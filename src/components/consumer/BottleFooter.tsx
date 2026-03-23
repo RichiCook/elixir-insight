@@ -13,7 +13,7 @@ export function BottleFooter({ product }: Props) {
         classycocktails.com
       </p>
       <p className="font-sans-consumer text-[10px] tracking-[0.2em] uppercase text-cc-text-lt">
-        Digital Product Passport
+        Digital Nutritional Passport
       </p>
       {product.ean_int && (
         <p className="font-sans-consumer text-[10px] text-cc-text-lt mt-2">
