@@ -9,6 +9,7 @@ import {
   useProductServeMoments,
   useProductAiPairings,
 } from '@/hooks/useProduct';
+import { useProductImages } from '@/hooks/useImages';
 import { BottleHero } from '@/components/consumer/BottleHero';
 import { GenuineCard } from '@/components/consumer/GenuineCard';
 import { AbvDisplay } from '@/components/consumer/AbvDisplay';
@@ -39,7 +40,10 @@ export default function BottlePage() {
   const { data: technicalData } = useProductTechnicalData(product?.id);
   const { data: serveMoments } = useProductServeMoments(product?.id);
   const { data: pairings } = useProductAiPairings(product?.id);
+  const { data: productImages } = useProductImages(product?.id);
 
+  const heroImages = productImages?.filter((pi: any) => pi.section === 'hero') || [];
+  const galleryImages = productImages?.filter((pi: any) => pi.section === 'gallery') || [];
   if (isLoading) {
     return (
       <div className="consumer-theme min-h-screen bg-cc-cream flex items-center justify-center">
@@ -124,6 +128,25 @@ export default function BottlePage() {
           )}
 
           <BottleNutrition data={technicalData ?? null} allergensSummary={product.allergens_summary} />
+
+          {/* Product gallery images */}
+          {galleryImages.length > 0 && (
+            <div className="px-5 py-6" style={{ borderTop: '1px solid #e5e0d8' }}>
+              <p className="font-sans-consumer text-[9px] uppercase tracking-[0.16em] text-cc-gold mb-3">Gallery</p>
+              <div className="flex gap-2 overflow-x-auto pb-2" style={{ WebkitOverflowScrolling: 'touch' }}>
+                {galleryImages.map((pi: any) => (
+                  <img
+                    key={pi.id}
+                    src={pi.brand_images?.public_url}
+                    alt=""
+                    className="w-[70%] flex-shrink-0 rounded-lg object-cover"
+                    style={{ aspectRatio: '4/3' }}
+                    loading="lazy"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
           <StoreCTA slug={product.slug} />
 
