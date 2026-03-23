@@ -38,6 +38,9 @@ export default function AdminDashboard() {
           <p className="text-xs text-muted-foreground">Classy Cocktails · PIM</p>
         </div>
         <div className="flex items-center gap-3">
+          <Link to="/admin/images">
+            <Button variant="outline" size="sm">Image Library</Button>
+          </Link>
           <Link to="/admin/ai-upload">
             <Button variant="outline" size="sm">AI Upload</Button>
           </Link>
