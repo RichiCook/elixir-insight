@@ -40,7 +40,10 @@ export default function BottlePage() {
   const { data: technicalData } = useProductTechnicalData(product?.id);
   const { data: serveMoments } = useProductServeMoments(product?.id);
   const { data: pairings } = useProductAiPairings(product?.id);
+  const { data: productImages } = useProductImages(product?.id);
 
+  const heroImages = productImages?.filter((pi: any) => pi.section === 'hero') || [];
+  const galleryImages = productImages?.filter((pi: any) => pi.section === 'gallery') || [];
   if (isLoading) {
     return (
       <div className="consumer-theme min-h-screen bg-cc-cream flex items-center justify-center">
