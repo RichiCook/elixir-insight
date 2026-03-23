@@ -9,6 +9,7 @@ import {
   useProductServeMoments,
   useProductAiPairings,
 } from '@/hooks/useProduct';
+import { useProductImages } from '@/hooks/useImages';
 import { BottleHero } from '@/components/consumer/BottleHero';
 import { GenuineCard } from '@/components/consumer/GenuineCard';
 import { AbvDisplay } from '@/components/consumer/AbvDisplay';
