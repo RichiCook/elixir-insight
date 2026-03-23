@@ -119,19 +119,17 @@ export default function BottlePage() {
             <BottlePairings pairings={pairings} />
           )}
 
-          <EditorialBlock line={product.line} bottleColor={product.bottle_color} />
-
-          <BrandHeritage lang={lang} />
-
           {translation && (
             <BottleIngredients translation={translation} allergensSummary={product.allergens_summary} />
           )}
 
-          {technicalData && (
-            <BottleNutrition data={technicalData} />
-          )}
+          <BottleNutrition data={technicalData ?? null} allergensSummary={product.allergens_summary} />
 
           <StoreCTA slug={product.slug} />
+
+          <EditorialBlock line={product.line} bottleColor={product.bottle_color} />
+
+          <BrandHeritage lang={lang} />
 
           <BottleFooter product={product} />
         </motion.div>

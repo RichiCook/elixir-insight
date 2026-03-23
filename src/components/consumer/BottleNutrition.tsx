@@ -1,105 +1,195 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { ShieldCheck } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 
 type TechData = Database['public']['Tables']['product_technical_data']['Row'];
 
 interface Props {
-  data: TechData;
+  data: TechData | null;
+  allergensSummary?: string | null;
 }
 
-export function BottleNutrition({ data }: Props) {
-  const [expanded, setExpanded] = useState(false);
+function DataRow({ label, value, indented }: { label: string; value: string | null | undefined; indented?: boolean }) {
+  if (!value) return null;
+  return (
+    <div
+      className="flex justify-between items-baseline border-b border-cc-border"
+      style={{ padding: '9px 0', paddingLeft: indented ? 14 : 0 }}
+    >
+      <span
+        className="font-sans-consumer font-light"
+        style={{ fontSize: indented ? 11 : 12, color: indented ? '#7a7a7a' : '#5a5a5a' }}
+      >
+        {label}
+      </span>
+      <span className="font-sans-consumer text-[11px] font-medium" style={{ color: '#2a2a2a' }}>
+        {value}
+      </span>
+    </div>
+  );
+}
 
-  const nutritionRows = [
-    { label: 'Energy', value: `${data.energy_kcal} kcal / ${data.energy_kj} kJ` },
-    { label: 'Fats', value: data.fats },
-    { label: '  of which saturated', value: data.saturated_fats },
-    { label: 'Carbohydrates', value: data.carbohydrates },
-    { label: '  of which sugars', value: data.sugars },
-    { label: 'Fibre', value: data.fibre },
-    { label: 'Proteins', value: data.proteins },
-    { label: 'Salt', value: data.salt },
-  ].filter((r) => r.value);
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p
+      className="font-sans-consumer uppercase mb-[10px] mt-5"
+      style={{ fontSize: 9, letterSpacing: '0.16em', color: '#b8975a' }}
+    >
+      {children}
+    </p>
+  );
+}
+
+const ALLERGEN_LABELS = [
+  { key: 'allergen_gluten', label: 'Gluten' },
+  { key: 'allergen_crustaceans', label: 'Crustaceans' },
+  { key: 'allergen_eggs', label: 'Eggs' },
+  { key: 'allergen_fish', label: 'Fish' },
+  { key: 'allergen_peanuts', label: 'Peanuts' },
+  { key: 'allergen_soybeans', label: 'Soybeans' },
+  { key: 'allergen_milk', label: 'Milk' },
+  { key: 'allergen_nuts', label: 'Nuts' },
+  { key: 'allergen_celery', label: 'Celery' },
+  { key: 'allergen_mustard', label: 'Mustard' },
+  { key: 'allergen_sesame', label: 'Sesame' },
+  { key: 'allergen_sulphites', label: 'Sulphites' },
+  { key: 'allergen_lupin', label: 'Lupin' },
+  { key: 'allergen_molluscs', label: 'Molluscs' },
+] as const;
+
+export function BottleNutrition({ data, allergensSummary }: Props) {
+  const hasNutrition = data && (data.energy_kcal || data.energy_kj || data.carbohydrates || data.proteins || data.fats || data.salt);
+  const hasOrganoleptic = data && (data.odor || data.appearance || data.taste_profile);
+  const hasChemical = data && (data.ph || data.brix);
+  const hasStorage = data && data.shelf_life;
+  const hasDeclarations = data && data.gmo_declaration;
+  const hasAnyData = hasNutrition || allergensSummary;
 
   return (
-    <section className="px-6 py-8 border-t border-cc-border">
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between"
+    <section>
+      {/* Header banner */}
+      <div
+        className="flex items-center justify-between border-t border-b border-cc-border"
+        style={{ backgroundColor: '#f5f0ea', padding: '10px 18px' }}
       >
-        <h2 className="font-display text-lg font-light tracking-wide text-cc-black">
-          Nutrition & Technical
-        </h2>
-        <span className="font-sans-consumer text-xs text-cc-gold">
-          {expanded ? '▲' : '▼'}
+        <ShieldCheck size={16} style={{ color: '#b8975a' }} />
+        <span
+          className="font-sans-consumer uppercase"
+          style={{ fontSize: 9, letterSpacing: '0.2em', color: '#2a2a2a' }}
+        >
+          Digital Nutritional Passport
         </span>
-      </button>
+        <span className="flex items-center gap-1">
+          <span className="w-[6px] h-[6px] rounded-full" style={{ backgroundColor: '#4a8c5c' }} />
+          <span className="font-sans-consumer" style={{ fontSize: 9, color: '#4a8c5c' }}>Verified</span>
+        </span>
+      </div>
 
-      <AnimatePresence>
-        {expanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="overflow-hidden"
-          >
-            <p className="font-sans-consumer text-[10px] tracking-[0.15em] uppercase text-cc-text-lt mt-4 mb-3">
-              Per 100ml
-            </p>
-            <div className="space-y-0">
-              {nutritionRows.map((row) => (
-                <div
-                  key={row.label}
-                  className="flex justify-between py-2 border-b border-cc-border last:border-0"
-                >
-                  <span className="font-sans-consumer text-xs text-cc-text-md">
-                    {row.label}
-                  </span>
-                  <span className="font-sans-consumer text-xs font-medium text-cc-text">
-                    {row.value}
-                  </span>
+      <div style={{ padding: '0 18px 16px' }}>
+        {!hasAnyData ? (
+          <p className="font-sans-consumer italic text-center" style={{ fontSize: 12, color: '#9a9a9a', padding: 20 }}>
+            Technical data not yet available for this product.
+          </p>
+        ) : (
+          <>
+            {/* A — Nutritional Values */}
+            {hasNutrition && (
+              <>
+                <SectionLabel>Nutritional Values per 100ml</SectionLabel>
+                {(data.energy_kcal || data.energy_kj) && (
+                  <DataRow label="Energy" value={`${data.energy_kcal || '–'} kcal / ${data.energy_kj || '–'} kJ`} />
+                )}
+                <DataRow label="Fats" value={data.fats} />
+                <DataRow label="of which saturated" value={data.saturated_fats} indented />
+                <DataRow label="Carbohydrates" value={data.carbohydrates} />
+                <DataRow label="of which sugars" value={data.sugars} indented />
+                <DataRow label="Dietary Fibre" value={data.fibre} />
+                <DataRow label="Proteins" value={data.proteins} />
+                <DataRow label="Salt" value={data.salt} />
+              </>
+            )}
+
+            {/* B — Organoleptic */}
+            {hasOrganoleptic && (
+              <>
+                <SectionLabel>Organoleptic Profile</SectionLabel>
+                <DataRow label="Odor" value={data.odor} />
+                <DataRow label="Appearance" value={data.appearance} />
+                <DataRow label="Taste" value={data.taste_profile} />
+              </>
+            )}
+
+            {/* C — Chemical */}
+            {hasChemical && (
+              <>
+                <SectionLabel>Chemical Parameters</SectionLabel>
+                <DataRow label="pH" value={data.ph} />
+                <DataRow label="°Brix" value={data.brix} />
+              </>
+            )}
+
+            {/* D — Allergen Declaration */}
+            {data && (
+              <>
+                <SectionLabel>Allergen Declaration — EU Reg. 1169/2011</SectionLabel>
+                <div className="grid grid-cols-3 gap-x-2 gap-y-2">
+                  {ALLERGEN_LABELS.map(({ key, label }) => {
+                    const present = !!(data as any)[key];
+                    return (
+                      <div key={key} className="flex items-center gap-[5px]">
+                        <span
+                          className="w-[6px] h-[6px] rounded-full flex-shrink-0"
+                          style={{ backgroundColor: present ? '#a04040' : '#4a8c5c' }}
+                        />
+                        <span className="font-sans-consumer font-light" style={{ fontSize: 10, color: '#5a5a5a' }}>
+                          {label}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
+              </>
+            )}
 
-            {/* Extra info */}
-            {data.taste_profile && (
-              <div className="mt-4">
-                <p className="font-sans-consumer text-[10px] tracking-[0.15em] uppercase text-cc-text-lt mb-1">
-                  Taste Profile
-                </p>
-                <p className="font-sans-consumer text-xs text-cc-text-md">
-                  {data.taste_profile}
+            {/* Allergen summary chip fallback */}
+            {!data && allergensSummary && allergensSummary !== 'None' && (
+              <div className="mt-4 flex items-center gap-2 px-3 py-2 rounded" style={{ backgroundColor: '#fef3cd' }}>
+                <span className="text-sm">⚠️</span>
+                <p className="font-sans-consumer text-xs font-medium" style={{ color: '#856404' }}>
+                  {allergensSummary}
                 </p>
               </div>
             )}
 
-            {data.storage_conditions && (
-              <div className="mt-3">
-                <p className="font-sans-consumer text-[10px] tracking-[0.15em] uppercase text-cc-text-lt mb-1">
-                  Storage
-                </p>
-                <p className="font-sans-consumer text-xs text-cc-text-md">
-                  {data.storage_conditions}
-                </p>
-              </div>
+            {/* E — Storage */}
+            {hasStorage && (
+              <>
+                <SectionLabel>Storage</SectionLabel>
+                <DataRow label="🕐 Best Before" value={data.shelf_life} />
+                <DataRow label="🌡 Storage" value={data.storage_conditions} />
+                <DataRow label="ℹ After Opening" value={data.storage_after_opening} />
+              </>
             )}
 
-            {data.shelf_life && (
-              <div className="mt-3">
-                <p className="font-sans-consumer text-[10px] tracking-[0.15em] uppercase text-cc-text-lt mb-1">
-                  Shelf Life
-                </p>
-                <p className="font-sans-consumer text-xs text-cc-text-md">
-                  {data.shelf_life}
-                </p>
-              </div>
+            {/* F — Declarations */}
+            {hasDeclarations && (
+              <>
+                <SectionLabel>Declarations</SectionLabel>
+                <div className="space-y-0">
+                  {data.gmo_declaration && (
+                    <DataRow label="GMO" value={data.gmo_declaration} />
+                  )}
+                  {data.ionising_radiation && (
+                    <DataRow label="Ionising Radiation" value={data.ionising_radiation} />
+                  )}
+                  {data.compliance_references && (
+                    <DataRow label="Compliance" value={data.compliance_references} />
+                  )}
+                </div>
+              </>
             )}
-          </motion.div>
+          </>
         )}
-      </AnimatePresence>
+      </div>
     </section>
   );
 }
