@@ -33,6 +33,7 @@ const LANGUAGES = ['EN', 'IT', 'DE', 'FR'] as const;
 export default function BottlePage() {
   const { slug } = useParams<{ slug: string }>();
   const [lang, setLang] = useState<string>('EN');
+  const [fullscreenImage, setFullscreenImage] = useState<{ url: string; alt: string } | null>(null);
 
   const { data: product, isLoading } = useProduct(slug || '');
   const { data: translation } = useProductTranslations(product?.id, lang);
@@ -42,8 +43,31 @@ export default function BottlePage() {
   const { data: pairings } = useProductAiPairings(product?.id);
   const { data: productImages } = useProductImages(product?.id);
 
-  const heroImages = productImages?.filter((pi: any) => pi.section === 'hero') || [];
-  const galleryImages = productImages?.filter((pi: any) => pi.section === 'gallery') || [];
+  // Group images by section, only use approved ones
+  const getApprovedBySection = (section: string) => {
+    if (!productImages) return [];
+    return productImages.filter((pi: any) => {
+      if (pi.section !== section) return false;
+      const attrs = pi.brand_images?.image_attributes;
+      if (Array.isArray(attrs)) return attrs.some((a: any) => a.is_approved);
+      return attrs?.is_approved;
+    });
+  };
+
+  const heroImages = getApprovedBySection('hero');
+  const editorialImages = getApprovedBySection('editorial');
+  const serveMomentImagesRaw = getApprovedBySection('serve_moment');
+  const galleryImages = getApprovedBySection('gallery');
+
+  const heroImageUrl = heroImages[0]?.brand_images?.public_url || null;
+  const editorialImageUrl = editorialImages[0]?.brand_images?.public_url || null;
+
+  // Map serve moment images by sort_order
+  const serveMomentImageMap: Record<number, string> = {};
+  serveMomentImagesRaw.forEach((pi: any, idx: number) => {
+    serveMomentImageMap[idx] = pi.brand_images?.public_url;
+  });
+
   if (isLoading) {
     return (
       <div className="consumer-theme min-h-screen bg-cc-cream flex items-center justify-center">
@@ -92,7 +116,7 @@ export default function BottlePage() {
           </div>
         </div>
 
-        <BottleHero product={product} />
+        <BottleHero product={product} heroImageUrl={heroImageUrl} />
         <GenuineCard product={product} />
         <AbvDisplay product={product} />
 
@@ -116,7 +140,11 @@ export default function BottlePage() {
           )}
 
           {serveMoments && serveMoments.length > 0 && (
-            <BottleServeMoments moments={serveMoments} line={product.line} />
+            <BottleServeMoments
+              moments={serveMoments}
+              line={product.line}
+              serveMomentImages={serveMomentImageMap}
+            />
           )}
 
           {pairings && pairings.length > 0 && (
@@ -129,34 +157,71 @@ export default function BottlePage() {
 
           <BottleNutrition data={technicalData ?? null} allergensSummary={product.allergens_summary} />
 
-          {/* Product gallery images */}
-          {galleryImages.length > 0 && (
-            <div className="px-5 py-6" style={{ borderTop: '1px solid #e5e0d8' }}>
-              <p className="font-sans-consumer text-[9px] uppercase tracking-[0.16em] text-cc-gold mb-3">Gallery</p>
-              <div className="flex gap-2 overflow-x-auto pb-2" style={{ WebkitOverflowScrolling: 'touch' }}>
-                {galleryImages.map((pi: any) => (
-                  <img
-                    key={pi.id}
-                    src={pi.brand_images?.public_url}
-                    alt=""
-                    className="w-[70%] flex-shrink-0 rounded-lg object-cover"
-                    style={{ aspectRatio: '4/3' }}
-                    loading="lazy"
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
           <StoreCTA slug={product.slug} />
 
-          <EditorialBlock line={product.line} bottleColor={product.bottle_color} />
+          <EditorialBlock line={product.line} bottleColor={product.bottle_color} editorialImageUrl={editorialImageUrl} />
+
+          {/* Gallery section — only if 3+ approved gallery images */}
+          {galleryImages.length >= 3 && (
+            <section className="py-6">
+              <div
+                className="flex gap-2 overflow-x-auto px-0 pb-2 gallery-scroll"
+                style={{
+                  scrollSnapType: 'x mandatory',
+                  WebkitOverflowScrolling: 'touch',
+                  scrollbarWidth: 'none',
+                }}
+              >
+                <style>{`.gallery-scroll::-webkit-scrollbar { display: none; }`}</style>
+                {galleryImages.map((pi: any) => {
+                  const attrs = pi.brand_images?.image_attributes;
+                  const altText = Array.isArray(attrs) ? (lang === 'IT' ? attrs[0]?.alt_text_it : attrs[0]?.alt_text_en) : (lang === 'IT' ? attrs?.alt_text_it : attrs?.alt_text_en);
+                  return (
+                    <button
+                      key={pi.id}
+                      className="flex-shrink-0 overflow-hidden"
+                      style={{ width: '75%', scrollSnapAlign: 'start' }}
+                      onClick={() => setFullscreenImage({ url: pi.brand_images?.public_url, alt: altText || '' })}
+                    >
+                      <img
+                        src={pi.brand_images?.public_url}
+                        alt={altText || ''}
+                        className="w-full object-cover"
+                        style={{ aspectRatio: '4/3' }}
+                        loading="lazy"
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
           <BrandHeritage lang={lang} />
 
           <BottleFooter product={product} />
         </motion.div>
       </div>
+
+      {/* Fullscreen image viewer */}
+      {fullscreenImage && (
+        <div
+          className="fixed inset-0 z-[200] bg-black/95 flex flex-col items-center justify-center"
+          onClick={() => setFullscreenImage(null)}
+        >
+          <img
+            src={fullscreenImage.url}
+            alt={fullscreenImage.alt}
+            className="max-w-full max-h-[85vh] object-contain"
+          />
+          {fullscreenImage.alt && (
+            <p className="font-sans-consumer text-xs text-white/70 mt-3 px-6 text-center">
+              {fullscreenImage.alt}
+            </p>
+          )}
+          <button className="absolute top-5 right-5 text-white/60 hover:text-white text-2xl">✕</button>
+        </div>
+      )}
     </div>
   );
 }
