@@ -565,6 +565,7 @@ export default function AdminProductDetail() {
               <TabsTrigger value="languages">Languages</TabsTrigger>
               <TabsTrigger value="technical">Technical Data</TabsTrigger>
               <TabsTrigger value="ean">EAN Codes</TabsTrigger>
+              <TabsTrigger value="images">Images</TabsTrigger>
             </TabsList>
 
             <TabsContent value="general">
@@ -581,6 +582,10 @@ export default function AdminProductDetail() {
 
             <TabsContent value="ean">
               <EanTab productId={product.id} />
+            </TabsContent>
+
+            <TabsContent value="images">
+              <ImagesTab productId={product.id} />
             </TabsContent>
           </Tabs>
         </div>
