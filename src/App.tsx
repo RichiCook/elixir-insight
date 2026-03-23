@@ -55,6 +55,14 @@ function AppInner() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/admin/images"
+          element={
+            <ProtectedRoute>
+              <AdminImageLibrary />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Root redirect */}
         <Route path="/" element={<Navigate to="/bottle/negroni" replace />} />
