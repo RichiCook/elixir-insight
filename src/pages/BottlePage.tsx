@@ -17,11 +17,15 @@ import { BottleQuickFacts } from '@/components/consumer/BottleQuickFacts';
 import { BottleSensory } from '@/components/consumer/BottleSensory';
 import { BottleComposition } from '@/components/consumer/BottleComposition';
 import { BottleServeMoments } from '@/components/consumer/BottleServeMoments';
-import { CraftedWith } from '@/components/consumer/CraftedWith';
 import { BottlePairings } from '@/components/consumer/BottlePairings';
 import { BottleIngredients } from '@/components/consumer/BottleIngredients';
 import { BottleNutrition } from '@/components/consumer/BottleNutrition';
 import { BottleFooter } from '@/components/consumer/BottleFooter';
+import { CraftedWith } from '@/components/consumer/CraftedWith';
+import { EditorialBlock } from '@/components/consumer/EditorialBlock';
+import { BrandHeritage } from '@/components/consumer/BrandHeritage';
+import { StoreCTA } from '@/components/consumer/StoreCTA';
+import { AgeGate } from '@/components/consumer/AgeGate';
 
 const LANGUAGES = ['EN', 'IT', 'DE', 'FR'] as const;
 
@@ -52,8 +56,12 @@ export default function BottlePage() {
     );
   }
 
+  const showAgeGate = parseFloat(product.abv) > 0;
+
   return (
     <div className="consumer-theme min-h-screen" style={{ backgroundColor: '#e8e4dc' }}>
+      {showAgeGate && <AgeGate />}
+
       <div className="mx-auto max-w-bottle min-h-screen bg-cc-white shadow-xl">
         {/* Top nav with logo */}
         <div className="flex items-center justify-between px-5 pt-4">
@@ -111,6 +119,10 @@ export default function BottlePage() {
             <BottlePairings pairings={pairings} />
           )}
 
+          <EditorialBlock line={product.line} bottleColor={product.bottle_color} />
+
+          <BrandHeritage lang={lang} />
+
           {translation && (
             <BottleIngredients translation={translation} allergensSummary={product.allergens_summary} />
           )}
@@ -118,6 +130,8 @@ export default function BottlePage() {
           {technicalData && (
             <BottleNutrition data={technicalData} />
           )}
+
+          <StoreCTA slug={product.slug} />
 
           <BottleFooter product={product} />
         </motion.div>
