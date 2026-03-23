@@ -129,6 +129,25 @@ export default function BottlePage() {
 
           <BottleNutrition data={technicalData ?? null} allergensSummary={product.allergens_summary} />
 
+          {/* Product gallery images */}
+          {galleryImages.length > 0 && (
+            <div className="px-5 py-6" style={{ borderTop: '1px solid #e5e0d8' }}>
+              <p className="font-sans-consumer text-[9px] uppercase tracking-[0.16em] text-cc-gold mb-3">Gallery</p>
+              <div className="flex gap-2 overflow-x-auto pb-2" style={{ WebkitOverflowScrolling: 'touch' }}>
+                {galleryImages.map((pi: any) => (
+                  <img
+                    key={pi.id}
+                    src={pi.brand_images?.public_url}
+                    alt=""
+                    className="w-[70%] flex-shrink-0 rounded-lg object-cover"
+                    style={{ aspectRatio: '4/3' }}
+                    loading="lazy"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
           <StoreCTA slug={product.slug} />
 
           <EditorialBlock line={product.line} bottleColor={product.bottle_color} />
