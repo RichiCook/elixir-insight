@@ -471,6 +471,107 @@ function EanTab({ productId }: { productId: string }) {
   );
 }
 
+// ─── Images Tab ───
+const SECTIONS = ['hero', 'editorial', 'serve_moment', 'pairing', 'gallery'] as const;
+
+function ImagesTab({ productId }: { productId: string }) {
+  const { data: productImages, refetch } = useProductImages(productId);
+  const { data: allImages } = useApprovedBrandImages();
+  const queryClient = useQueryClient();
+  const [adding, setAdding] = useState(false);
+  const [selectedSection, setSelectedSection] = useState<string>('hero');
+
+  const handleAttach = async (imageId: string) => {
+    const { error } = await supabase.from('product_images').upsert({
+      product_id: productId,
+      image_id: imageId,
+      section: selectedSection,
+      sort_order: (productImages?.length || 0),
+    }, { onConflict: 'product_id,image_id,section' });
+    if (error) { toast.error('Failed to attach image'); return; }
+    toast.success('Image attached');
+    queryClient.invalidateQueries({ queryKey: ['product-images', productId] });
+    setAdding(false);
+  };
+
+  const handleRemove = async (id: string) => {
+    await supabase.from('product_images').delete().eq('id', id);
+    toast.success('Image removed');
+    queryClient.invalidateQueries({ queryKey: ['product-images', productId] });
+  };
+
+  const grouped = SECTIONS.reduce((acc, s) => {
+    acc[s] = productImages?.filter((pi: any) => pi.section === s) || [];
+    return acc;
+  }, {} as Record<string, any[]>);
+
+  return (
+    <div className="space-y-6">
+      {SECTIONS.map((section) => (
+        <div key={section}>
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-xs font-admin uppercase tracking-wider text-muted-foreground capitalize">{section.replace('_', ' ')}</h4>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-6 text-[9px]"
+              onClick={() => { setSelectedSection(section); setAdding(true); }}
+            >
+              + Add Image
+            </Button>
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            {grouped[section].map((pi: any) => (
+              <div key={pi.id} className="relative group rounded border border-border overflow-hidden">
+                <img
+                  src={pi.brand_images?.public_url}
+                  alt=""
+                  className="w-full aspect-square object-cover"
+                />
+                <button
+                  onClick={() => handleRemove(pi.id)}
+                  className="absolute top-1 right-1 w-5 h-5 bg-red-600 text-white rounded-full text-[10px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+            {grouped[section].length === 0 && (
+              <p className="text-[10px] text-muted-foreground col-span-4 py-3">No images for this section</p>
+            )}
+          </div>
+        </div>
+      ))}
+
+      {/* Image picker modal */}
+      {adding && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-6" onClick={() => setAdding(false)}>
+          <div className="bg-card rounded-lg border border-border p-4 max-w-2xl w-full max-h-[70vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-admin font-semibold text-foreground">
+                Attach to "{selectedSection.replace('_', ' ')}"
+              </h3>
+              <Button variant="ghost" size="sm" onClick={() => setAdding(false)}>✕</Button>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {allImages?.map((img: any) => (
+                <button
+                  key={img.id}
+                  onClick={() => handleAttach(img.id)}
+                  className="rounded border border-border overflow-hidden hover:border-primary transition-colors"
+                >
+                  <img src={img.public_url} alt="" className="w-full aspect-square object-cover" />
+                  <p className="text-[8px] text-muted-foreground p-1 truncate">{img.filename}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Page ───
 export default function AdminProductDetail() {
   const { slug } = useParams<{ slug: string }>();
