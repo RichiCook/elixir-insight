@@ -14,6 +14,143 @@ export type Database = {
   }
   public: {
     Tables: {
+      brand_images: {
+        Row: {
+          created_at: string | null
+          file_size: number | null
+          filename: string
+          height: number | null
+          id: string
+          public_url: string
+          status: string | null
+          storage_path: string
+          uploaded_by: string | null
+          width: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          file_size?: number | null
+          filename: string
+          height?: number | null
+          id?: string
+          public_url: string
+          status?: string | null
+          storage_path: string
+          uploaded_by?: string | null
+          width?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          file_size?: number | null
+          filename?: string
+          height?: number | null
+          id?: string
+          public_url?: string
+          status?: string | null
+          storage_path?: string
+          uploaded_by?: string | null
+          width?: number | null
+        }
+        Relationships: []
+      }
+      image_attributes: {
+        Row: {
+          alt_text_en: string | null
+          alt_text_it: string | null
+          best_for_sections: string[] | null
+          brightness: string | null
+          cocktails_present: string[] | null
+          composition: string | null
+          created_at: string | null
+          dominant_colors: string[] | null
+          foods_present: string[] | null
+          id: string
+          image_id: string | null
+          internal_notes: string | null
+          is_alcoholic_context: boolean | null
+          is_approved: boolean | null
+          is_featured: boolean | null
+          mood: string[] | null
+          people_count: number | null
+          people_present: boolean | null
+          people_setting: string | null
+          product_slugs: string[] | null
+          props_present: string[] | null
+          scene_description: string | null
+          season: string | null
+          setting: string | null
+          suitable_for_lines: string[] | null
+          time_of_day: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          alt_text_en?: string | null
+          alt_text_it?: string | null
+          best_for_sections?: string[] | null
+          brightness?: string | null
+          cocktails_present?: string[] | null
+          composition?: string | null
+          created_at?: string | null
+          dominant_colors?: string[] | null
+          foods_present?: string[] | null
+          id?: string
+          image_id?: string | null
+          internal_notes?: string | null
+          is_alcoholic_context?: boolean | null
+          is_approved?: boolean | null
+          is_featured?: boolean | null
+          mood?: string[] | null
+          people_count?: number | null
+          people_present?: boolean | null
+          people_setting?: string | null
+          product_slugs?: string[] | null
+          props_present?: string[] | null
+          scene_description?: string | null
+          season?: string | null
+          setting?: string | null
+          suitable_for_lines?: string[] | null
+          time_of_day?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          alt_text_en?: string | null
+          alt_text_it?: string | null
+          best_for_sections?: string[] | null
+          brightness?: string | null
+          cocktails_present?: string[] | null
+          composition?: string | null
+          created_at?: string | null
+          dominant_colors?: string[] | null
+          foods_present?: string[] | null
+          id?: string
+          image_id?: string | null
+          internal_notes?: string | null
+          is_alcoholic_context?: boolean | null
+          is_approved?: boolean | null
+          is_featured?: boolean | null
+          mood?: string[] | null
+          people_count?: number | null
+          people_present?: boolean | null
+          people_setting?: string | null
+          product_slugs?: string[] | null
+          props_present?: string[] | null
+          scene_description?: string | null
+          season?: string | null
+          setting?: string | null
+          suitable_for_lines?: string[] | null
+          time_of_day?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "image_attributes_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "brand_images"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_ai_pairings: {
         Row: {
           emoji: string | null
@@ -112,6 +249,45 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "product_ean_codes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_images: {
+        Row: {
+          id: string
+          image_id: string | null
+          product_id: string | null
+          section: string
+          sort_order: number | null
+        }
+        Insert: {
+          id?: string
+          image_id?: string | null
+          product_id?: string | null
+          section: string
+          sort_order?: number | null
+        }
+        Update: {
+          id?: string
+          image_id?: string | null
+          product_id?: string | null
+          section?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_images_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "brand_images"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_images_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
