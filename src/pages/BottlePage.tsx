@@ -127,11 +127,11 @@ export default function BottlePage() {
             <BottleIngredients translation={translation} allergensSummary={product.allergens_summary} />
           )}
 
-          {technicalData && (
-            <BottleNutrition data={technicalData} />
-          )}
+          <BottleNutrition data={technicalData ?? null} allergensSummary={product.allergens_summary} />
 
           <StoreCTA slug={product.slug} />
+
+          <BrandHeritage lang={lang} />
 
           <BottleFooter product={product} />
         </motion.div>
