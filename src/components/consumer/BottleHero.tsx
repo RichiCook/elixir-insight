@@ -5,17 +5,27 @@ type Product = Database['public']['Tables']['products']['Row'];
 
 interface Props {
   product: Product;
+  heroImageUrl?: string | null;
 }
 
-export function BottleHero({ product }: Props) {
+export function BottleHero({ product, heroImageUrl }: Props) {
   return (
     <section
-      className="relative w-full"
+      className="relative w-full overflow-hidden"
       style={{
         backgroundColor: product.hero_bg || '#f5f0ea',
         aspectRatio: '4 / 5',
       }}
     >
+      {/* Hero background image if available */}
+      {heroImageUrl && (
+        <img
+          src={heroImageUrl}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      )}
+
       {/* Bottle silhouette centered */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}

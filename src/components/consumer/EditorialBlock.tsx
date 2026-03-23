@@ -3,6 +3,7 @@ import { CrosshatchPattern, CLettermark } from './DecorativeSVG';
 interface Props {
   line: string;
   bottleColor: string | null;
+  editorialImageUrl?: string | null;
 }
 
 function getContent(line: string) {
@@ -32,7 +33,7 @@ function darkenHex(hex: string): string {
   return `rgb(${r},${g},${b})`;
 }
 
-export function EditorialBlock({ line, bottleColor }: Props) {
+export function EditorialBlock({ line, bottleColor, editorialImageUrl }: Props) {
   const { title, body } = getContent(line);
   const bg = darkenHex(bottleColor || '#2a2a2a');
 
@@ -41,8 +42,22 @@ export function EditorialBlock({ line, bottleColor }: Props) {
       className="relative w-full overflow-hidden"
       style={{ aspectRatio: '3 / 4', backgroundColor: bg }}
     >
-      <CrosshatchPattern id="editorial-cross" />
-      <CLettermark />
+      {/* Editorial background image if available */}
+      {editorialImageUrl && (
+        <img
+          src={editorialImageUrl}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      )}
+
+      {!editorialImageUrl && (
+        <>
+          <CrosshatchPattern id="editorial-cross" />
+          <CLettermark />
+        </>
+      )}
+
       <div
         className="absolute inset-0"
         style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.75))' }}

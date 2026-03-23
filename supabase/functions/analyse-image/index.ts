@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,12 +14,19 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const systemPrompt = `You are an expert brand image analyst for Classy Cocktails, a premium ready-to-drink cocktail brand with three lines: Classic (alcoholic cocktails), No Regrets (alcohol-free), and Sparkling (carbonated aperitivo). Analyse the provided image thoroughly and extract all attributes using the provided function.`;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Update status to analysing
+    await supabase.from("brand_images").update({ status: "analysing" }).eq("id", image_id);
+
+    const systemPrompt = `You are an expert brand image analyst for Classy Cocktails, a premium ready-to-drink cocktail brand with three lines: Classic (alcoholic cocktails), No Regrets (alcohol-free), and Sparkling (carbonated aperitivo). The 12 products are: negroni, cosmopolitan, espresso-martini, daiquiri, margarita, pornstar-martini, paper-plane, penicillin, spicy-paloma, spritz, no-regrets-negroni, no-regrets-moment. Analyse the provided image thoroughly and extract all attributes using the provided function.`;
 
     const userPrompt = `Analyse this brand image comprehensively. Extract:
 - Alt text in English and Italian (concise, descriptive, accessibility-focused)
 - Scene description (natural language, 2-3 sentences)
-- Any Classy Cocktails products visible (by name if recognisable)
+- Any Classy Cocktails products visible (by slug if recognisable from the list)
 - Foods, props, and objects visible
 - People: present? how many? setting (solo/couple/group)?
 - Setting: bar, home, outdoor, studio, table, restaurant
@@ -93,6 +101,7 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
+      await supabase.from("brand_images").update({ status: "error" }).eq("id", image_id);
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -112,14 +121,43 @@ serve(async (req) => {
     const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
 
     if (!toolCall) {
+      await supabase.from("brand_images").update({ status: "error" }).eq("id", image_id);
       return new Response(JSON.stringify({ error: "No structured data extracted" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const extracted = JSON.parse(toolCall.function.arguments);
+    const attrs = JSON.parse(toolCall.function.arguments);
 
-    return new Response(JSON.stringify({ data: { image_id, ...extracted } }), {
+    // Save to image_attributes
+    await supabase.from("image_attributes").upsert({
+      image_id,
+      alt_text_en: attrs.alt_text_en || null,
+      alt_text_it: attrs.alt_text_it || null,
+      scene_description: attrs.scene_description || null,
+      cocktails_present: attrs.cocktails_present || [],
+      foods_present: attrs.foods_present || [],
+      props_present: attrs.props_present || [],
+      people_present: attrs.people_present ?? false,
+      people_count: attrs.people_count ?? 0,
+      people_setting: attrs.people_setting || null,
+      setting: attrs.setting || null,
+      time_of_day: attrs.time_of_day || null,
+      season: attrs.season || null,
+      mood: attrs.mood || [],
+      dominant_colors: attrs.dominant_colors || [],
+      composition: attrs.composition || null,
+      brightness: attrs.brightness || null,
+      best_for_sections: attrs.best_for_sections || [],
+      suitable_for_lines: attrs.suitable_for_lines || [],
+      is_alcoholic_context: attrs.is_alcoholic_context ?? false,
+      product_slugs: attrs.product_slugs || [],
+    }, { onConflict: "image_id" });
+
+    // Update brand_images status to complete
+    await supabase.from("brand_images").update({ status: "complete" }).eq("id", image_id);
+
+    return new Response(JSON.stringify({ data: { image_id, ...attrs } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
