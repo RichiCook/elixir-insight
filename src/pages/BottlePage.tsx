@@ -10,6 +10,9 @@ import {
   useProductAiPairings,
 } from '@/hooks/useProduct';
 import { BottleHero } from '@/components/consumer/BottleHero';
+import { GenuineCard } from '@/components/consumer/GenuineCard';
+import { AbvDisplay } from '@/components/consumer/AbvDisplay';
+import { ClassyLogo } from '@/components/consumer/ClassyLogo';
 import { BottleQuickFacts } from '@/components/consumer/BottleQuickFacts';
 import { BottleSensory } from '@/components/consumer/BottleSensory';
 import { BottleComposition } from '@/components/consumer/BottleComposition';
