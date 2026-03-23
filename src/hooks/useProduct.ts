@@ -5,13 +5,13 @@ export function useProduct(slug: string) {
   return useQuery({
     queryKey: ['product', slug],
     queryFn: async () => {
-      const { data: product, error } = await supabase
+      const { data, error } = await supabase
         .from('products')
         .select('*')
         .eq('slug', slug)
         .single();
       if (error) throw error;
-      return product;
+      return data;
     },
     enabled: !!slug,
   });
@@ -109,6 +109,49 @@ export function useProducts() {
         .order('name');
       if (error) throw error;
       return data;
+    },
+  });
+}
+
+export function useProductEanCodes(productId: string | undefined) {
+  return useQuery({
+    queryKey: ['product-ean-codes', productId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('product_ean_codes')
+        .select('*')
+        .eq('product_id', productId!)
+        .order('market');
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!productId,
+  });
+}
+
+export function useAdminStats() {
+  return useQuery({
+    queryKey: ['admin-stats'],
+    queryFn: async () => {
+      const [productsRes, translationsRes, techSheetsRes] = await Promise.all([
+        supabase.from('products').select('id, completeness'),
+        supabase.from('product_translations').select('language'),
+        supabase.from('tech_sheet_uploads').select('status').eq('status', 'complete'),
+      ]);
+
+      const products = productsRes.data || [];
+      const translations = translationsRes.data || [];
+      const techSheets = techSheetsRes.data || [];
+
+      const languages = new Set(translations.map((t) => t.language));
+      const complete = products.filter((p) => (p.completeness || 0) >= 85).length;
+
+      return {
+        totalProducts: products.length,
+        languages: languages.size,
+        completeProfiles: complete,
+        techSheetsProcessed: techSheets.length,
+      };
     },
   });
 }

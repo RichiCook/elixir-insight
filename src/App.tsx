@@ -10,6 +10,7 @@ import BottlePage from '@/pages/BottlePage';
 import AdminLogin from '@/pages/AdminLogin';
 import AdminDashboard from '@/pages/AdminDashboard';
 import AdminProductDetail from '@/pages/AdminProductDetail';
+import AdminAiUpload from '@/pages/AdminAiUpload';
 import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient();
@@ -42,6 +43,14 @@ function AppInner() {
           element={
             <ProtectedRoute>
               <AdminProductDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/ai-upload"
+          element={
+            <ProtectedRoute>
+              <AdminAiUpload />
             </ProtectedRoute>
           }
         />
