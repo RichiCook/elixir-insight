@@ -91,6 +91,10 @@ export default function BottlePage() {
         >
           <BottleQuickFacts product={product} />
 
+          {product.spirit && (
+            <CraftedWith spirit={product.spirit} />
+          )}
+
           {translation?.sensory_description && (
             <BottleSensory description={translation.sensory_description} />
           )}
@@ -100,7 +104,7 @@ export default function BottlePage() {
           )}
 
           {serveMoments && serveMoments.length > 0 && (
-            <BottleServeMoments moments={serveMoments} />
+            <BottleServeMoments moments={serveMoments} line={product.line} />
           )}
 
           {pairings && pairings.length > 0 && (
