@@ -11,6 +11,7 @@ import AdminLogin from '@/pages/AdminLogin';
 import AdminDashboard from '@/pages/AdminDashboard';
 import AdminProductDetail from '@/pages/AdminProductDetail';
 import AdminAiUpload from '@/pages/AdminAiUpload';
+import AdminImageLibrary from '@/pages/AdminImageLibrary';
 import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient();
