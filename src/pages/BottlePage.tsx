@@ -54,24 +54,34 @@ export default function BottlePage() {
   return (
     <div className="consumer-theme min-h-screen" style={{ backgroundColor: '#e8e4dc' }}>
       <div className="mx-auto max-w-bottle min-h-screen bg-cc-white shadow-xl">
-        {/* Language selector */}
-        <div className="flex justify-end px-5 pt-4 gap-2">
-          {LANGUAGES.map((l) => (
-            <button
-              key={l}
-              onClick={() => setLang(l)}
-              className={`font-sans-consumer text-xs tracking-widest px-2 py-1 transition-colors ${
-                lang === l
-                  ? 'text-cc-gold font-medium'
-                  : 'text-cc-text-lt hover:text-cc-text-md'
-              }`}
-            >
-              {l}
-            </button>
-          ))}
+        {/* Top nav with logo */}
+        <div className="flex items-center justify-between px-5 pt-4">
+          <div className="flex items-center gap-2">
+            <ClassyLogo size={24} />
+            <span className="font-sans-consumer text-[10px] tracking-[0.3em] uppercase text-cc-text-lt">
+              Classy Cocktails
+            </span>
+          </div>
+          <div className="flex gap-2">
+            {LANGUAGES.map((l) => (
+              <button
+                key={l}
+                onClick={() => setLang(l)}
+                className={`font-sans-consumer text-xs tracking-widest px-2 py-1 transition-colors ${
+                  lang === l
+                    ? 'text-cc-gold font-medium'
+                    : 'text-cc-text-lt hover:text-cc-text-md'
+                }`}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <BottleHero product={product} translation={translation} />
+        <BottleHero product={product} />
+        <GenuineCard product={product} />
+        <AbvDisplay product={product} />
 
         <motion.div
           initial={{ opacity: 0 }}
