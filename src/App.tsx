@@ -46,6 +46,14 @@ function AppInner() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/admin/ai-upload"
+          element={
+            <ProtectedRoute>
+              <AdminAiUpload />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Root redirect */}
         <Route path="/" element={<Navigate to="/bottle/negroni" replace />} />
