@@ -17,6 +17,7 @@ import { BottleQuickFacts } from '@/components/consumer/BottleQuickFacts';
 import { BottleSensory } from '@/components/consumer/BottleSensory';
 import { BottleComposition } from '@/components/consumer/BottleComposition';
 import { BottleServeMoments } from '@/components/consumer/BottleServeMoments';
+import { CraftedWith } from '@/components/consumer/CraftedWith';
 import { BottlePairings } from '@/components/consumer/BottlePairings';
 import { BottleIngredients } from '@/components/consumer/BottleIngredients';
 import { BottleNutrition } from '@/components/consumer/BottleNutrition';
@@ -90,6 +91,10 @@ export default function BottlePage() {
         >
           <BottleQuickFacts product={product} />
 
+          {product.spirit && (
+            <CraftedWith spirit={product.spirit} />
+          )}
+
           {translation?.sensory_description && (
             <BottleSensory description={translation.sensory_description} />
           )}
@@ -99,7 +104,7 @@ export default function BottlePage() {
           )}
 
           {serveMoments && serveMoments.length > 0 && (
-            <BottleServeMoments moments={serveMoments} />
+            <BottleServeMoments moments={serveMoments} line={product.line} />
           )}
 
           {pairings && pairings.length > 0 && (
