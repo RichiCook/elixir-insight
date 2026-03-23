@@ -17,6 +17,7 @@ import { BottleQuickFacts } from '@/components/consumer/BottleQuickFacts';
 import { BottleSensory } from '@/components/consumer/BottleSensory';
 import { BottleComposition } from '@/components/consumer/BottleComposition';
 import { BottleServeMoments } from '@/components/consumer/BottleServeMoments';
+import { CraftedWith } from '@/components/consumer/CraftedWith';
 import { BottlePairings } from '@/components/consumer/BottlePairings';
 import { BottleIngredients } from '@/components/consumer/BottleIngredients';
 import { BottleNutrition } from '@/components/consumer/BottleNutrition';
