@@ -96,7 +96,7 @@ function MetaItem({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function BottleNutrition({ data, allergensSummary }: Props) {
+export function BottleNutrition({ data, allergensSummary, onExpand }: Props) {
   const [open, setOpen] = useState(false);
 
   const td = data as (TechData & { application?: string | null }) | null;
