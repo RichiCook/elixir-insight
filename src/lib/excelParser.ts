@@ -95,6 +95,9 @@ function parseSheet(sheet: XLSX.WorkSheet, sheetName: string): ParsedProduct | n
     const colC = String(row[2] || '').trim();
     const colD = String(row[3] || '').trim();
 
+    const fieldName = colC.toUpperCase();
+    const value = cleanValue(colD);
+
     // Detect section headers — a section header row has the name in col A
     // but no field name in col C (data rows have field names in col C)
     if (['GENERAL INFORMATION', 'INTERNATIONAL', 'ITALY', 'GERMANY', 'FRANCE'].includes(colA) && !fieldName) {
@@ -102,14 +105,10 @@ function parseSheet(sheet: XLSX.WorkSheet, sheetName: string): ParsedProduct | n
       continue;
     }
 
-    // If col A has a market name, use it to set the current section contextually
+    // If col A has a market name on a data row, update the current section
     if (['INTERNATIONAL', 'INT', 'ITALY', 'GERMANY', 'FRANCE'].includes(colA) && fieldName) {
       currentSection = colA === 'INT' ? 'INTERNATIONAL' : colA;
     }
-
-    // The field name is in column C, value in column D
-    const fieldName = colC.toUpperCase();
-    const value = cleanValue(colD);
 
     if (!fieldName || value === null) continue;
 
