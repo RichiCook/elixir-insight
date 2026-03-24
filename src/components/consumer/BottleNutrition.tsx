@@ -28,13 +28,13 @@ function isValidPH(ph: any): boolean {
   return !isNaN(n) && n >= 0 && n <= 14;
 }
 
-function DataRow({ label, value, indented }: { label: string; value: string | null | undefined; indented?: boolean }) {
+function DataRow({ label, value, indented, unit }: { label: string; value: string | null | undefined; indented?: boolean; unit?: string }) {
   const cleaned = cleanValue(value);
   if (cleaned === '—') return null;
   return (
     <div className="flex justify-between items-baseline" style={{ padding: '9px 0', paddingLeft: indented ? 16 : 0, borderBottom: '1px solid rgba(229,224,216,0.6)' }}>
       <span className="font-sans-consumer font-light" style={{ fontSize: indented ? 11 : 12, color: indented ? '#7a7a7a' : '#5a5a5a' }}>{label}</span>
-      <span className="font-sans-consumer text-[11px] font-medium" style={{ color: '#2a2a2a' }}>{cleaned}</span>
+      <span className="font-sans-consumer text-[11px] font-medium" style={{ color: '#2a2a2a' }}>{cleaned}{unit ? ` ${unit}` : ''}</span>
     </div>
   );
 }
@@ -86,14 +86,23 @@ function DeclarationRow({ icon, label, value }: { icon: string; label: string; v
   );
 }
 
-function NutritionalTable({ td }: { td: TechData }) {
+function StatCard({ value, label }: { value: string; label: string }) {
+  return (
+    <div style={{ background: '#f5f0ea', border: '1px solid #e5e0d8', borderRadius: 6, padding: '12px 14px', textAlign: 'center' }}>
+      <p className="font-display" style={{ fontSize: 22, fontWeight: 300, color: '#b8975a', lineHeight: 1, marginBottom: 4 }}>{value}</p>
+      <p className="font-sans-consumer uppercase" style={{ fontSize: 9, letterSpacing: '0.14em', color: '#9a9a9a', fontWeight: 500 }}>{label}</p>
+    </div>
+  );
+}
+
+function NutritionalTable({ td, title }: { td: Record<string, any>; title: string }) {
   const energyDisplay = (td.energy_kcal || td.energy_kj)
     ? `${cleanValue(td.energy_kcal)} kcal / ${cleanValue(td.energy_kj)} kJ`
     : null;
 
   return (
     <>
-      <SectionLabel>Nutritional Values per 100ml</SectionLabel>
+      <SectionLabel>{title}</SectionLabel>
       {energyDisplay && (
         <div className="flex justify-between items-baseline" style={{ padding: '9px 0', borderBottom: '1px solid rgba(229,224,216,0.6)' }}>
           <span className="font-sans-consumer font-light" style={{ fontSize: 12, color: '#5a5a5a' }}>Energy</span>
@@ -113,13 +122,118 @@ function NutritionalTable({ td }: { td: TechData }) {
   );
 }
 
+// ── MINERALS TABLE ─────────────────────────────────────────
+function MineralsSection({ minerals }: { minerals: Record<string, any> }) {
+  const entries = Object.entries(minerals).filter(([_, v]) => v && String(v) !== '—');
+  if (entries.length === 0) return null;
+  return (
+    <>
+      <SectionLabel>Mineral Analysis</SectionLabel>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+        {entries.map(([key, val]) => {
+          const display = typeof val === 'object'
+            ? `${val.result || '—'}${val.unit ? ` ${val.unit}` : ''}`
+            : String(val);
+          return (
+            <div key={key} style={{ background: '#f5f0ea', border: '1px solid #e5e0d8', borderRadius: 6, padding: '8px 10px' }}>
+              <p className="font-sans-consumer uppercase" style={{ fontSize: 8, letterSpacing: '0.12em', color: '#9a9a9a', marginBottom: 2 }}>
+                {key.replace(/_/g, ' ')}
+              </p>
+              <p className="font-sans-consumer" style={{ fontSize: 12, fontWeight: 500, color: '#2a2a2a' }}>{display}</p>
+              {typeof val === 'object' && val.loq && (
+                <p className="font-sans-consumer" style={{ fontSize: 8, color: '#9a9a9a', marginTop: 1 }}>LOQ: {val.loq}</p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+// ── CHEMICAL CONGENERS TABLE ───────────────────────────────
+function CongenersSection({ congeners }: { congeners: Record<string, any> }) {
+  const entries = Object.entries(congeners).filter(([_, v]) => v && String(v) !== '—');
+  if (entries.length === 0) return null;
+  return (
+    <>
+      <SectionLabel>Chemical Congeners</SectionLabel>
+      {entries.map(([key, val]) => {
+        const display = typeof val === 'object'
+          ? `${val.result || '—'}${val.unit ? ` ${val.unit}` : ''}`
+          : String(val);
+        return (
+          <DataRow key={key} label={key.replace(/_/g, ' ')} value={display} />
+        );
+      })}
+    </>
+  );
+}
+
+// ── SAMPLE INFO ────────────────────────────────────────────
+function SampleInfoSection({ info }: { info: Record<string, any> }) {
+  const entries = Object.entries(info).filter(([_, v]) => v && String(v) !== '—' && String(v).trim());
+  if (entries.length === 0) return null;
+  return (
+    <>
+      <SectionLabel>Sample Information</SectionLabel>
+      <div style={{ background: '#f5f0ea', border: '1px solid #e5e0d8', borderRadius: 6, padding: '12px 14px' }}>
+        {entries.map(([key, val]) => (
+          <div key={key} className="flex justify-between items-baseline" style={{ padding: '5px 0', borderBottom: '1px solid rgba(229,224,216,0.4)' }}>
+            <span className="font-sans-consumer capitalize" style={{ fontSize: 10, color: '#9a9a9a' }}>{key.replace(/_/g, ' ')}</span>
+            <span className="font-sans-consumer" style={{ fontSize: 11, fontWeight: 500, color: '#2a2a2a' }}>{String(val)}</span>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+// ── RAW DATA RENDERER (generic for any raw_analytical_data) ─
+function RawAnalyticalData({ raw }: { raw: Record<string, any> | null }) {
+  if (!raw || typeof raw !== 'object') return null;
+
+  const { minerals, chemical_congeners, congeners, sample_info, per_serving_usa, per_100g_anses, analytical_results, ...rest } = raw;
+
+  return (
+    <>
+      {sample_info && <SampleInfoSection info={sample_info} />}
+      {per_100g_anses && Object.keys(per_100g_anses).length > 0 && (
+        <NutritionalTable td={per_100g_anses} title="Nutritional Values per 100g (Anses)" />
+      )}
+      {per_serving_usa && Object.keys(per_serving_usa).length > 0 && (
+        <NutritionalTable td={per_serving_usa} title="Nutritional Values per Serving (USA)" />
+      )}
+      {analytical_results && typeof analytical_results === 'object' && Object.keys(analytical_results).length > 0 && (
+        <>
+          <SectionLabel>Analytical Results</SectionLabel>
+          {Object.entries(analytical_results).map(([key, val]) => (
+            <DataRow key={key} label={key.replace(/_/g, ' ')} value={typeof val === 'object' ? JSON.stringify(val) : String(val)} />
+          ))}
+        </>
+      )}
+      {minerals && <MineralsSection minerals={minerals} />}
+      {(chemical_congeners || congeners) && <CongenersSection congeners={chemical_congeners || congeners} />}
+      {/* Render any other unknown sections */}
+      {Object.entries(rest).filter(([_, v]) => v && typeof v === 'object' && Object.keys(v).length > 0).map(([sectionKey, sectionData]) => (
+        <div key={sectionKey}>
+          <SectionLabel>{sectionKey.replace(/_/g, ' ')}</SectionLabel>
+          {Object.entries(sectionData as Record<string, any>).map(([k, v]) => (
+            <DataRow key={k} label={k.replace(/_/g, ' ')} value={typeof v === 'object' ? JSON.stringify(v) : String(v)} />
+          ))}
+        </div>
+      ))}
+    </>
+  );
+}
+
 // ── SUPPLIER TECH SHEET LAYOUT ─────────────────────────────
 function TechSheetView({ td, allergensSummary }: { td: TechData; allergensSummary?: string | null }) {
   const hasNutrition = td.energy_kcal || td.energy_kj || td.carbohydrates || td.proteins || td.fats || td.salt;
   const hasOrganoleptic = td.odor || td.appearance || td.taste_profile;
   const hasChemical = isValidPH(td.ph) || td.brix;
   const hasStorage = td.shelf_life;
-  const hasDeclarations = td.gmo_declaration || td.ionising_radiation || td.compliance_references;
+  const hasDeclarations = td.gmo_declaration || td.ionising_radiation || td.compliance_references || td.compliance_regulation_1;
   const hasSupplier = td.supplier_name;
 
   return (
@@ -132,7 +246,7 @@ function TechSheetView({ td, allergensSummary }: { td: TechData; allergensSummar
       </div>
 
       <div style={{ padding: '0 18px' }}>
-        {hasNutrition && <NutritionalTable td={td} />}
+        {hasNutrition && <NutritionalTable td={td} title="Nutritional Values per 100ml" />}
 
         {hasOrganoleptic && (
           <>
@@ -148,18 +262,10 @@ function TechSheetView({ td, allergensSummary }: { td: TechData; allergensSummar
           <>
             <SectionLabel>Chemical Parameters</SectionLabel>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              {isValidPH(td.ph) && (
-                <div style={{ background: '#f5f0ea', border: '1px solid #e5e0d8', borderRadius: 6, padding: '12px 14px', textAlign: 'center' }}>
-                  <p className="font-serif-consumer" style={{ fontSize: 26, fontWeight: 300, color: '#b8975a', lineHeight: 1, marginBottom: 4 }}>{cleanValue(td.ph)}</p>
-                  <p className="font-sans-consumer uppercase" style={{ fontSize: 9, letterSpacing: '0.14em', color: '#9a9a9a', fontWeight: 500 }}>pH</p>
-                </div>
-              )}
-              {td.brix && (
-                <div style={{ background: '#f5f0ea', border: '1px solid #e5e0d8', borderRadius: 6, padding: '12px 14px', textAlign: 'center' }}>
-                  <p className="font-serif-consumer" style={{ fontSize: 26, fontWeight: 300, color: '#b8975a', lineHeight: 1, marginBottom: 4 }}>{cleanValue(td.brix)}</p>
-                  <p className="font-sans-consumer uppercase" style={{ fontSize: 9, letterSpacing: '0.14em', color: '#9a9a9a', fontWeight: 500 }}>°Brix</p>
-                </div>
-              )}
+              {isValidPH(td.ph) && <StatCard value={cleanValue(td.ph)} label="pH" />}
+              {td.brix && <StatCard value={cleanValue(td.brix)} label="°Brix" />}
+              {td.total_acidity && <StatCard value={cleanValue(td.total_acidity)} label="Total Acidity" />}
+              {td.alcoholic_strength && <StatCard value={`${cleanValue(td.alcoholic_strength)}%`} label="ABV" />}
             </div>
           </>
         )}
@@ -193,14 +299,27 @@ function TechSheetView({ td, allergensSummary }: { td: TechData; allergensSummar
             {td.gmo_declaration && <DeclarationRow icon="✓" label="GMO Declaration" value={td.gmo_declaration} />}
             {td.ionising_radiation && <DeclarationRow icon="✓" label="Ionising Radiation" value={td.ionising_radiation} />}
             {td.compliance_references && <DeclarationRow icon="⚖" label="Compliance" value={td.compliance_references} />}
+            {td.compliance_regulation_1 && <DeclarationRow icon="⚖" label="Regulation" value={td.compliance_regulation_1} />}
+            {td.compliance_regulation_2 && <DeclarationRow icon="⚖" label="Regulation" value={td.compliance_regulation_2} />}
+            {td.compliance_regulation_3 && <DeclarationRow icon="⚖" label="Regulation" value={td.compliance_regulation_3} />}
           </>
         )}
+
+        {td.additional_information && (
+          <>
+            <SectionLabel>Additional Information</SectionLabel>
+            <p className="font-sans-consumer" style={{ fontSize: 11, fontWeight: 300, color: '#5a5a5a', lineHeight: 1.6 }}>{td.additional_information}</p>
+          </>
+        )}
+
+        {/* Raw analytical data (minerals, congeners, extra tables) */}
+        <RawAnalyticalData raw={td.raw_analytical_data} />
 
         {hasSupplier && (
           <>
             <SectionLabel>Supplied By</SectionLabel>
             <div style={{ background: '#f5f0ea', border: '1px solid #e5e0d8', borderRadius: 6, padding: '12px 14px' }}>
-              <p className="font-serif-consumer" style={{ fontSize: 15, fontWeight: 500, color: '#2a2a2a', marginBottom: 5 }}>{td.supplier_name}</p>
+              <p className="font-display" style={{ fontSize: 15, fontWeight: 500, color: '#2a2a2a', marginBottom: 5 }}>{td.supplier_name}</p>
               {td.supplier_address && <p className="font-sans-consumer" style={{ fontSize: 10, fontWeight: 300, color: '#9a9a9a' }}>📍 {td.supplier_address}</p>}
               {td.supplier_vat && <p className="font-sans-consumer" style={{ fontSize: 10, fontWeight: 300, color: '#9a9a9a' }}>🆔 {td.supplier_vat}</p>}
               {td.supplier_phone && <p className="font-sans-consumer" style={{ fontSize: 10, fontWeight: 300, color: '#9a9a9a' }}>📞 {td.supplier_phone}</p>}
@@ -227,7 +346,7 @@ function TechSheetView({ td, allergensSummary }: { td: TechData; allergensSummar
 // ── LABORATORY TEST REPORT LAYOUT ──────────────────────────
 function LabReportView({ td }: { td: TechData }) {
   const hasNutrition = td.energy_kcal || td.energy_kj || td.carbohydrates || td.proteins || td.fats || td.salt;
-  const hasChemical = td.total_acidity || td.alcoholic_strength;
+  const hasChemical = td.total_acidity || td.alcoholic_strength || isValidPH(td.ph) || td.brix;
 
   return (
     <>
@@ -240,24 +359,19 @@ function LabReportView({ td }: { td: TechData }) {
       </div>
 
       <div style={{ padding: '0 18px' }}>
-        {hasNutrition && <NutritionalTable td={td} />}
+        {hasNutrition && <NutritionalTable td={td} title="Nutritional Values per 100ml (EU)" />}
+
+        {/* Raw analytical data — extra nutrition tables, minerals, congeners */}
+        <RawAnalyticalData raw={td.raw_analytical_data} />
 
         {hasChemical && (
           <>
             <SectionLabel>Chemical Analysis</SectionLabel>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-              {td.total_acidity && (
-                <div style={{ background: '#f5f0ea', border: '1px solid #e5e0d8', borderRadius: 6, padding: '12px 14px', textAlign: 'center' }}>
-                  <p className="font-serif-consumer" style={{ fontSize: 22, fontWeight: 300, color: '#b8975a', lineHeight: 1, marginBottom: 4 }}>{cleanValue(td.total_acidity)}</p>
-                  <p className="font-sans-consumer uppercase" style={{ fontSize: 9, letterSpacing: '0.14em', color: '#9a9a9a', fontWeight: 500 }}>Total Acidity</p>
-                </div>
-              )}
-              {td.alcoholic_strength && (
-                <div style={{ background: '#f5f0ea', border: '1px solid #e5e0d8', borderRadius: 6, padding: '12px 14px', textAlign: 'center' }}>
-                  <p className="font-serif-consumer" style={{ fontSize: 22, fontWeight: 300, color: '#b8975a', lineHeight: 1, marginBottom: 4 }}>{cleanValue(td.alcoholic_strength)}%</p>
-                  <p className="font-sans-consumer uppercase" style={{ fontSize: 9, letterSpacing: '0.14em', color: '#9a9a9a', fontWeight: 500 }}>Alcoholic Strength % vol</p>
-                </div>
-              )}
+              {td.total_acidity && <StatCard value={cleanValue(td.total_acidity)} label="Total Acidity" />}
+              {td.alcoholic_strength && <StatCard value={`${cleanValue(td.alcoholic_strength)}%`} label="Alcoholic Strength % vol" />}
+              {isValidPH(td.ph) && <StatCard value={cleanValue(td.ph)} label="pH" />}
+              {td.brix && <StatCard value={cleanValue(td.brix)} label="°Brix" />}
             </div>
           </>
         )}
@@ -276,10 +390,20 @@ function LabReportView({ td }: { td: TechData }) {
           </div>
         )}
 
-        {td.compliance_references && (
+        {(td.compliance_references || td.compliance_regulation_1) && (
           <>
             <SectionLabel>Compliance References</SectionLabel>
-            <p className="font-sans-consumer" style={{ fontSize: 11, fontWeight: 300, color: '#5a5a5a', lineHeight: 1.6 }}>{td.compliance_references}</p>
+            {td.compliance_references && <p className="font-sans-consumer" style={{ fontSize: 11, fontWeight: 300, color: '#5a5a5a', lineHeight: 1.6 }}>{td.compliance_references}</p>}
+            {td.compliance_regulation_1 && <p className="font-sans-consumer" style={{ fontSize: 10, fontWeight: 300, color: '#7a7a7a', lineHeight: 1.5, marginTop: 4 }}>{td.compliance_regulation_1}</p>}
+            {td.compliance_regulation_2 && <p className="font-sans-consumer" style={{ fontSize: 10, fontWeight: 300, color: '#7a7a7a', lineHeight: 1.5 }}>{td.compliance_regulation_2}</p>}
+            {td.compliance_regulation_3 && <p className="font-sans-consumer" style={{ fontSize: 10, fontWeight: 300, color: '#7a7a7a', lineHeight: 1.5 }}>{td.compliance_regulation_3}</p>}
+          </>
+        )}
+
+        {td.additional_information && (
+          <>
+            <SectionLabel>Additional Information</SectionLabel>
+            <p className="font-sans-consumer" style={{ fontSize: 11, fontWeight: 300, color: '#5a5a5a', lineHeight: 1.6 }}>{td.additional_information}</p>
           </>
         )}
 
@@ -288,7 +412,7 @@ function LabReportView({ td }: { td: TechData }) {
           <>
             <SectionLabel>Issued By</SectionLabel>
             <div style={{ background: '#f5f0ea', border: '1px solid #e5e0d8', borderRadius: 6, padding: '12px 14px' }}>
-              <p className="font-serif-consumer" style={{ fontSize: 15, fontWeight: 500, color: '#2a2a2a', marginBottom: 5 }}>{td.laboratory_name}</p>
+              <p className="font-display" style={{ fontSize: 15, fontWeight: 500, color: '#2a2a2a', marginBottom: 5 }}>{td.laboratory_name}</p>
               {td.laboratory_address && <p className="font-sans-consumer" style={{ fontSize: 10, fontWeight: 300, color: '#9a9a9a' }}>📍 {td.laboratory_address}</p>}
               {td.accreditation_number && <p className="font-sans-consumer" style={{ fontSize: 10, fontWeight: 300, color: '#9a9a9a' }}>🏅 Accreditation #{td.accreditation_number}</p>}
             </div>
@@ -316,7 +440,7 @@ function LabelOnlyView({ td, allergensSummary }: { td: TechData | null; allergen
 
   return (
     <div style={{ padding: '0 18px' }}>
-      {hasNutrition && <NutritionalTable td={td!} />}
+      {hasNutrition && <NutritionalTable td={td!} title="Nutritional Values per 100ml" />}
 
       {allergensSummary && allergensSummary !== 'None' && (
         <>
@@ -340,7 +464,8 @@ export function BottleNutrition({ data, allergensSummary, onExpand }: Props) {
   const td = data as TechData | null;
 
   const hasNutrition = td && (td.energy_kcal || td.energy_kj || td.carbohydrates || td.proteins || td.fats || td.salt);
-  const hasAnyTechData = td && (hasNutrition || td.odor || td.ph || td.shelf_life || td.supplier_name || td.laboratory_name);
+  const hasRawData = td?.raw_analytical_data && typeof td.raw_analytical_data === 'object' && Object.keys(td.raw_analytical_data).length > 0;
+  const hasAnyTechData = td && (hasNutrition || td.odor || td.ph || td.shelf_life || td.supplier_name || td.laboratory_name || hasRawData);
   const docType = td?.document_type || null;
   const isLabReport = docType === 'LABORATORY_TEST_REPORT';
   const isTechSheet = docType === 'SUPPLIER_TECH_SHEET';
@@ -352,6 +477,7 @@ export function BottleNutrition({ data, allergensSummary, onExpand }: Props) {
   if (hasNutrition) subParts.push('Nutritional');
   if (td || allergensSummary) subParts.push('Allergens');
   if (td?.shelf_life) subParts.push('Storage');
+  if (hasRawData) subParts.push('Minerals');
   if (td?.gmo_declaration || td?.ionising_radiation || td?.compliance_references || td?.supplier_name || td?.laboratory_name) subParts.push('Declarations');
   const subLabel = subParts.length > 0 ? subParts.join(' · ') : 'Nutritional · Allergens';
 
@@ -376,7 +502,7 @@ export function BottleNutrition({ data, allergensSummary, onExpand }: Props) {
         </span>
       </button>
 
-      <div style={{ maxHeight: open ? 4000 : 0, overflow: 'hidden', transition: 'max-height 0.5s cubic-bezier(0.4,0,0.2,1)' }}>
+      <div style={{ maxHeight: open ? 8000 : 0, overflow: 'hidden', transition: 'max-height 0.5s cubic-bezier(0.4,0,0.2,1)' }}>
         {hasNoData ? (
           <p className="font-sans-consumer italic text-center" style={{ fontSize: 12, color: '#9a9a9a', padding: 20 }}>
             Technical analysis not yet available. Upload a supplier data sheet or lab report in the admin panel.
