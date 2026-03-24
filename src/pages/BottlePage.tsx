@@ -28,8 +28,11 @@ import { EditorialBlock } from '@/components/consumer/EditorialBlock';
 import { BrandHeritage } from '@/components/consumer/BrandHeritage';
 import { StoreCTA } from '@/components/consumer/StoreCTA';
 import { AgeGate } from '@/components/consumer/AgeGate';
+import { RepairButton } from '@/components/consumer/RepairButton';
+import { RepairRequestSheet } from '@/components/consumer/RepairRequestSheet';
 import { ActivationSlot } from '@/components/consumer/ActivationRenderer';
 import { useActiveActivationsForProduct } from '@/hooks/useActivations';
+import { useRepairSettings } from '@/hooks/useRepairSettings';
 
 const LANGUAGES = ['EN', 'IT', 'DE', 'FR'] as const;
 
@@ -37,6 +40,7 @@ export default function BottlePage() {
   const { slug } = useParams<{ slug: string }>();
   const [lang, setLang] = useState<string>('EN');
   const [fullscreenImage, setFullscreenImage] = useState<{ url: string; alt: string } | null>(null);
+  const [repairSheetOpen, setRepairSheetOpen] = useState(false);
 
   const { data: product, isLoading } = useProduct(slug || '');
   const { data: translation } = useProductTranslations(product?.id, lang);
@@ -46,6 +50,7 @@ export default function BottlePage() {
   const { data: pairings } = useProductAiPairings(product?.id);
   const { data: productImages } = useProductImages(product?.id);
   const { data: activeActivations } = useActiveActivationsForProduct(product?.id);
+  const { data: repairSettings } = useRepairSettings();
 
   // Tracking
   usePageViewTracking(slug);
@@ -236,6 +241,10 @@ export default function BottlePage() {
           {activeActivations && <ActivationSlot activations={activeActivations} placement="after_nutrition" productSlug={product.slug} />}
           {activeActivations && <ActivationSlot activations={activeActivations} placement="before_cta" productSlug={product.slug} />}
 
+          {repairSettings?.enabled && (
+            <RepairButton onClick={() => setRepairSheetOpen(true)} />
+          )}
+
           <StoreCTA slug={product.slug} onCtaClick={handleCtaClick} />
 
           <div ref={editorialRef}>
@@ -306,6 +315,15 @@ export default function BottlePage() {
           )}
           <button className="absolute top-5 right-5 text-white/60 hover:text-white text-2xl">✕</button>
         </div>
+      )}
+
+      {repairSettings?.enabled && (
+        <RepairRequestSheet
+          open={repairSheetOpen}
+          onClose={() => setRepairSheetOpen(false)}
+          product={product}
+          settings={repairSettings}
+        />
       )}
     </div>
   );
