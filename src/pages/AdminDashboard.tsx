@@ -174,6 +174,64 @@ export default function AdminDashboard() {
           </div>
         )}
       </main>
+
+      {/* New Product Modal */}
+      {showNewProduct && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-6" onClick={() => setShowNewProduct(false)}>
+          <div className="bg-card rounded-lg border border-border p-6 w-full max-w-md space-y-4" onClick={(e) => e.stopPropagation()}>
+            <h2 className="font-display text-xl text-foreground">New Product</h2>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Product Name *</Label>
+              <Input
+                value={newProduct.name}
+                onChange={(e) => {
+                  const name = e.target.value;
+                  setNewProduct((p) => ({
+                    ...p,
+                    name,
+                    slug: name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+                  }));
+                }}
+                placeholder="e.g. Paloma"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Slug *</Label>
+              <Input
+                value={newProduct.slug}
+                onChange={(e) => setNewProduct((p) => ({ ...p, slug: e.target.value }))}
+                placeholder="e.g. paloma"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">URL path: /bottle/{newProduct.slug || '...'}</p>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Line</Label>
+              <Select value={newProduct.line} onValueChange={(v) => setNewProduct((p) => ({ ...p, line: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Classic">Classic</SelectItem>
+                  <SelectItem value="Sparkling">Sparkling</SelectItem>
+                  <SelectItem value="No Regrets">No Regrets</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">ABV (%) *</Label>
+              <Input
+                value={newProduct.abv}
+                onChange={(e) => setNewProduct((p) => ({ ...p, abv: e.target.value }))}
+                placeholder="e.g. 14.9"
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button variant="ghost" onClick={() => setShowNewProduct(false)} className="flex-1">Cancel</Button>
+              <Button onClick={handleCreateProduct} disabled={creating} className="flex-1 bg-primary text-primary-foreground">
+                {creating ? 'Creating…' : 'Create Product'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

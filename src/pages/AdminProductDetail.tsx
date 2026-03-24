@@ -82,6 +82,7 @@ function GeneralTab({ product, onSave }: { product: any; onSave: () => void }) {
       allergens_summary: form.allergens_summary,
       hero_bg: form.hero_bg,
       bottle_color: form.bottle_color,
+      product_link: form.product_link || null,
     }).eq('id', product.id);
     setSaving(false);
     if (error) { toast.error('Failed to save'); return; }
