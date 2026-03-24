@@ -15,7 +15,6 @@ import AdminImageLibrary from '@/pages/AdminImageLibrary';
 import AdminAnalytics from '@/pages/AdminAnalytics';
 import AdminActivations from '@/pages/AdminActivations';
 import AdminActivationEditor from '@/pages/AdminActivationEditor';
-import AdminSettings from '@/pages/AdminSettings';
 import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient();
@@ -88,14 +87,6 @@ function AppInner() {
           element={
             <ProtectedRoute>
               <AdminActivationEditor />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/settings"
-          element={
-            <ProtectedRoute>
-              <AdminSettings />
             </ProtectedRoute>
           }
         />
