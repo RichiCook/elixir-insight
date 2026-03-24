@@ -7,6 +7,7 @@ type TechData = Database['public']['Tables']['product_technical_data']['Row'];
 interface Props {
   data: TechData | null;
   allergensSummary?: string | null;
+  onExpand?: () => void;
 }
 
 function DataRow({ label, value, indented }: { label: string; value: string | null | undefined; indented?: boolean }) {
