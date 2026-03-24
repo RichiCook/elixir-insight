@@ -300,6 +300,7 @@ function TechnicalTab({ productId }: { productId: string }) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
+  const [flushing, setFlushing] = useState(false);
 
   useEffect(() => {
     if (techData) setForm({ ...techData });
@@ -330,11 +331,38 @@ function TechnicalTab({ productId }: { productId: string }) {
     queryClient.invalidateQueries({ queryKey: ['product-technical-data', productId] });
   };
 
+  const handleFlush = async () => {
+    if (!confirm('This will permanently delete all technical data and tech sheet upload records for this product. Continue?')) return;
+    setFlushing(true);
+    try {
+      // Delete technical data
+      await supabase.from('product_technical_data').delete().eq('product_id', productId);
+      // Delete associated tech sheet uploads
+      await supabase.from('tech_sheet_uploads').delete().eq('product_id', productId);
+      setForm({});
+      toast.success('Technical data flushed');
+      queryClient.invalidateQueries({ queryKey: ['product-technical-data', productId] });
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+    } catch {
+      toast.error('Failed to flush data');
+    }
+    setFlushing(false);
+  };
+
   return (
     <div className="space-y-6">
       {techData ? (
-        <div className="rounded-lg bg-[#4a8c5c]/10 border border-[#4a8c5c]/20 p-3">
+        <div className="rounded-lg bg-[#4a8c5c]/10 border border-[#4a8c5c]/20 p-3 flex items-center justify-between">
           <p className="text-xs text-[#5aac6c]">✓ Populated via AI Tech Sheet</p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-destructive text-[10px] hover:bg-destructive/10"
+            onClick={handleFlush}
+            disabled={flushing}
+          >
+            {flushing ? 'Flushing…' : '⟳ Flush Technical Data'}
+          </Button>
         </div>
       ) : (
         <div className="rounded-lg bg-[#c09040]/10 border border-[#c09040]/20 p-3 flex items-center justify-between">
