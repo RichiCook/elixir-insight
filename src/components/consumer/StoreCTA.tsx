@@ -1,5 +1,6 @@
 interface Props {
   slug: string;
+  onCtaClick?: () => void;
 }
 
 export function StoreCTA({ slug }: Props) {
