@@ -74,6 +74,22 @@ function AppInner() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/admin/activations"
+          element={
+            <ProtectedRoute>
+              <AdminActivations />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/activations/:id"
+          element={
+            <ProtectedRoute>
+              <AdminActivationEditor />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Root redirect */}
         <Route path="/" element={<Navigate to="/bottle/negroni" replace />} />

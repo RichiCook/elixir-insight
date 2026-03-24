@@ -45,6 +45,7 @@ export default function BottlePage() {
   const { data: serveMoments } = useProductServeMoments(product?.id);
   const { data: pairings } = useProductAiPairings(product?.id);
   const { data: productImages } = useProductImages(product?.id);
+  const { data: activeActivations } = useActiveActivationsForProduct(product?.id);
 
   // Tracking
   usePageViewTracking(slug);
