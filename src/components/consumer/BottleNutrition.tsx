@@ -62,6 +62,7 @@ export function BottleNutrition({ data, allergensSummary }: Props) {
   const hasChemical = data && (data.ph || data.brix);
   const hasStorage = data && data.shelf_life;
   const hasDeclarations = data && data.gmo_declaration;
+  const hasTechInfo = data && ((data as any).recommended_dosage || (data as any).document_revision || (data as any).supplier_name);
   const hasAnyData = hasNutrition || allergensSummary;
 
   return (
@@ -185,6 +186,24 @@ export function BottleNutrition({ data, allergensSummary }: Props) {
                     <DataRow label="Compliance" value={data.compliance_references} />
                   )}
                 </div>
+              </>
+            )}
+
+            {/* G — Technical Information */}
+            {hasTechInfo && (
+              <>
+                <SectionLabel>Technical Information</SectionLabel>
+                <DataRow label="Recommended Dosage" value={(data as any).recommended_dosage} />
+                {((data as any).document_revision || (data as any).document_date) && (
+                  <DataRow
+                    label="Document Reference"
+                    value={[
+                      (data as any).document_revision && `Rev ${(data as any).document_revision}`,
+                      (data as any).document_date,
+                    ].filter(Boolean).join(' · ')}
+                  />
+                )}
+                <DataRow label="Supplied by" value={(data as any).supplier_name} />
               </>
             )}
           </>
