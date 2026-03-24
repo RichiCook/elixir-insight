@@ -366,6 +366,20 @@ ${sourceText}`;
       if (!s || /<\s*LOQ/i.test(s)) return null;
       return s.replace(/,/g, ".");
     };
+    const normalizeReportCode = (v: unknown): string | null => {
+      if (v === null || v === undefined) return null;
+      const compact = String(v).toUpperCase().replace(/[^A-Z0-9]/g, "");
+      if (!compact) return null;
+      const vr = compact.match(/\d{2}VR\d{4,}/);
+      if (vr?.[0]) return vr[0];
+      const generic = compact.match(/[A-Z0-9]{6,}/);
+      return generic?.[0] ?? compact;
+    };
+    const preferLonger = (current: unknown, candidate: string | null) => {
+      if (!candidate) return isEmpty(current) ? null : String(current);
+      if (isEmpty(current)) return candidate;
+      return String(candidate).length > String(current).length ? candidate : String(current);
+    };
 
     if (extracted?.document_type === "LABORATORY_TEST_REPORT") {
       // Force null for fields not in lab reports
@@ -375,15 +389,17 @@ ${sourceText}`;
 
       // Lab name fallbacks
       const hasUivMarkers = /(UNIONE\s+ITALIANA\s+VINI|LAB\.VERONA@ULV\.IT|ULV\.IT)/i.test(sourceText);
-      if (hasUivMarkers && isEmpty(extracted.laboratory_name)) {
-        extracted.laboratory_name = "Unione Italiana Vini Servizi Soc. Coop.";
+      if (hasUivMarkers) {
+        extracted.laboratory_name = preferLonger(
+          extracted.laboratory_name,
+          "Unione Italiana Vini Servizi Soc. Coop.",
+        );
       }
 
-      if (isEmpty(extracted.laboratory_address)) {
-        const sedeMatch = sourceText.match(/Sede\s+operativa\s*:\s*([^\n]+)/i);
-        if (sedeMatch?.[1]) {
-          extracted.laboratory_address = sedeMatch[1].split("T.")[0].replace(/\s+/g, " ").trim();
-        }
+      const sedeMatch = sourceText.match(/Sede\s+operativa\s*:\s*([^\n\r]+)/i);
+      if (sedeMatch?.[1]) {
+        const canonicalAddress = sedeMatch[1].split("T.")[0].replace(/\s+/g, " ").trim();
+        extracted.laboratory_address = preferLonger(extracted.laboratory_address, canonicalAddress);
       }
 
       // VR report number fallback
@@ -396,11 +412,15 @@ ${sourceText}`;
 
       // Energy fallbacks
       if (isEmpty(extracted.energy_kj)) {
-        const m = sourceText.match(/Valore\s+energetico\s*\(kJ\)[\s\S]{0,80}?([0-9]+(?:[.,][0-9]+)?)/i);
+        const m =
+          sourceText.match(/Valore\s+energetico\s*\(kJ\)[\s\S]{0,120}?KJ\s*\/\s*100\s*ml[\s\S]{0,40}?([0-9]+(?:[.,][0-9]+)?)/i) ||
+          sourceText.match(/Valore\s+energetico\s*\(kJ\)[\s\S]{0,120}?([0-9]{2,4}(?:[.,][0-9]+)?)/i);
         if (m?.[1]) extracted.energy_kj = m[1].replace(/,/g, ".");
       }
       if (isEmpty(extracted.energy_kcal)) {
-        const m = sourceText.match(/Valore\s+energetico\s*\(kcal\)[\s\S]{0,80}?([0-9]+(?:[.,][0-9]+)?)/i);
+        const m =
+          sourceText.match(/Valore\s+energetico\s*\(kcal\)[\s\S]{0,120}?Kcal\s*\/\s*100\s*ml[\s\S]{0,40}?([0-9]+(?:[.,][0-9]+)?)/i) ||
+          sourceText.match(/Valore\s+energetico\s*\(kcal\)[\s\S]{0,120}?([0-9]{2,4}(?:[.,][0-9]+)?)/i);
         if (m?.[1]) extracted.energy_kcal = m[1].replace(/,/g, ".");
       }
 
@@ -412,17 +432,31 @@ ${sourceText}`;
 
       // Trans fats fallback — Anses g/100g section
       if (isEmpty(extracted.trans_fats)) {
-        const m = sourceText.match(/(?:Acidi\s+grassi\s+trans|Trans\s+fatty\s+acids|Grassi\s+trans)[\s\S]{0,120}?([0-9]+(?:[.,][0-9]+)?|<\s*LOQ)/i);
+        const m = sourceText.match(/(?:Acidi\s+grassi\s+trans|Trans\s+fatty\s+acids|Grassi\s+trans)[\s\S]{0,160}?g\s*\/\s*100\s*g[\s\S]{0,40}?([0-9]+(?:[.,][0-9]+)?|<\s*LOQ)/i);
         const normalized = normalizeNumber(m?.[1] ?? null);
         extracted.trans_fats = normalized ?? "0.00";
       }
 
       // Fibre fallback — Anses g/100g section
       if (isEmpty(extracted.fibre)) {
-        const m = sourceText.match(/Fibre\s*\/\s*Fibres[\s\S]{0,120}?([0-9]+(?:[.,][0-9]+)?|<\s*LOQ)/i);
+        const m = sourceText.match(/Fibre\s*\/\s*Fibres[\s\S]{0,160}?g\s*\/\s*100\s*g[\s\S]{0,40}?([0-9]+(?:[.,][0-9]+)?|<\s*LOQ)/i);
         if (m?.[1]) {
           extracted.fibre = /<\s*LOQ/i.test(m[1]) ? "0.00" : m[1].replace(/,/g, ".");
         }
+      }
+
+      // Supplier block fallback from "Spett." section
+      const supplierBlock = sourceText.match(/Spett\.\s*[\r\n]+\s*([^\n\r]+)\s*[\r\n]+\s*([^\n\r]+)(?:\s*[\r\n]+\s*([^\n\r]+))?/i);
+      if (supplierBlock) {
+        const supplierName = supplierBlock[1]?.replace(/\s+/g, " ").trim() || null;
+        const supplierAddress = [supplierBlock[2], supplierBlock[3]]
+          .filter(Boolean)
+          .map((part) => String(part).replace(/\s+/g, " ").trim())
+          .filter(Boolean)
+          .join(", ");
+
+        extracted.supplier_name = preferLonger(extracted.supplier_name, supplierName);
+        extracted.supplier_address = preferLonger(extracted.supplier_address, supplierAddress || null);
       }
 
       // Sulphites detection
@@ -438,13 +472,30 @@ ${sourceText}`;
       }
 
       // Document revision fallback
-      const reportMatch = sourceText.match(/(?:Rapporto\s+di\s+prova|Test\s+report)\s*n°?\s*([A-Z0-9]+)/i);
+      const reportMatch = sourceText.match(/(?:Rapporto\s+di\s+prova|Test\s+report)\s*n°?\s*[:\-/]?\s*([A-Z0-9\s-]{6,24})/i);
       const oldReportMatch =
-        sourceText.match(/annulla\s+e\s+sostituisce\s+il\s+RDP\s*n°?\s*([A-Z0-9]+)/i) ||
-        sourceText.match(/replaces?\s*([A-Z0-9]+)/i);
-      const reportNumber = extracted.test_report_number || reportMatch?.[1];
-      if (reportNumber && oldReportMatch?.[1]) {
-        extracted.document_revision = `${reportNumber} (replaces ${oldReportMatch[1]})`;
+        sourceText.match(/annulla\s+e\s+sostituisce\s+il\s+RDP\s*n°?\s*([A-Z0-9\s-]{6,24})/i) ||
+        sourceText.match(/replaces?\s*(?:test\s+report\s*n°?\s*)?([A-Z0-9\s-]{6,24})/i);
+      const reportNumber = normalizeReportCode(extracted.test_report_number) ?? normalizeReportCode(reportMatch?.[1]);
+      const oldReportNumber = normalizeReportCode(oldReportMatch?.[1]);
+
+      if (reportNumber) extracted.test_report_number = reportNumber;
+      if (reportNumber && oldReportNumber) {
+        extracted.document_revision = `${reportNumber} (replaces ${oldReportNumber})`;
+      }
+
+      // Compliance references fallback
+      const regulations = Array.from(
+        new Set(
+          (sourceText.match(/\bReg\.?\s*(?:CE|UE)\s*\d+\/\d{4}\b/gi) ?? [])
+            .map((r) => r.replace(/\./g, "").replace(/\s+/g, " ").trim().replace(/^reg/i, "Reg")),
+        ),
+      );
+      if (regulations.length) {
+        extracted.compliance_regulation_1 = preferLonger(extracted.compliance_regulation_1, regulations[0] ?? null);
+        extracted.compliance_regulation_2 = preferLonger(extracted.compliance_regulation_2, regulations[1] ?? null);
+        extracted.compliance_regulation_3 = preferLonger(extracted.compliance_regulation_3, regulations[2] ?? null);
+        extracted.compliance_references = preferLonger(extracted.compliance_references, regulations.join("; "));
       }
 
       // Normalize all numeric fields
