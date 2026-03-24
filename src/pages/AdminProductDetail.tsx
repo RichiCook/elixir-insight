@@ -101,6 +101,7 @@ function GeneralTab({ product, onSave }: { product: any; onSave: () => void }) {
     { key: 'occasion', label: 'Occasion', badges: ['WEBSITE'] },
     { key: 'uk_units', label: 'UK Units', badges: ['STICKER'] },
     { key: 'allergens_summary', label: 'Allergens Summary', badges: ['STICKER', 'WEBSITE'] },
+    { key: 'product_link', label: 'Product Link (URL)', badges: ['WEBSITE'] },
   ];
 
   return (
