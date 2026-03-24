@@ -545,6 +545,9 @@ export type Database = {
       }
       product_technical_data: {
         Row: {
+          accreditation_number: string | null
+          additional_information: string | null
+          alcoholic_strength: string | null
           allergen_celery: boolean | null
           allergen_crustaceans: boolean | null
           allergen_eggs: boolean | null
@@ -561,12 +564,17 @@ export type Database = {
           allergen_sulphites: boolean | null
           appearance: string | null
           application: string | null
+          batch_number: string | null
           brix: string | null
           carbohydrates: string | null
           colour: string | null
           compliance_references: string | null
+          compliance_regulation_1: string | null
+          compliance_regulation_2: string | null
+          compliance_regulation_3: string | null
           document_date: string | null
           document_revision: string | null
+          document_type: string | null
           energy_kcal: string | null
           energy_kj: string | null
           fats: string | null
@@ -574,6 +582,9 @@ export type Database = {
           gmo_declaration: string | null
           id: string
           ionising_radiation: string | null
+          label_date: string | null
+          laboratory_address: string | null
+          laboratory_name: string | null
           microbiological_count: string | null
           odor: string | null
           ph: string | null
@@ -583,6 +594,7 @@ export type Database = {
           salt: string | null
           saturated_fats: string | null
           shelf_life: string | null
+          sodium_mg: string | null
           storage_after_opening: string | null
           storage_conditions: string | null
           sugars: string | null
@@ -592,9 +604,14 @@ export type Database = {
           supplier_phone: string | null
           supplier_vat: string | null
           taste_profile: string | null
+          test_report_number: string | null
+          total_acidity: string | null
           trans_fats: string | null
         }
         Insert: {
+          accreditation_number?: string | null
+          additional_information?: string | null
+          alcoholic_strength?: string | null
           allergen_celery?: boolean | null
           allergen_crustaceans?: boolean | null
           allergen_eggs?: boolean | null
@@ -611,12 +628,17 @@ export type Database = {
           allergen_sulphites?: boolean | null
           appearance?: string | null
           application?: string | null
+          batch_number?: string | null
           brix?: string | null
           carbohydrates?: string | null
           colour?: string | null
           compliance_references?: string | null
+          compliance_regulation_1?: string | null
+          compliance_regulation_2?: string | null
+          compliance_regulation_3?: string | null
           document_date?: string | null
           document_revision?: string | null
+          document_type?: string | null
           energy_kcal?: string | null
           energy_kj?: string | null
           fats?: string | null
@@ -624,6 +646,9 @@ export type Database = {
           gmo_declaration?: string | null
           id?: string
           ionising_radiation?: string | null
+          label_date?: string | null
+          laboratory_address?: string | null
+          laboratory_name?: string | null
           microbiological_count?: string | null
           odor?: string | null
           ph?: string | null
@@ -633,6 +658,7 @@ export type Database = {
           salt?: string | null
           saturated_fats?: string | null
           shelf_life?: string | null
+          sodium_mg?: string | null
           storage_after_opening?: string | null
           storage_conditions?: string | null
           sugars?: string | null
@@ -642,9 +668,14 @@ export type Database = {
           supplier_phone?: string | null
           supplier_vat?: string | null
           taste_profile?: string | null
+          test_report_number?: string | null
+          total_acidity?: string | null
           trans_fats?: string | null
         }
         Update: {
+          accreditation_number?: string | null
+          additional_information?: string | null
+          alcoholic_strength?: string | null
           allergen_celery?: boolean | null
           allergen_crustaceans?: boolean | null
           allergen_eggs?: boolean | null
@@ -661,12 +692,17 @@ export type Database = {
           allergen_sulphites?: boolean | null
           appearance?: string | null
           application?: string | null
+          batch_number?: string | null
           brix?: string | null
           carbohydrates?: string | null
           colour?: string | null
           compliance_references?: string | null
+          compliance_regulation_1?: string | null
+          compliance_regulation_2?: string | null
+          compliance_regulation_3?: string | null
           document_date?: string | null
           document_revision?: string | null
+          document_type?: string | null
           energy_kcal?: string | null
           energy_kj?: string | null
           fats?: string | null
@@ -674,6 +710,9 @@ export type Database = {
           gmo_declaration?: string | null
           id?: string
           ionising_radiation?: string | null
+          label_date?: string | null
+          laboratory_address?: string | null
+          laboratory_name?: string | null
           microbiological_count?: string | null
           odor?: string | null
           ph?: string | null
@@ -683,6 +722,7 @@ export type Database = {
           salt?: string | null
           saturated_fats?: string | null
           shelf_life?: string | null
+          sodium_mg?: string | null
           storage_after_opening?: string | null
           storage_conditions?: string | null
           sugars?: string | null
@@ -692,6 +732,8 @@ export type Database = {
           supplier_phone?: string | null
           supplier_vat?: string | null
           taste_profile?: string | null
+          test_report_number?: string | null
+          total_acidity?: string | null
           trans_fats?: string | null
         }
         Relationships: [
