@@ -7,9 +7,10 @@ type Translation = Database['public']['Tables']['product_translations']['Row'];
 interface Props {
   translation: Translation;
   allergensSummary: string | null;
+  onExpand?: () => void;
 }
 
-export function BottleIngredients({ translation, allergensSummary }: Props) {
+export function BottleIngredients({ translation, allergensSummary, onExpand }: Props) {
   const [expanded, setExpanded] = useState(false);
 
   return (
