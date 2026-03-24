@@ -31,10 +31,39 @@ export default function AdminDashboard() {
   const { data: stats } = useAdminStats();
   const signOut = useAuthStore((s) => s.signOut);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [showNewProduct, setShowNewProduct] = useState(false);
+  const [newProduct, setNewProduct] = useState({ name: '', slug: '', line: 'Classic', abv: '' });
+  const [creating, setCreating] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/admin/login');
+  };
+
+  const handleCreateProduct = async () => {
+    if (!newProduct.name || !newProduct.slug || !newProduct.abv) {
+      toast.error('Name, slug and ABV are required');
+      return;
+    }
+    setCreating(true);
+    const { data, error } = await supabase.from('products').insert({
+      name: newProduct.name,
+      slug: newProduct.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+      line: newProduct.line,
+      abv: newProduct.abv,
+    }).select('slug').single();
+    setCreating(false);
+    if (error) {
+      toast.error(error.message.includes('duplicate') ? 'A product with that slug already exists' : 'Failed to create product');
+      return;
+    }
+    toast.success('Product created');
+    queryClient.invalidateQueries({ queryKey: ['products'] });
+    queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+    setShowNewProduct(false);
+    setNewProduct({ name: '', slug: '', line: 'Classic', abv: '' });
+    navigate(`/admin/product/${data.slug}`);
   };
 
   return (
