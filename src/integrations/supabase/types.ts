@@ -826,6 +826,110 @@ export type Database = {
         }
         Relationships: []
       }
+      repair_requests: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string | null
+          damage_type: string
+          estimated_cost_max: number | null
+          estimated_cost_min: number | null
+          id: string
+          photos: string[] | null
+          product_id: string | null
+          status: Database["public"]["Enums"]["repair_request_status"]
+          updated_at: string | null
+          user_email: string | null
+          user_name: string | null
+          warranty_status: string | null
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          damage_type: string
+          estimated_cost_max?: number | null
+          estimated_cost_min?: number | null
+          id?: string
+          photos?: string[] | null
+          product_id?: string | null
+          status?: Database["public"]["Enums"]["repair_request_status"]
+          updated_at?: string | null
+          user_email?: string | null
+          user_name?: string | null
+          warranty_status?: string | null
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          damage_type?: string
+          estimated_cost_max?: number | null
+          estimated_cost_min?: number | null
+          id?: string
+          photos?: string[] | null
+          product_id?: string | null
+          status?: Database["public"]["Enums"]["repair_request_status"]
+          updated_at?: string | null
+          user_email?: string | null
+          user_name?: string | null
+          warranty_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repair_requests_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      repair_settings: {
+        Row: {
+          created_at: string | null
+          damage_types: Json
+          email_template_fields: Json
+          enabled: boolean
+          estimated_turnaround: string | null
+          id: string
+          pricing_rules: Json
+          repair_centre_address: string | null
+          repair_email: string | null
+          return_shipping_cost: number
+          updated_at: string | null
+          warranty_covers_repair: boolean
+        }
+        Insert: {
+          created_at?: string | null
+          damage_types?: Json
+          email_template_fields?: Json
+          enabled?: boolean
+          estimated_turnaround?: string | null
+          id?: string
+          pricing_rules?: Json
+          repair_centre_address?: string | null
+          repair_email?: string | null
+          return_shipping_cost?: number
+          updated_at?: string | null
+          warranty_covers_repair?: boolean
+        }
+        Update: {
+          created_at?: string | null
+          damage_types?: Json
+          email_template_fields?: Json
+          enabled?: boolean
+          estimated_turnaround?: string | null
+          id?: string
+          pricing_rules?: Json
+          repair_centre_address?: string | null
+          repair_email?: string | null
+          return_shipping_cost?: number
+          updated_at?: string | null
+          warranty_covers_repair?: boolean
+        }
+        Relationships: []
+      }
       scan_events: {
         Row: {
           ean_code: string | null
@@ -977,6 +1081,14 @@ export type Database = {
         | "lead_capture"
         | "lead_capture_rating"
       app_role: "admin" | "moderator" | "user"
+      repair_request_status:
+        | "submitted"
+        | "reviewing"
+        | "approved"
+        | "in_repair"
+        | "shipped_back"
+        | "completed"
+        | "cancelled"
       targeting_mode: "products" | "collections"
     }
     CompositeTypes: {
@@ -1121,6 +1233,15 @@ export const Constants = {
         "lead_capture_rating",
       ],
       app_role: ["admin", "moderator", "user"],
+      repair_request_status: [
+        "submitted",
+        "reviewing",
+        "approved",
+        "in_repair",
+        "shipped_back",
+        "completed",
+        "cancelled",
+      ],
       targeting_mode: ["products", "collections"],
     },
   },
