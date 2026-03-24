@@ -28,6 +28,8 @@ import { EditorialBlock } from '@/components/consumer/EditorialBlock';
 import { BrandHeritage } from '@/components/consumer/BrandHeritage';
 import { StoreCTA } from '@/components/consumer/StoreCTA';
 import { AgeGate } from '@/components/consumer/AgeGate';
+import { ActivationSlot } from '@/components/consumer/ActivationRenderer';
+import { useActiveActivationsForProduct } from '@/hooks/useActivations';
 
 const LANGUAGES = ['EN', 'IT', 'DE', 'FR'] as const;
 
@@ -43,6 +45,7 @@ export default function BottlePage() {
   const { data: serveMoments } = useProductServeMoments(product?.id);
   const { data: pairings } = useProductAiPairings(product?.id);
   const { data: productImages } = useProductImages(product?.id);
+  const { data: activeActivations } = useActiveActivationsForProduct(product?.id);
 
   // Tracking
   usePageViewTracking(slug);
@@ -157,6 +160,8 @@ export default function BottlePage() {
         <GenuineCard product={product} />
         <AbvDisplay product={product} />
 
+        {activeActivations && <ActivationSlot activations={activeActivations} placement="after_hero" productSlug={product.slug} />}
+
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -170,17 +175,23 @@ export default function BottlePage() {
             <CraftedWith spirit={product.spirit} />
           )}
 
+          {activeActivations && <ActivationSlot activations={activeActivations} placement="after_serve" productSlug={product.slug} />}
+
           {translation?.sensory_description && (
             <div ref={sensoryRef}>
               <BottleSensory description={translation.sensory_description} />
             </div>
           )}
 
+          {activeActivations && <ActivationSlot activations={activeActivations} placement="after_sensory" productSlug={product.slug} />}
+
           {composition && composition.length > 0 && (
             <div ref={compositionRef}>
               <BottleComposition composition={composition} />
             </div>
           )}
+
+          {activeActivations && <ActivationSlot activations={activeActivations} placement="after_composition" productSlug={product.slug} />}
 
           {serveMoments && serveMoments.length > 0 && (
             <div ref={momentsRef}>
@@ -192,11 +203,15 @@ export default function BottlePage() {
             </div>
           )}
 
+          {activeActivations && <ActivationSlot activations={activeActivations} placement="after_moments" productSlug={product.slug} />}
+
           {pairings && pairings.length > 0 && (
             <div ref={pairingsRef}>
               <BottlePairings pairings={pairings} />
             </div>
           )}
+
+          {activeActivations && <ActivationSlot activations={activeActivations} placement="after_pairings" productSlug={product.slug} />}
 
           {translation && (
             <div ref={ingredientsRef}>
@@ -208,6 +223,8 @@ export default function BottlePage() {
             </div>
           )}
 
+          {activeActivations && <ActivationSlot activations={activeActivations} placement="after_ingredients" productSlug={product.slug} />}
+
           <div ref={nutritionRef}>
             <BottleNutrition
               data={technicalData ?? null}
@@ -216,11 +233,16 @@ export default function BottlePage() {
             />
           </div>
 
+          {activeActivations && <ActivationSlot activations={activeActivations} placement="after_nutrition" productSlug={product.slug} />}
+          {activeActivations && <ActivationSlot activations={activeActivations} placement="before_cta" productSlug={product.slug} />}
+
           <StoreCTA slug={product.slug} onCtaClick={handleCtaClick} />
 
           <div ref={editorialRef}>
             <EditorialBlock line={product.line} bottleColor={product.bottle_color} editorialImageUrl={editorialImageUrl} />
           </div>
+
+          {activeActivations && <ActivationSlot activations={activeActivations} placement="after_editorial" productSlug={product.slug} />}
 
           {/* Gallery section — only if 3+ approved gallery images */}
           {galleryImages.length >= 3 && (

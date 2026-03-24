@@ -80,6 +80,9 @@ export default function AdminDashboard() {
           <Link to="/admin/ai-upload">
             <Button variant="outline" size="sm">Data Import</Button>
           </Link>
+          <Link to="/admin/activations">
+            <Button variant="outline" size="sm">Activations</Button>
+          </Link>
           <Link to="/admin/analytics">
             <Button variant="outline" size="sm">Analytics</Button>
           </Link>

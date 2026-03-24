@@ -14,6 +14,115 @@ export type Database = {
   }
   public: {
     Tables: {
+      activation_leads: {
+        Row: {
+          activation_id: string
+          created_at: string | null
+          custom_data: Json | null
+          email: string | null
+          id: string
+          name: string | null
+          phone: string | null
+          product_slug: string | null
+          rating: number | null
+          session_id: string | null
+        }
+        Insert: {
+          activation_id: string
+          created_at?: string | null
+          custom_data?: Json | null
+          email?: string | null
+          id?: string
+          name?: string | null
+          phone?: string | null
+          product_slug?: string | null
+          rating?: number | null
+          session_id?: string | null
+        }
+        Update: {
+          activation_id?: string
+          created_at?: string | null
+          custom_data?: Json | null
+          email?: string | null
+          id?: string
+          name?: string | null
+          phone?: string | null
+          product_slug?: string | null
+          rating?: number | null
+          session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activation_leads_activation_id_fkey"
+            columns: ["activation_id"]
+            isOneToOne: false
+            referencedRelation: "activations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      activations: {
+        Row: {
+          activation_type: Database["public"]["Enums"]["activation_type"]
+          brand_id: string
+          content: Json
+          created_at: string | null
+          end_date: string | null
+          id: string
+          name: string
+          placement: string
+          priority: number | null
+          start_date: string | null
+          status: Database["public"]["Enums"]["activation_status"]
+          target_collection_ids: string[] | null
+          target_product_ids: string[] | null
+          targeting_mode: Database["public"]["Enums"]["targeting_mode"]
+          updated_at: string | null
+        }
+        Insert: {
+          activation_type: Database["public"]["Enums"]["activation_type"]
+          brand_id: string
+          content?: Json
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          name: string
+          placement?: string
+          priority?: number | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["activation_status"]
+          target_collection_ids?: string[] | null
+          target_product_ids?: string[] | null
+          targeting_mode?: Database["public"]["Enums"]["targeting_mode"]
+          updated_at?: string | null
+        }
+        Update: {
+          activation_type?: Database["public"]["Enums"]["activation_type"]
+          brand_id?: string
+          content?: Json
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          name?: string
+          placement?: string
+          priority?: number | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["activation_status"]
+          target_collection_ids?: string[] | null
+          target_product_ids?: string[] | null
+          targeting_mode?: Database["public"]["Enums"]["targeting_mode"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activations_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brand_images: {
         Row: {
           created_at: string | null
@@ -50,6 +159,33 @@ export type Database = {
           storage_path?: string
           uploaded_by?: string | null
           width?: number | null
+        }
+        Relationships: []
+      }
+      brands: {
+        Row: {
+          created_at: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          slug?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -827,7 +963,21 @@ export type Database = {
       maybe_assign_admin: { Args: never; Returns: undefined }
     }
     Enums: {
+      activation_status:
+        | "draft"
+        | "scheduled"
+        | "active"
+        | "paused"
+        | "completed"
+      activation_type:
+        | "text_image"
+        | "video"
+        | "banner_cta"
+        | "custom_html"
+        | "lead_capture"
+        | "lead_capture_rating"
       app_role: "admin" | "moderator" | "user"
+      targeting_mode: "products" | "collections"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -955,7 +1105,23 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      activation_status: [
+        "draft",
+        "scheduled",
+        "active",
+        "paused",
+        "completed",
+      ],
+      activation_type: [
+        "text_image",
+        "video",
+        "banner_cta",
+        "custom_html",
+        "lead_capture",
+        "lead_capture_rating",
+      ],
       app_role: ["admin", "moderator", "user"],
+      targeting_mode: ["products", "collections"],
     },
   },
 } as const
