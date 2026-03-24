@@ -80,6 +80,7 @@ export default function AdminDashboard() {
           <Link to="/admin/ai-upload">
             <Button variant="outline" size="sm">AI Upload</Button>
           </Link>
+          <Button size="sm" className="bg-primary text-primary-foreground" onClick={() => setShowNewProduct(true)}>+ New Product</Button>
           <Button variant="ghost" size="sm" onClick={handleSignOut}>Sign Out</Button>
         </div>
       </header>
