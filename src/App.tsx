@@ -13,6 +13,8 @@ import AdminProductDetail from '@/pages/AdminProductDetail';
 import AdminAiUpload from '@/pages/AdminAiUpload';
 import AdminImageLibrary from '@/pages/AdminImageLibrary';
 import AdminAnalytics from '@/pages/AdminAnalytics';
+import AdminActivations from '@/pages/AdminActivations';
+import AdminActivationEditor from '@/pages/AdminActivationEditor';
 import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient();
