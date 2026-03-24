@@ -11,8 +11,8 @@ function getSessionId(): string {
 }
 
 /** Fire-and-forget insert — never blocks UI */
-function track(table: string, data: Record<string, any>) {
-  supabase.from(table).insert(data).then(() => {});
+function track(table: 'page_views' | 'scan_events' | 'section_interactions' | 'image_views', data: Record<string, any>) {
+  (supabase.from(table) as any).insert(data).then(() => {});
 }
 
 export function usePageViewTracking(slug: string | undefined) {
