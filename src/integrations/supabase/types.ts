@@ -590,6 +590,7 @@ export type Database = {
           ph: string | null
           product_id: string | null
           proteins: string | null
+          raw_analytical_data: Json | null
           recommended_dosage: string | null
           salt: string | null
           saturated_fats: string | null
@@ -654,6 +655,7 @@ export type Database = {
           ph?: string | null
           product_id?: string | null
           proteins?: string | null
+          raw_analytical_data?: Json | null
           recommended_dosage?: string | null
           salt?: string | null
           saturated_fats?: string | null
@@ -718,6 +720,7 @@ export type Database = {
           ph?: string | null
           product_id?: string | null
           proteins?: string | null
+          raw_analytical_data?: Json | null
           recommended_dosage?: string | null
           salt?: string | null
           saturated_fats?: string | null

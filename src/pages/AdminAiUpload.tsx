@@ -67,47 +67,114 @@ const TECH_SHEET_SECTIONS = [
 
 const LAB_REPORT_SECTIONS = [
   { title: 'TEST REPORT', fields: ['test_report_number', 'document_date', 'document_revision', 'batch_number', 'label_date', 'accreditation_number'] },
+  { title: 'SAMPLE INFO', fields: [], isSampleInfo: true },
   { title: 'PRODUCT', fields: ['product_name', 'alcoholic_strength'] },
-  { title: 'NUTRITIONAL VALUES PER 100ML (EU REG 1169/2011)', fields: ['energy_kcal', 'energy_kj', 'fats', 'saturated_fats', 'trans_fats', 'carbohydrates', 'sugars', 'fibre', 'proteins', 'salt', 'sodium_mg'], isNutriTable: true },
-  { title: 'CHEMICAL ANALYSIS', fields: ['total_acidity', 'alcoholic_strength'] },
+  { title: 'NUTRITIONAL VALUES PER 100ML (EU REG 1169/2011)', fields: ['energy_kcal', 'energy_kj', 'fats', 'saturated_fats', 'carbohydrates', 'sugars', 'proteins', 'salt', 'sodium_mg'], isNutriTable: true },
+  { title: 'ANSES PER 100G VALUES', fields: [], isAnses: true },
+  { title: 'USA PER-SERVING NUTRITION', fields: [], isPerServing: true },
+  { title: 'ANALYTICAL RESULTS (WINE/SPIRITS)', fields: [], isAnalytical: true },
+  { title: 'MINERAL & METAL ANALYSIS', fields: [], isMinerals: true },
+  { title: 'CHEMICAL CONGENERS', fields: [], isChemical: true },
   { title: 'ALLERGEN INFO', fields: [], isLabAllergenSection: true },
   { title: 'COMPLIANCE REFERENCES', fields: ['compliance_regulation_1', 'compliance_regulation_2', 'compliance_regulation_3', 'compliance_references'] },
   { title: 'ISSUING LABORATORY', fields: ['laboratory_name', 'laboratory_address', 'accreditation_number'] },
-  { title: 'CLIENT / SUPPLIER', fields: ['supplier_name', 'supplier_address', 'supplier_vat', 'supplier_phone', 'supplier_email'] },
+  { title: 'CLIENT / SUPPLIER', fields: ['supplier_name', 'supplier_address'] },
   { title: 'DOCUMENT', fields: ['document_revision', 'document_date', 'batch_number', 'label_date'] },
 ];
 
-const THINKING_TECH_SHEET = [
-  'Reading document structure…',
-  'Detecting document type…',
-  'Locating ingredient declarations…',
-  'Processing allergen matrix…',
-  'Extracting organoleptic profile…',
-  'Mapping storage and compliance…',
-  'Analysis complete ✓',
+const SAMPLE_INFO_FIELDS = [
+  { key: 'matrix', label: 'Matrix / Matrice' },
+  { key: 'description', label: 'Sample Description' },
+  { key: 'degree_on_label', label: 'Degree on Label' },
+  { key: 'vintage', label: 'Vintage / Annata' },
+  { key: 'seal', label: 'Seal / Suggello' },
+  { key: 'sampling_by', label: 'Sampling By' },
+  { key: 'laboratory_manager', label: 'Laboratory Manager' },
 ];
 
-const THINKING_LAB_REPORT = [
-  'Reading document structure…',
-  'Detecting document type…',
-  'Reading analytical results table…',
-  'Extracting nutritional values per 100ml…',
-  'Checking sulphite levels…',
-  'Mapping compliance references…',
-  'Analysis complete ✓',
+const ANALYTICAL_FIELDS = [
+  { key: 'alcoholic_strength', label: 'Alcoholic Strength' },
+  { key: 'total_sugars', label: 'Total Sugars (inverted)' },
+  { key: 'relative_density', label: 'Relative Density 20°C' },
+  { key: 'total_acidity', label: 'Total Acidity' },
+  { key: 'volatile_acidity', label: 'Volatile Acidity' },
+  { key: 'total_so2', label: 'Total SO₂' },
+  { key: 'glycerol', label: 'Glycerol' },
 ];
 
-const HIDE_IF_NULL_BY_DOC_TYPE: Record<string, string[]> = {
-  LABORATORY_TEST_REPORT: ['supplier_vat', 'supplier_phone', 'supplier_email'],
-  SUPPLIER_TECH_SHEET: ['laboratory_name', 'laboratory_address', 'test_report_number'],
-};
+const CHEMICAL_FIELDS = [
+  { key: 'higher_alcohols', label: 'Higher Alcohols Total' },
+  { key: 'total_aldehydes', label: 'Total Aldehydes' },
+  { key: 'furfural', label: 'Furfural' },
+  { key: 'butanol_1', label: '1-Butanol' },
+  { key: 'propanol_1', label: '1-Propanol' },
+  { key: 'butanol_2', label: '2-Butanol' },
+  { key: 'methyl_1_butanol_2', label: '2-Methyl-1-butanol' },
+  { key: 'methyl_1_propanol_2', label: '2-Methyl-1-propanol' },
+  { key: 'methyl_1_butanol_3', label: '3-Methyl-1-butanol' },
+  { key: 'acetaldehyde', label: 'Acetaldehyde' },
+  { key: 'acetal', label: 'Acetal' },
+  { key: 'ethyl_acetate', label: 'Ethyl Acetate' },
+  { key: 'ethyl_lactate', label: 'Ethyl Lactate' },
+  { key: 'methanol', label: 'Methanol' },
+  { key: 'volatile_impurities', label: 'Volatile Impurities' },
+];
+
+const MINERAL_FIELDS = [
+  { key: 'sodium', label: 'Sodium (Sodio)' },
+  { key: 'calcium', label: 'Calcium (Calcio)' },
+  { key: 'iron', label: 'Iron (Ferro)' },
+  { key: 'potassium', label: 'Potassium (Potassio)' },
+  { key: 'cadmium', label: 'Cadmium (Cadmio)' },
+  { key: 'chromium', label: 'Chromium (Cromo)' },
+  { key: 'lead', label: 'Lead (Piombo)' },
+  { key: 'copper', label: 'Copper (Rame)' },
+  { key: 'aluminium', label: 'Aluminium (Alluminio)' },
+  { key: 'zinc', label: 'Zinc (Zinco)' },
+];
+
+const PER_SERVING_FIELDS = [
+  { key: 'serving_size_ml', label: 'Serving Size (ml)' },
+  { key: 'calories', label: 'Calories' },
+  { key: 'fats', label: 'Total Fat' },
+  { key: 'saturated_fats', label: 'Saturated Fat' },
+  { key: 'trans_fats', label: 'Trans Fat' },
+  { key: 'cholesterol', label: 'Cholesterol' },
+  { key: 'sodium', label: 'Sodium' },
+  { key: 'carbohydrates', label: 'Total Carbohydrate' },
+  { key: 'fibre', label: 'Dietary Fiber' },
+  { key: 'sugars', label: 'Total Sugars' },
+  { key: 'added_sugars', label: 'Added Sugars' },
+  { key: 'proteins', label: 'Protein' },
+  { key: 'vitamin_d', label: 'Vitamin D' },
+  { key: 'calcium', label: 'Calcium' },
+  { key: 'iron', label: 'Iron' },
+  { key: 'potassium', label: 'Potassium' },
+];
+
+const ANSES_FIELDS = [
+  { key: 'proteins', label: 'Proteins' },
+  { key: 'fats', label: 'Fats' },
+  { key: 'saturated_fats', label: 'Saturated Fats' },
+  { key: 'trans_fats', label: 'Trans Fats' },
+  { key: 'cholesterol', label: 'Cholesterol' },
+  { key: 'fibre', label: 'Fibre' },
+  { key: 'vitamin_d', label: 'Vitamin D' },
+];
+
+const THINKING_MESSAGES = [
+  'Reading document structure…',
+  'Detecting document type…',
+  'Extracting sample metadata…',
+  'Reading analytical results…',
+  'Extracting mineral analysis…',
+  'Processing nutritional tables (EU / Anses / USA)…',
+  'Mapping chemical congeners…',
+  'Checking allergens & compliance…',
+  'Analysis complete ✓',
+];
 
 const isEmptyValue = (value: unknown) => value === null || value === '' || value === undefined;
-
-const shouldHideNullField = (field: string, value: unknown, documentType: string | null) => {
-  if (!documentType || !isEmptyValue(value)) return false;
-  return HIDE_IF_NULL_BY_DOC_TYPE[documentType]?.includes(field) ?? false;
-};
 
 // ── Sub-components ─────────────────────────────────────────
 
@@ -135,6 +202,20 @@ function FieldCard({ label, value, onChange, isTextarea }: { label: string; valu
       ) : (
         <Input value={value || ''} onChange={(e) => onChange(e.target.value)} className="h-8 text-sm" placeholder={isEmpty ? 'Not found in document' : ''} />
       )}
+    </div>
+  );
+}
+
+function MineralRow({ label, data, onChange }: { label: string; data: any; onChange: (d: any) => void }) {
+  const mineral = typeof data === 'object' && data ? data : { value: data || '', unit: '', uncertainty: '', loq: '' };
+  const hasValue = mineral.value && mineral.value !== '';
+  return (
+    <div className={`grid grid-cols-5 gap-2 items-center py-1.5 px-2 rounded ${hasValue ? '' : 'opacity-60'}`}>
+      <span className="text-xs text-muted-foreground col-span-1">{label}</span>
+      <Input value={mineral.value || ''} onChange={e => onChange({ ...mineral, value: e.target.value })} className="h-7 text-xs" placeholder="—" />
+      <Input value={mineral.unit || ''} onChange={e => onChange({ ...mineral, unit: e.target.value })} className="h-7 text-xs" placeholder="unit" />
+      <Input value={mineral.uncertainty || ''} onChange={e => onChange({ ...mineral, uncertainty: e.target.value })} className="h-7 text-xs" placeholder="±" />
+      <Input value={mineral.loq || ''} onChange={e => onChange({ ...mineral, loq: e.target.value })} className="h-7 text-xs" placeholder="LOQ" />
     </div>
   );
 }
@@ -188,15 +269,11 @@ function ExcelTab() {
         await new Promise(r => setTimeout(r, 50));
 
         try {
-          // Find or create product
           let dbProduct = products.find(p => p.slug === pp.slug);
           if (!dbProduct) {
             const insertData: any = {
-              slug: pp.slug,
-              name: pp.sheetName,
-              line: pp.productFields.line || 'Classy Cocktails',
-              abv: pp.productFields.abv || '0',
-              completeness: 0,
+              slug: pp.slug, name: pp.sheetName,
+              line: pp.productFields.line || 'Classy Cocktails', abv: pp.productFields.abv || '0', completeness: 0,
             };
             ['spirit', 'garnish', 'liquid_color', 'serving', 'flavour', 'glass', 'ice', 'food_pairing', 'occasion', 'uk_units', 'allergens_summary', 'product_link'].forEach(k => {
               if (pp.productFields[k]) insertData[k] = pp.productFields[k];
@@ -210,7 +287,6 @@ function ExcelTab() {
           const langs: string[] = [];
           let eanCount = 0;
 
-          // Update products table (only non-null)
           const prodUpdate: Record<string, any> = {};
           for (const [key, val] of Object.entries(pp.productFields)) {
             if (val !== null && key !== 'shelf_life_note') { prodUpdate[key] = val; fieldsCount++; }
@@ -219,7 +295,6 @@ function ExcelTab() {
             await supabase.from('products').update(prodUpdate).eq('id', dbProduct!.id);
           }
 
-          // Upsert technical data (nutritional only)
           if (pp.nutriFields) {
             const techPayload: Record<string, any> = { product_id: dbProduct!.id, ...pp.nutriFields };
             if (pp.allergenSulphites) techPayload.allergen_sulphites = true;
@@ -232,7 +307,6 @@ function ExcelTab() {
             );
           }
 
-          // Upsert translations
           for (const [lang, fields] of Object.entries(pp.translations)) {
             const nonNull = Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== null));
             if (Object.keys(nonNull).length === 0) continue;
@@ -244,7 +318,6 @@ function ExcelTab() {
             fieldsCount += Object.keys(nonNull).length;
           }
 
-          // Upsert EAN codes
           for (const [market, eans] of Object.entries(pp.eanCodes)) {
             const nonNull = Object.fromEntries(Object.entries(eans).filter(([, v]) => v));
             if (Object.keys(nonNull).length === 0) continue;
@@ -255,7 +328,6 @@ function ExcelTab() {
             eanCount++;
           }
 
-          // Recalculate completeness
           let score = 0;
           ['line', 'spirit', 'abv', 'garnish', 'glass', 'flavour', 'food_pairing'].forEach(f => {
             if (pp.productFields[f]) score++;
@@ -292,7 +364,6 @@ function ExcelTab() {
 
   return (
     <div className="space-y-6">
-      {/* Upload zone */}
       <div className="rounded-lg border border-border bg-card p-5">
         <div
           onDrop={handleDrop} onDragOver={(e) => e.preventDefault()}
@@ -328,7 +399,6 @@ function ExcelTab() {
         </Button>
       )}
 
-      {/* Processing progress */}
       {progress.length > 0 && !completed && (
         <div className="rounded-lg border border-border bg-card p-5 space-y-3">
           <div className="flex justify-between text-xs text-muted-foreground mb-2">
@@ -356,7 +426,6 @@ function ExcelTab() {
         </div>
       )}
 
-      {/* Completion summary */}
       {completed && (
         <div className="space-y-4">
           <div className="rounded-lg p-4" style={{ backgroundColor: '#1a3a2a', border: '1px solid #2a5a3a' }}>
@@ -419,7 +488,6 @@ function PdfTab() {
   const [uploadRecordId, setUploadRecordId] = useState<string | null>(null);
 
   const selectedProduct = products?.find(p => p.id === productId);
-  const thinkingMessages = docType === 'LABORATORY_TEST_REPORT' ? THINKING_LAB_REPORT : THINKING_TECH_SHEET;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -448,11 +516,7 @@ function PdfTab() {
     type PositionedItem = { str: string; x: number; y: number; width: number };
 
     const normalizeCellText = (value: string) =>
-      value
-        .replace(/\s+/g, ' ')
-        .replace(/\s+([,.;:)\]])/g, '$1')
-        .replace(/([([])\s+/g, '$1')
-        .trim();
+      value.replace(/\s+/g, ' ').replace(/\s+([,.;:)\]])/g, '$1').replace(/([([])\s+/g, '$1').trim();
 
     const mergeRowIntoCells = (items: PositionedItem[]) => {
       const sorted = [...items].sort((a, b) => a.x - b.x);
@@ -462,62 +526,46 @@ function PdfTab() {
       for (const item of sorted) {
         const token = item.str.trim();
         if (!token) continue;
-
         if (!current) {
           current = { tokens: [token], x: item.x, endX: item.x + item.width };
           continue;
         }
-
         const gap = item.x - current.endX;
         if (gap > CELL_GAP_THRESHOLD) {
           const text = normalizeCellText(current.tokens.join(' '));
-          if (text) {
-            cells.push({ text, x: current.x, center: current.x + (current.endX - current.x) / 2 });
-          }
+          if (text) cells.push({ text, x: current.x, center: current.x + (current.endX - current.x) / 2 });
           current = { tokens: [token], x: item.x, endX: item.x + item.width };
         } else {
           current.tokens.push(token);
           current.endX = Math.max(current.endX, item.x + item.width);
         }
       }
-
       if (current) {
         const text = normalizeCellText(current.tokens.join(' '));
-        if (text) {
-          cells.push({ text, x: current.x, center: current.x + (current.endX - current.x) / 2 });
-        }
+        if (text) cells.push({ text, x: current.x, center: current.x + (current.endX - current.x) / 2 });
       }
-
       return cells;
     };
 
     const isTableHeader = (cells: Array<{ text: string }>) => {
       const rowText = cells.map((c) => c.text.toLowerCase()).join(' ');
-      const matches = TABLE_HEADER_KEYWORDS.filter((keyword) => rowText.includes(keyword)).length;
-      return matches >= 2;
+      return TABLE_HEADER_KEYWORDS.filter((keyword) => rowText.includes(keyword)).length >= 2;
     };
 
     const alignCellsToAnchors = (cells: Array<{ text: string; center: number }>, anchors: number[]) => {
       const buckets: string[][] = Array.from({ length: anchors.length }, () => []);
-
       for (const cell of cells) {
         let bestIndex = 0;
         let bestDistance = Number.POSITIVE_INFINITY;
         for (let i = 0; i < anchors.length; i++) {
           const distance = Math.abs(cell.center - anchors[i]);
-          if (distance < bestDistance) {
-            bestDistance = distance;
-            bestIndex = i;
-          }
+          if (distance < bestDistance) { bestDistance = distance; bestIndex = i; }
         }
-
         if (bestDistance <= COLUMN_ASSIGN_TOLERANCE || anchors.length <= 3) {
           buckets[bestIndex].push(cell.text);
         }
       }
-
-      const aligned = buckets.map((bucket) => normalizeCellText(bucket.join(' '))).filter(Boolean);
-      return aligned;
+      return buckets.map((bucket) => normalizeCellText(bucket.join(' '))).filter(Boolean);
     };
 
     for (let i = 1; i <= pdf.numPages; i++) {
@@ -528,7 +576,6 @@ function PdfTab() {
       for (const item of content.items as any[]) {
         const token = item.str?.trim();
         if (!token) continue;
-
         const x = Number(item.transform?.[4] ?? 0);
         const y = Number(item.transform?.[5] ?? 0);
         const width = Number(item.width ?? token.length * 4.8);
@@ -538,16 +585,11 @@ function PdfTab() {
       const rows: Array<{ y: number; items: PositionedItem[] }> = [];
       for (const item of positionedItems) {
         const existing = rows.find((row) => Math.abs(row.y - item.y) <= Y_TOLERANCE);
-        if (existing) {
-          existing.items.push(item);
-        } else {
-          rows.push({ y: item.y, items: [item] });
-        }
+        if (existing) existing.items.push(item);
+        else rows.push({ y: item.y, items: [item] });
       }
 
-      const sortedRows = rows
-        .sort((a, b) => b.y - a.y)
-        .map((row) => ({ ...row, items: row.items.sort((a, b) => a.x - b.x) }));
+      const sortedRows = rows.sort((a, b) => b.y - a.y).map((row) => ({ ...row, items: row.items.sort((a, b) => a.x - b.x) }));
 
       let tableAnchors: number[] | null = null;
       let sparseTableRows = 0;
@@ -583,10 +625,8 @@ function PdfTab() {
           }
         }
       }
-
       fullText += '\n--- PAGE BREAK ---\n';
     }
-
     return fullText;
   };
 
@@ -596,7 +636,7 @@ function PdfTab() {
 
     const interval = setInterval(() => {
       setThinkingIdx(prev => {
-        if (prev >= thinkingMessages.length - 1) { clearInterval(interval); return prev; }
+        if (prev >= THINKING_MESSAGES.length - 1) { clearInterval(interval); return prev; }
         return prev + 1;
       });
     }, 600);
@@ -626,7 +666,7 @@ function PdfTab() {
       }
 
       clearInterval(interval);
-      setThinkingIdx(thinkingMessages.length - 1);
+      setThinkingIdx(THINKING_MESSAGES.length - 1);
     } catch (err: any) {
       clearInterval(interval);
       toast.error(err.message || 'Analysis failed');
@@ -637,11 +677,18 @@ function PdfTab() {
 
   const updateField = (key: string, value: any) => setEditedData(d => ({ ...d, [key]: value }));
 
+  const updateNestedField = (parent: string, key: string, value: any) => {
+    setEditedData(d => ({
+      ...d,
+      [parent]: { ...(d[parent] || {}), [key]: value },
+    }));
+  };
+
   const handleApply = async () => {
     if (!productId || !editedData) return;
     setApplying(true);
     try {
-      // Build tech payload
+      // Build tech payload with standard columns
       const techPayload: Record<string, any> = { product_id: productId };
       const allTechFields = [
         'document_type', 'document_date', 'document_revision', 'batch_number', 'label_date',
@@ -657,6 +704,15 @@ function PdfTab() {
       ];
       allTechFields.forEach(k => { if (editedData[k] !== undefined) techPayload[k] = editedData[k] || null; });
       ALLERGEN_KEYS.forEach(({ key }) => { techPayload[key] = !!editedData[key]; });
+
+      // Store all extra analytical data in raw_analytical_data JSONB
+      const rawData: Record<string, any> = {};
+      if (editedData.sample_info && Object.keys(editedData.sample_info).length > 0) rawData.sample_info = editedData.sample_info;
+      if (editedData.analytical_results && Object.keys(editedData.analytical_results).length > 0) rawData.analytical_results = editedData.analytical_results;
+      if (editedData.minerals && Object.keys(editedData.minerals).length > 0) rawData.minerals = editedData.minerals;
+      if (editedData.per_serving_usa && Object.keys(editedData.per_serving_usa).length > 0) rawData.per_serving_usa = editedData.per_serving_usa;
+      if (editedData.per_100g_anses && Object.keys(editedData.per_100g_anses).length > 0) rawData.per_100g_anses = editedData.per_100g_anses;
+      if (Object.keys(rawData).length > 0) techPayload.raw_analytical_data = rawData;
 
       const { error: techError } = await supabase.from('product_technical_data').upsert(techPayload, { onConflict: 'product_id' });
       if (techError) throw techError;
@@ -720,6 +776,25 @@ function PdfTab() {
 
   const sections = docType === 'LABORATORY_TEST_REPORT' ? LAB_REPORT_SECTIONS : TECH_SHEET_SECTIONS;
 
+  // Count populated vs total fields for stats
+  const countPopulated = () => {
+    if (!editedData) return { filled: 0, total: 0 };
+    let filled = 0;
+    let total = 0;
+    const check = (v: any) => { total++; if (v !== null && v !== undefined && v !== '' && v !== false) filled++; };
+    
+    // Standard fields
+    ['energy_kcal', 'energy_kj', 'fats', 'saturated_fats', 'trans_fats', 'carbohydrates', 'sugars', 'fibre', 'proteins', 'salt', 'sodium_mg', 'alcoholic_strength', 'test_report_number', 'document_date'].forEach(k => check(editedData[k]));
+    
+    // Nested objects
+    if (editedData.analytical_results) Object.values(editedData.analytical_results).forEach(v => check(v));
+    if (editedData.minerals) Object.values(editedData.minerals).forEach(v => check(v));
+    if (editedData.per_serving_usa) Object.values(editedData.per_serving_usa).forEach(v => check(v));
+    if (editedData.sample_info) Object.values(editedData.sample_info).forEach(v => check(v));
+    
+    return { filled, total };
+  };
+
   return (
     <div className="space-y-6">
       {/* Step 1: Select product */}
@@ -756,7 +831,7 @@ function PdfTab() {
           ) : (
             <div>
               <p className="text-sm text-muted-foreground">Drop a supplier tech sheet or laboratory test report (PDF) here</p>
-              <p className="text-xs text-muted-foreground mt-1">Both UICo-style ingredient sheets and Unione Italiana Vini lab reports are supported</p>
+              <p className="text-xs text-muted-foreground mt-1">All data points will be extracted — nutritional, analytical, minerals, chemical congeners, per-serving</p>
             </div>
           )}
         </div>
@@ -769,90 +844,151 @@ function PdfTab() {
           className="w-full h-[50px] text-sm font-medium"
           style={{ background: processing ? '#333' : 'linear-gradient(135deg, #4a7cc0, #4a8c5c)', color: 'white' }}
         >
-          {processing ? thinkingMessages[thinkingIdx] : '⬡ Analyse with AI'}
+          {processing ? THINKING_MESSAGES[thinkingIdx] : '⬡ Analyse with AI'}
         </Button>
       )}
 
       {/* Review panel */}
       {extracted && !applied && (
         <div className="space-y-4">
-          {/* Success banner */}
+          {/* Success banner with stats */}
           <div className="rounded-lg p-4" style={{ backgroundColor: '#1a3a2a', border: '1px solid #2a5a3a' }}>
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
                 <p className="text-sm font-medium text-green-400">✓ Analysis Complete — {file?.name}</p>
                 <p className="text-xs text-green-400/70 mt-0.5">
-                  {editedData.document_revision && `${editedData.test_report_number || editedData.document_revision}`}
+                  {editedData.test_report_number && `${editedData.test_report_number}`}
                   {editedData.document_date && ` · ${editedData.document_date}`}
                   {editedData.supplier_name && ` · ${editedData.supplier_name}`}
+                  {' · '}{countPopulated().filled}/{countPopulated().total} fields populated
                 </p>
               </div>
               {docType === 'LABORATORY_TEST_REPORT' ? (
-                <Badge className="bg-blue-600/20 text-blue-400 border-blue-600/30">🔬 Laboratory Test Report — Rapporto di Prova</Badge>
+                <Badge className="bg-blue-600/20 text-blue-400 border-blue-600/30">🔬 Laboratory Test Report</Badge>
               ) : (
-                <Badge className="bg-amber-600/20 text-amber-400 border-amber-600/30">📋 Supplier Technical Data Sheet</Badge>
+                <Badge className="bg-amber-600/20 text-amber-400 border-amber-600/30">📋 Supplier Tech Sheet</Badge>
               )}
             </div>
           </div>
 
           {/* Section cards */}
-          {sections.map(section => (
-            <div key={section.title} className="rounded-lg border border-border bg-card p-4">
-              <SectionBlock title={section.title}>
-                {(section as any).isAllergenSection ? (
-                  <div className="grid grid-cols-2 gap-3 mt-3">
-                    {ALLERGEN_KEYS.map(({ key, label }) => (
-                      <div key={key} className="flex items-center justify-between rounded-lg border border-border p-2">
-                        <span className="text-sm text-foreground">{label}</span>
-                        <Switch checked={!!editedData[key]} onCheckedChange={c => updateField(key, c)} />
-                      </div>
-                    ))}
-                  </div>
-                ) : (section as any).isLabAllergenSection ? (
-                  <div className="mt-3 space-y-3">
-                    <div className="flex items-center justify-between rounded-lg border border-border p-3">
-                      <span className="text-sm text-foreground">Sulphites (SO₂)</span>
-                      <Switch checked={!!editedData.allergen_sulphites} onCheckedChange={c => updateField('allergen_sulphites', c)} />
+          {sections.map(section => {
+            const s = section as any;
+            return (
+              <div key={section.title} className="rounded-lg border border-border bg-card p-4">
+                <SectionBlock title={section.title} defaultOpen={!s.isChemical}>
+                  {s.isAllergenSection ? (
+                    <div className="grid grid-cols-2 gap-3 mt-3">
+                      {ALLERGEN_KEYS.map(({ key, label }) => (
+                        <div key={key} className="flex items-center justify-between rounded-lg border border-border p-2">
+                          <span className="text-sm text-foreground">{label}</span>
+                          <Switch checked={!!editedData[key]} onCheckedChange={c => updateField(key, c)} />
+                        </div>
+                      ))}
                     </div>
-                    <p className="text-xs text-muted-foreground italic">Allergen matrix not typically included in lab reports. Sulphites detected from SO₂ measurement above.</p>
-                  </div>
-                ) : (section as any).isNutriTable ? (
-                  <div className="mt-3 space-y-1">
-                    {section.fields.map(f => (
-                      <div key={f} className="flex items-center justify-between py-1">
-                        <span className="text-xs text-muted-foreground uppercase">{f.replace(/_/g, ' ')}</span>
-                        <Input
-                          value={editedData[f] || ''} onChange={e => updateField(f, e.target.value)}
-                          className="w-24 h-7 text-xs text-right"
-                          placeholder="—"
-                        />
+                  ) : s.isLabAllergenSection ? (
+                    <div className="mt-3 space-y-3">
+                      <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                        <span className="text-sm text-foreground">Sulphites (SO₂)</span>
+                        <Switch checked={!!editedData.allergen_sulphites} onCheckedChange={c => updateField('allergen_sulphites', c)} />
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div
-                    className="grid gap-3 mt-3"
-                    style={{
-                      gridTemplateColumns:
-                        section.fields.filter((f) => !shouldHideNullField(f, editedData[f], docType)).length <= 2
-                          ? '1fr'
-                          : 'repeat(auto-fit, minmax(200px, 1fr))',
-                    }}
-                  >
-                    {section.fields
-                      .filter((f) => !shouldHideNullField(f, editedData[f], docType))
-                      .map(f => (
-                      <FieldCard
-                        key={f} label={f} value={editedData[f]}
-                        onChange={v => updateField(f, v)}
-                        isTextarea={(section as any).textareas?.includes(f)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </SectionBlock>
-            </div>
-          ))}
+                      <p className="text-xs text-muted-foreground italic">Detected from SO₂ measurement in analytical results.</p>
+                    </div>
+                  ) : s.isSampleInfo ? (
+                    <div className="grid gap-3 mt-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+                      {SAMPLE_INFO_FIELDS.map(({ key, label }) => (
+                        <FieldCard key={key} label={label} value={editedData.sample_info?.[key]}
+                          onChange={v => updateNestedField('sample_info', key, v)} />
+                      ))}
+                    </div>
+                  ) : s.isAnalytical ? (
+                    <div className="mt-3 space-y-1">
+                      {ANALYTICAL_FIELDS.map(({ key, label }) => (
+                        <div key={key} className="flex items-center justify-between py-1">
+                          <span className="text-xs text-muted-foreground">{label}</span>
+                          <Input
+                            value={editedData.analytical_results?.[key] || ''} onChange={e => updateNestedField('analytical_results', key, e.target.value)}
+                            className="w-40 h-7 text-xs text-right" placeholder="—" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : s.isChemical ? (
+                    <div className="mt-3 space-y-1">
+                      {CHEMICAL_FIELDS.map(({ key, label }) => (
+                        <div key={key} className="flex items-center justify-between py-1">
+                          <span className="text-xs text-muted-foreground">{label}</span>
+                          <Input
+                            value={editedData.analytical_results?.[key] || ''} onChange={e => updateNestedField('analytical_results', key, e.target.value)}
+                            className="w-40 h-7 text-xs text-right" placeholder="—" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : s.isMinerals ? (
+                    <div className="mt-3">
+                      <div className="grid grid-cols-5 gap-2 mb-2 px-2">
+                        <span className="text-[9px] font-mono uppercase text-muted-foreground">Mineral</span>
+                        <span className="text-[9px] font-mono uppercase text-muted-foreground">Value</span>
+                        <span className="text-[9px] font-mono uppercase text-muted-foreground">Unit</span>
+                        <span className="text-[9px] font-mono uppercase text-muted-foreground">Uncertainty</span>
+                        <span className="text-[9px] font-mono uppercase text-muted-foreground">LOQ</span>
+                      </div>
+                      {MINERAL_FIELDS.map(({ key, label }) => (
+                        <MineralRow key={key} label={label} data={editedData.minerals?.[key]}
+                          onChange={v => updateNestedField('minerals', key, v)} />
+                      ))}
+                    </div>
+                  ) : s.isPerServing ? (
+                    <div className="mt-3 space-y-1">
+                      {PER_SERVING_FIELDS.map(({ key, label }) => (
+                        <div key={key} className="flex items-center justify-between py-1">
+                          <span className="text-xs text-muted-foreground">{label}</span>
+                          <Input
+                            value={editedData.per_serving_usa?.[key] || ''} onChange={e => updateNestedField('per_serving_usa', key, e.target.value)}
+                            className="w-28 h-7 text-xs text-right" placeholder="—" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : s.isAnses ? (
+                    <div className="mt-3 space-y-1">
+                      {ANSES_FIELDS.map(({ key, label }) => (
+                        <div key={key} className="flex items-center justify-between py-1">
+                          <span className="text-xs text-muted-foreground">{label} (g/100g)</span>
+                          <Input
+                            value={editedData.per_100g_anses?.[key] || ''} onChange={e => updateNestedField('per_100g_anses', key, e.target.value)}
+                            className="w-28 h-7 text-xs text-right" placeholder="—" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : s.isNutriTable ? (
+                    <div className="mt-3 space-y-1">
+                      {section.fields.map(f => (
+                        <div key={f} className="flex items-center justify-between py-1">
+                          <span className="text-xs text-muted-foreground uppercase">{f.replace(/_/g, ' ')}</span>
+                          <Input
+                            value={editedData[f] || ''} onChange={e => updateField(f, e.target.value)}
+                            className="w-24 h-7 text-xs text-right" placeholder="—" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div
+                      className="grid gap-3 mt-3"
+                      style={{
+                        gridTemplateColumns: section.fields.length <= 2 ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
+                      }}
+                    >
+                      {section.fields.map(f => (
+                        <FieldCard
+                          key={f} label={f} value={editedData[f]}
+                          onChange={v => updateField(f, v)}
+                          isTextarea={(section as any).textareas?.includes(f)} />
+                      ))}
+                    </div>
+                  )}
+                </SectionBlock>
+              </div>
+            );
+          })}
 
           {/* Apply buttons */}
           <div className="flex gap-3">

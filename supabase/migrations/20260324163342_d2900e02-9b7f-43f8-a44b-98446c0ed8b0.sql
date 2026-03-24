@@ -1,0 +1,1 @@
+ALTER TABLE public.product_technical_data ADD COLUMN IF NOT EXISTS raw_analytical_data jsonb DEFAULT '{}'::jsonb;
