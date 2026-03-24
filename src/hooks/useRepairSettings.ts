@@ -44,7 +44,7 @@ export function useRepairSettings() {
         .limit(1)
         .maybeSingle();
       if (error) throw error;
-      return data as RepairSettings | null;
+      return data as unknown as RepairSettings | null;
     },
   });
 }
