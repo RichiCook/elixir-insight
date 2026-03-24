@@ -12,6 +12,7 @@ import AdminDashboard from '@/pages/AdminDashboard';
 import AdminProductDetail from '@/pages/AdminProductDetail';
 import AdminAiUpload from '@/pages/AdminAiUpload';
 import AdminImageLibrary from '@/pages/AdminImageLibrary';
+import AdminAnalytics from '@/pages/AdminAnalytics';
 import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient();
@@ -60,6 +61,14 @@ function AppInner() {
           element={
             <ProtectedRoute>
               <AdminImageLibrary />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/analytics"
+          element={
+            <ProtectedRoute>
+              <AdminAnalytics />
             </ProtectedRoute>
           }
         />

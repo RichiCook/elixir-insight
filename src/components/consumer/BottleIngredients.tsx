@@ -7,9 +7,10 @@ type Translation = Database['public']['Tables']['product_translations']['Row'];
 interface Props {
   translation: Translation;
   allergensSummary: string | null;
+  onExpand?: () => void;
 }
 
-export function BottleIngredients({ translation, allergensSummary }: Props) {
+export function BottleIngredients({ translation, allergensSummary, onExpand }: Props) {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -29,7 +30,10 @@ export function BottleIngredients({ translation, allergensSummary }: Props) {
       {translation.ingredient_list_full && (
         <>
           <button
-            onClick={() => setExpanded(!expanded)}
+            onClick={() => {
+              if (!expanded && onExpand) onExpand();
+              setExpanded(!expanded);
+            }}
             className="font-sans-consumer text-xs text-cc-gold mt-3 flex items-center gap-1"
           >
             {expanded ? 'Hide full list' : 'View full ingredient list'}

@@ -7,6 +7,7 @@ type TechData = Database['public']['Tables']['product_technical_data']['Row'];
 interface Props {
   data: TechData | null;
   allergensSummary?: string | null;
+  onExpand?: () => void;
 }
 
 function DataRow({ label, value, indented }: { label: string; value: string | null | undefined; indented?: boolean }) {
@@ -95,7 +96,7 @@ function MetaItem({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function BottleNutrition({ data, allergensSummary }: Props) {
+export function BottleNutrition({ data, allergensSummary, onExpand }: Props) {
   const [open, setOpen] = useState(false);
 
   const td = data as (TechData & { application?: string | null }) | null;
@@ -119,7 +120,7 @@ export function BottleNutrition({ data, allergensSummary }: Props) {
     <section>
       {/* Trigger banner */}
       <button
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => { setOpen((v) => { if (!v && onExpand) onExpand(); return !v; }); }}
         className="flex items-center justify-between border-t border-b border-cc-border w-full text-left cursor-pointer"
         style={{ backgroundColor: '#f5f0ea', padding: '10px 18px' }}
       >

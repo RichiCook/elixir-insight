@@ -151,6 +151,77 @@ export type Database = {
           },
         ]
       }
+      image_views: {
+        Row: {
+          id: string
+          image_id: string | null
+          product_slug: string | null
+          section: string | null
+          session_id: string | null
+          viewed_at: string | null
+        }
+        Insert: {
+          id?: string
+          image_id?: string | null
+          product_slug?: string | null
+          section?: string | null
+          session_id?: string | null
+          viewed_at?: string | null
+        }
+        Update: {
+          id?: string
+          image_id?: string | null
+          product_slug?: string | null
+          section?: string | null
+          session_id?: string | null
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "image_views_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "brand_images"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      page_views: {
+        Row: {
+          city: string | null
+          country: string | null
+          id: string
+          language: string | null
+          product_slug: string
+          referrer: string | null
+          session_id: string | null
+          user_agent: string | null
+          viewed_at: string | null
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          id?: string
+          language?: string | null
+          product_slug: string
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          viewed_at?: string | null
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          id?: string
+          language?: string | null
+          product_slug?: string
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          viewed_at?: string | null
+        }
+        Relationships: []
+      }
       product_ai_pairings: {
         Row: {
           emoji: string | null
@@ -616,6 +687,66 @@ export type Database = {
           spirit?: string | null
           uk_units?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      scan_events: {
+        Row: {
+          ean_code: string | null
+          id: string
+          language: string | null
+          market: string | null
+          product_slug: string
+          scanned_at: string | null
+          session_id: string | null
+        }
+        Insert: {
+          ean_code?: string | null
+          id?: string
+          language?: string | null
+          market?: string | null
+          product_slug: string
+          scanned_at?: string | null
+          session_id?: string | null
+        }
+        Update: {
+          ean_code?: string | null
+          id?: string
+          language?: string | null
+          market?: string | null
+          product_slug?: string
+          scanned_at?: string | null
+          session_id?: string | null
+        }
+        Relationships: []
+      }
+      section_interactions: {
+        Row: {
+          id: string
+          interacted_at: string | null
+          interaction_type: string | null
+          metadata: Json | null
+          product_slug: string
+          section_name: string
+          session_id: string | null
+        }
+        Insert: {
+          id?: string
+          interacted_at?: string | null
+          interaction_type?: string | null
+          metadata?: Json | null
+          product_slug: string
+          section_name: string
+          session_id?: string | null
+        }
+        Update: {
+          id?: string
+          interacted_at?: string | null
+          interaction_type?: string | null
+          metadata?: Json | null
+          product_slug?: string
+          section_name?: string
+          session_id?: string | null
         }
         Relationships: []
       }
