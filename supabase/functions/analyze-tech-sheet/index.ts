@@ -13,7 +13,16 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const systemPrompt = `You are a technical data extraction specialist for beverage products. Given the raw text from a technical/specification PDF sheet, extract all available data into a structured format. Be precise with numbers and units. For allergen booleans, mark true only if the document explicitly states the allergen is present or "contains". If the document says "free from" or "not present", mark false.`;
+    const systemPrompt = `You are a technical data extraction specialist for beverage products. Given the raw text from a technical/specification PDF sheet, extract ALL available data into a structured format.
+
+Rules:
+- Extract the COMPLETE ingredient list exactly as written in the document, preserving all sub-ingredient details, asterisks for organic markers, and percentage information. Extract both English and Italian versions if present.
+- For the 14 EU allergens, return true if the document says "Yes" or lists it as present/contains, false if it says "No" or is absent or "free from".
+- Extract ALL compliance regulation references separately (compliance_regulation_1, _2, _3) and also concatenated into compliance_references.
+- Extract supplier contact details completely (name, address, VAT, phone, email).
+- Extract document metadata (revision number, date).
+- Be precise with numbers and units.
+- If a field is not found in the document, return null — never guess or fabricate.`;
 
     const userPrompt = `Extract all technical data from this product specification sheet for "${product_name || 'Unknown Product'}". Return the data using the extract_technical_data function.
 
@@ -42,30 +51,34 @@ ${text}`;
                 type: "object",
                 properties: {
                   product_name: { type: "string" },
+                  product_version: { type: "string" },
+                  application: { type: "string" },
+                  recommended_dosage: { type: "string" },
+                  recommended_dosage_disclaimer: { type: "string" },
+                  main_flavour_components: { type: "string" },
+                  ingredient_list_full_en: { type: "string", description: "Full legal ingredient declaration in English" },
+                  ingredient_list_full_it: { type: "string", description: "Full legal ingredient declaration in Italian if present" },
+                  limits_of_application: { type: "string" },
+                  substances_annexes: { type: "string" },
+                  maximum_dosage_note: { type: "string" },
                   ph: { type: "string" },
                   brix: { type: "string" },
                   energy_kj: { type: "string" },
                   energy_kcal: { type: "string" },
                   fats: { type: "string" },
                   saturated_fats: { type: "string" },
+                  trans_fats: { type: "string" },
                   carbohydrates: { type: "string" },
                   sugars: { type: "string" },
                   fibre: { type: "string" },
                   proteins: { type: "string" },
                   salt: { type: "string" },
+                  microbiological_count: { type: "string" },
+                  microbiological_unit: { type: "string" },
                   odor: { type: "string" },
                   appearance: { type: "string" },
                   colour: { type: "string" },
                   taste_profile: { type: "string" },
-                  shelf_life: { type: "string" },
-                  storage_conditions: { type: "string" },
-                  storage_after_opening: { type: "string" },
-                  microbiological_count: { type: "string" },
-                  gmo_declaration: { type: "string" },
-                  ionising_radiation: { type: "string" },
-                  compliance_references: { type: "string" },
-                  supplier_name: { type: "string" },
-                  supplier_address: { type: "string" },
                   allergen_gluten: { type: "boolean" },
                   allergen_crustaceans: { type: "boolean" },
                   allergen_eggs: { type: "boolean" },
@@ -80,6 +93,23 @@ ${text}`;
                   allergen_sulphites: { type: "boolean" },
                   allergen_lupin: { type: "boolean" },
                   allergen_molluscs: { type: "boolean" },
+                  gmo_declaration: { type: "string" },
+                  ionising_radiation: { type: "string" },
+                  additional_information: { type: "string" },
+                  shelf_life: { type: "string" },
+                  storage_conditions: { type: "string" },
+                  storage_after_opening: { type: "string" },
+                  compliance_regulation_1: { type: "string" },
+                  compliance_regulation_2: { type: "string" },
+                  compliance_regulation_3: { type: "string" },
+                  compliance_references: { type: "string", description: "All compliance refs concatenated" },
+                  supplier_name: { type: "string" },
+                  supplier_address: { type: "string" },
+                  supplier_vat: { type: "string" },
+                  supplier_phone: { type: "string" },
+                  supplier_email: { type: "string" },
+                  document_revision: { type: "string" },
+                  document_date: { type: "string" },
                 },
                 required: ["product_name"],
                 additionalProperties: false,
