@@ -545,6 +545,9 @@ export type Database = {
       }
       product_technical_data: {
         Row: {
+          accreditation_number: string | null
+          additional_information: string | null
+          alcoholic_strength: string | null
           allergen_celery: boolean | null
           allergen_crustaceans: boolean | null
           allergen_eggs: boolean | null
@@ -561,12 +564,17 @@ export type Database = {
           allergen_sulphites: boolean | null
           appearance: string | null
           application: string | null
+          batch_number: string | null
           brix: string | null
           carbohydrates: string | null
           colour: string | null
           compliance_references: string | null
+          compliance_regulation_1: string | null
+          compliance_regulation_2: string | null
+          compliance_regulation_3: string | null
           document_date: string | null
           document_revision: string | null
+          document_type: string | null
           energy_kcal: string | null
           energy_kj: string | null
           fats: string | null
@@ -574,6 +582,9 @@ export type Database = {
           gmo_declaration: string | null
           id: string
           ionising_radiation: string | null
+          label_date: string | null
+          laboratory_address: string | null
+          laboratory_name: string | null
           microbiological_count: string | null
           odor: string | null
           ph: string | null
@@ -583,6 +594,7 @@ export type Database = {
           salt: string | null
           saturated_fats: string | null
           shelf_life: string | null
+          sodium_mg: string | null
           storage_after_opening: string | null
           storage_conditions: string | null
           sugars: string | null
@@ -592,9 +604,14 @@ export type Database = {
           supplier_phone: string | null
           supplier_vat: string | null
           taste_profile: string | null
+          test_report_number: string | null
+          total_acidity: string | null
           trans_fats: string | null
         }
         Insert: {
+          accreditation_number?: string | null
+          additional_information?: string | null
+          alcoholic_strength?: string | null
           allergen_celery?: boolean | null
           allergen_crustaceans?: boolean | null
           allergen_eggs?: boolean | null
@@ -611,12 +628,17 @@ export type Database = {
           allergen_sulphites?: boolean | null
           appearance?: string | null
           application?: string | null
+          batch_number?: string | null
           brix?: string | null
           carbohydrates?: string | null
           colour?: string | null
           compliance_references?: string | null
+          compliance_regulation_1?: string | null
+          compliance_regulation_2?: string | null
+          compliance_regulation_3?: string | null
           document_date?: string | null
           document_revision?: string | null
+          document_type?: string | null
           energy_kcal?: string | null
           energy_kj?: string | null
           fats?: string | null
@@ -624,6 +646,9 @@ export type Database = {
           gmo_declaration?: string | null
           id?: string
           ionising_radiation?: string | null
+          label_date?: string | null
+          laboratory_address?: string | null
+          laboratory_name?: string | null
           microbiological_count?: string | null
           odor?: string | null
           ph?: string | null
@@ -633,6 +658,7 @@ export type Database = {
           salt?: string | null
           saturated_fats?: string | null
           shelf_life?: string | null
+          sodium_mg?: string | null
           storage_after_opening?: string | null
           storage_conditions?: string | null
           sugars?: string | null
@@ -642,9 +668,14 @@ export type Database = {
           supplier_phone?: string | null
           supplier_vat?: string | null
           taste_profile?: string | null
+          test_report_number?: string | null
+          total_acidity?: string | null
           trans_fats?: string | null
         }
         Update: {
+          accreditation_number?: string | null
+          additional_information?: string | null
+          alcoholic_strength?: string | null
           allergen_celery?: boolean | null
           allergen_crustaceans?: boolean | null
           allergen_eggs?: boolean | null
@@ -661,12 +692,17 @@ export type Database = {
           allergen_sulphites?: boolean | null
           appearance?: string | null
           application?: string | null
+          batch_number?: string | null
           brix?: string | null
           carbohydrates?: string | null
           colour?: string | null
           compliance_references?: string | null
+          compliance_regulation_1?: string | null
+          compliance_regulation_2?: string | null
+          compliance_regulation_3?: string | null
           document_date?: string | null
           document_revision?: string | null
+          document_type?: string | null
           energy_kcal?: string | null
           energy_kj?: string | null
           fats?: string | null
@@ -674,6 +710,9 @@ export type Database = {
           gmo_declaration?: string | null
           id?: string
           ionising_radiation?: string | null
+          label_date?: string | null
+          laboratory_address?: string | null
+          laboratory_name?: string | null
           microbiological_count?: string | null
           odor?: string | null
           ph?: string | null
@@ -683,6 +722,7 @@ export type Database = {
           salt?: string | null
           saturated_fats?: string | null
           shelf_life?: string | null
+          sodium_mg?: string | null
           storage_after_opening?: string | null
           storage_conditions?: string | null
           sugars?: string | null
@@ -692,6 +732,8 @@ export type Database = {
           supplier_phone?: string | null
           supplier_vat?: string | null
           taste_profile?: string | null
+          test_report_number?: string | null
+          total_acidity?: string | null
           trans_fats?: string | null
         }
         Relationships: [
@@ -823,6 +865,110 @@ export type Database = {
           spirit?: string | null
           uk_units?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      repair_requests: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string | null
+          damage_type: string
+          estimated_cost_max: number | null
+          estimated_cost_min: number | null
+          id: string
+          photos: string[] | null
+          product_id: string | null
+          status: Database["public"]["Enums"]["repair_request_status"]
+          updated_at: string | null
+          user_email: string | null
+          user_name: string | null
+          warranty_status: string | null
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          damage_type: string
+          estimated_cost_max?: number | null
+          estimated_cost_min?: number | null
+          id?: string
+          photos?: string[] | null
+          product_id?: string | null
+          status?: Database["public"]["Enums"]["repair_request_status"]
+          updated_at?: string | null
+          user_email?: string | null
+          user_name?: string | null
+          warranty_status?: string | null
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          damage_type?: string
+          estimated_cost_max?: number | null
+          estimated_cost_min?: number | null
+          id?: string
+          photos?: string[] | null
+          product_id?: string | null
+          status?: Database["public"]["Enums"]["repair_request_status"]
+          updated_at?: string | null
+          user_email?: string | null
+          user_name?: string | null
+          warranty_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repair_requests_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      repair_settings: {
+        Row: {
+          created_at: string | null
+          damage_types: Json
+          email_template_fields: Json
+          enabled: boolean
+          estimated_turnaround: string | null
+          id: string
+          pricing_rules: Json
+          repair_centre_address: string | null
+          repair_email: string | null
+          return_shipping_cost: number
+          updated_at: string | null
+          warranty_covers_repair: boolean
+        }
+        Insert: {
+          created_at?: string | null
+          damage_types?: Json
+          email_template_fields?: Json
+          enabled?: boolean
+          estimated_turnaround?: string | null
+          id?: string
+          pricing_rules?: Json
+          repair_centre_address?: string | null
+          repair_email?: string | null
+          return_shipping_cost?: number
+          updated_at?: string | null
+          warranty_covers_repair?: boolean
+        }
+        Update: {
+          created_at?: string | null
+          damage_types?: Json
+          email_template_fields?: Json
+          enabled?: boolean
+          estimated_turnaround?: string | null
+          id?: string
+          pricing_rules?: Json
+          repair_centre_address?: string | null
+          repair_email?: string | null
+          return_shipping_cost?: number
+          updated_at?: string | null
+          warranty_covers_repair?: boolean
         }
         Relationships: []
       }
@@ -977,6 +1123,14 @@ export type Database = {
         | "lead_capture"
         | "lead_capture_rating"
       app_role: "admin" | "moderator" | "user"
+      repair_request_status:
+        | "submitted"
+        | "reviewing"
+        | "approved"
+        | "in_repair"
+        | "shipped_back"
+        | "completed"
+        | "cancelled"
       targeting_mode: "products" | "collections"
     }
     CompositeTypes: {
@@ -1121,6 +1275,15 @@ export const Constants = {
         "lead_capture_rating",
       ],
       app_role: ["admin", "moderator", "user"],
+      repair_request_status: [
+        "submitted",
+        "reviewing",
+        "approved",
+        "in_repair",
+        "shipped_back",
+        "completed",
+        "cancelled",
+      ],
       targeting_mode: ["products", "collections"],
     },
   },
