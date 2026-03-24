@@ -64,6 +64,14 @@ function AppInner() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/admin/analytics"
+          element={
+            <ProtectedRoute>
+              <AdminAnalytics />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Root redirect */}
         <Route path="/" element={<Navigate to="/bottle/negroni" replace />} />
