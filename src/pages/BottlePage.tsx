@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   useProduct,
   useProductTranslations,
@@ -10,6 +10,7 @@ import {
   useProductAiPairings,
 } from '@/hooks/useProduct';
 import { useProductImages } from '@/hooks/useImages';
+import { usePageViewTracking, useSectionTracking, trackInteraction } from '@/hooks/useTracking';
 import { BottleHero } from '@/components/consumer/BottleHero';
 import { GenuineCard } from '@/components/consumer/GenuineCard';
 import { AbvDisplay } from '@/components/consumer/AbvDisplay';
@@ -43,6 +44,22 @@ export default function BottlePage() {
   const { data: pairings } = useProductAiPairings(product?.id);
   const { data: productImages } = useProductImages(product?.id);
 
+  // Tracking
+  usePageViewTracking(slug);
+  const { observeSection } = useSectionTracking(slug);
+
+  // Section refs for IntersectionObserver tracking
+  const heroRef = useCallback((el: HTMLElement | null) => observeSection(el, 'hero'), [observeSection]);
+  const serveRef = useCallback((el: HTMLElement | null) => observeSection(el, 'how_to_serve'), [observeSection]);
+  const sensoryRef = useCallback((el: HTMLElement | null) => observeSection(el, 'sensory'), [observeSection]);
+  const compositionRef = useCallback((el: HTMLElement | null) => observeSection(el, 'composition'), [observeSection]);
+  const momentsRef = useCallback((el: HTMLElement | null) => observeSection(el, 'moments'), [observeSection]);
+  const pairingsRef = useCallback((el: HTMLElement | null) => observeSection(el, 'pairings'), [observeSection]);
+  const ingredientsRef = useCallback((el: HTMLElement | null) => observeSection(el, 'ingredients'), [observeSection]);
+  const nutritionRef = useCallback((el: HTMLElement | null) => observeSection(el, 'nutritional_passport'), [observeSection]);
+  const editorialRef = useCallback((el: HTMLElement | null) => observeSection(el, 'editorial'), [observeSection]);
+  const heritageRef = useCallback((el: HTMLElement | null) => observeSection(el, 'heritage'), [observeSection]);
+
   // Group images by section, only use approved ones
   const getApprovedBySection = (section: string) => {
     if (!productImages) return [];
@@ -62,11 +79,29 @@ export default function BottlePage() {
   const heroImageUrl = heroImages[0]?.brand_images?.public_url || null;
   const editorialImageUrl = editorialImages[0]?.brand_images?.public_url || null;
 
-  // Map serve moment images by sort_order
   const serveMomentImageMap: Record<number, string> = {};
   serveMomentImagesRaw.forEach((pi: any, idx: number) => {
     serveMomentImageMap[idx] = pi.brand_images?.public_url;
   });
+
+  const handleLangSwitch = (newLang: string) => {
+    if (slug && newLang !== lang) {
+      trackInteraction(slug, 'language_switch', 'click', { from: lang, to: newLang });
+    }
+    setLang(newLang);
+  };
+
+  const handleCtaClick = () => {
+    if (slug) trackInteraction(slug, 'cta_click', 'click');
+  };
+
+  const handleIngredientExpand = () => {
+    if (slug) trackInteraction(slug, 'ingredients', 'expand');
+  };
+
+  const handleNutritionExpand = () => {
+    if (slug) trackInteraction(slug, 'nutritional_passport', 'expand');
+  };
 
   if (isLoading) {
     return (
@@ -103,7 +138,7 @@ export default function BottlePage() {
             {LANGUAGES.map((l) => (
               <button
                 key={l}
-                onClick={() => setLang(l)}
+                onClick={() => handleLangSwitch(l)}
                 className={`font-sans-consumer text-xs tracking-widest px-2 py-1 transition-colors ${
                   lang === l
                     ? 'text-cc-gold font-medium'
@@ -116,7 +151,9 @@ export default function BottlePage() {
           </div>
         </div>
 
-        <BottleHero product={product} heroImageUrl={heroImageUrl} />
+        <div ref={heroRef}>
+          <BottleHero product={product} heroImageUrl={heroImageUrl} />
+        </div>
         <GenuineCard product={product} />
         <AbvDisplay product={product} />
 
@@ -125,41 +162,65 @@ export default function BottlePage() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.5 }}
         >
-          <BottleQuickFacts product={product} />
+          <div ref={serveRef}>
+            <BottleQuickFacts product={product} />
+          </div>
 
           {product.spirit && (
             <CraftedWith spirit={product.spirit} />
           )}
 
           {translation?.sensory_description && (
-            <BottleSensory description={translation.sensory_description} />
+            <div ref={sensoryRef}>
+              <BottleSensory description={translation.sensory_description} />
+            </div>
           )}
 
           {composition && composition.length > 0 && (
-            <BottleComposition composition={composition} />
+            <div ref={compositionRef}>
+              <BottleComposition composition={composition} />
+            </div>
           )}
 
           {serveMoments && serveMoments.length > 0 && (
-            <BottleServeMoments
-              moments={serveMoments}
-              line={product.line}
-              serveMomentImages={serveMomentImageMap}
-            />
+            <div ref={momentsRef}>
+              <BottleServeMoments
+                moments={serveMoments}
+                line={product.line}
+                serveMomentImages={serveMomentImageMap}
+              />
+            </div>
           )}
 
           {pairings && pairings.length > 0 && (
-            <BottlePairings pairings={pairings} />
+            <div ref={pairingsRef}>
+              <BottlePairings pairings={pairings} />
+            </div>
           )}
 
           {translation && (
-            <BottleIngredients translation={translation} allergensSummary={product.allergens_summary} />
+            <div ref={ingredientsRef}>
+              <BottleIngredients
+                translation={translation}
+                allergensSummary={product.allergens_summary}
+                onExpand={handleIngredientExpand}
+              />
+            </div>
           )}
 
-          <BottleNutrition data={technicalData ?? null} allergensSummary={product.allergens_summary} />
+          <div ref={nutritionRef}>
+            <BottleNutrition
+              data={technicalData ?? null}
+              allergensSummary={product.allergens_summary}
+              onExpand={handleNutritionExpand}
+            />
+          </div>
 
-          <StoreCTA slug={product.slug} />
+          <StoreCTA slug={product.slug} onCtaClick={handleCtaClick} />
 
-          <EditorialBlock line={product.line} bottleColor={product.bottle_color} editorialImageUrl={editorialImageUrl} />
+          <div ref={editorialRef}>
+            <EditorialBlock line={product.line} bottleColor={product.bottle_color} editorialImageUrl={editorialImageUrl} />
+          </div>
 
           {/* Gallery section — only if 3+ approved gallery images */}
           {galleryImages.length >= 3 && (
@@ -197,7 +258,9 @@ export default function BottlePage() {
             </section>
           )}
 
-          <BrandHeritage lang={lang} />
+          <div ref={heritageRef}>
+            <BrandHeritage lang={lang} />
+          </div>
 
           <BottleFooter product={product} />
         </motion.div>
