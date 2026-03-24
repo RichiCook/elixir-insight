@@ -241,6 +241,10 @@ export default function BottlePage() {
           {activeActivations && <ActivationSlot activations={activeActivations} placement="after_nutrition" productSlug={product.slug} />}
           {activeActivations && <ActivationSlot activations={activeActivations} placement="before_cta" productSlug={product.slug} />}
 
+          {repairSettings?.enabled && (
+            <RepairButton onClick={() => setRepairSheetOpen(true)} />
+          )}
+
           <StoreCTA slug={product.slug} onCtaClick={handleCtaClick} />
 
           <div ref={editorialRef}>
