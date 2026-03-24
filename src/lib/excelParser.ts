@@ -95,10 +95,16 @@ function parseSheet(sheet: XLSX.WorkSheet, sheetName: string): ParsedProduct | n
     const colC = String(row[2] || '').trim();
     const colD = String(row[3] || '').trim();
 
-    // Detect section headers
-    if (['GENERAL INFORMATION', 'INTERNATIONAL', 'ITALY', 'GERMANY', 'FRANCE'].includes(colA)) {
+    // Detect section headers — a section header row has the name in col A
+    // but no field name in col C (data rows have field names in col C)
+    if (['GENERAL INFORMATION', 'INTERNATIONAL', 'ITALY', 'GERMANY', 'FRANCE'].includes(colA) && !fieldName) {
       currentSection = colA;
       continue;
+    }
+
+    // If col A has a market name, use it to set the current section contextually
+    if (['INTERNATIONAL', 'INT', 'ITALY', 'GERMANY', 'FRANCE'].includes(colA) && fieldName) {
+      currentSection = colA === 'INT' ? 'INTERNATIONAL' : colA;
     }
 
     // The field name is in column C, value in column D
