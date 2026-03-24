@@ -355,7 +355,10 @@ export type Database = {
           appearance: string | null
           brix: string | null
           carbohydrates: string | null
+          colour: string | null
           compliance_references: string | null
+          document_date: string | null
+          document_revision: string | null
           energy_kcal: string | null
           energy_kj: string | null
           fats: string | null
@@ -368,13 +371,20 @@ export type Database = {
           ph: string | null
           product_id: string | null
           proteins: string | null
+          recommended_dosage: string | null
           salt: string | null
           saturated_fats: string | null
           shelf_life: string | null
           storage_after_opening: string | null
           storage_conditions: string | null
           sugars: string | null
+          supplier_address: string | null
+          supplier_email: string | null
+          supplier_name: string | null
+          supplier_phone: string | null
+          supplier_vat: string | null
           taste_profile: string | null
+          trans_fats: string | null
         }
         Insert: {
           allergen_celery?: boolean | null
@@ -394,7 +404,10 @@ export type Database = {
           appearance?: string | null
           brix?: string | null
           carbohydrates?: string | null
+          colour?: string | null
           compliance_references?: string | null
+          document_date?: string | null
+          document_revision?: string | null
           energy_kcal?: string | null
           energy_kj?: string | null
           fats?: string | null
@@ -407,13 +420,20 @@ export type Database = {
           ph?: string | null
           product_id?: string | null
           proteins?: string | null
+          recommended_dosage?: string | null
           salt?: string | null
           saturated_fats?: string | null
           shelf_life?: string | null
           storage_after_opening?: string | null
           storage_conditions?: string | null
           sugars?: string | null
+          supplier_address?: string | null
+          supplier_email?: string | null
+          supplier_name?: string | null
+          supplier_phone?: string | null
+          supplier_vat?: string | null
           taste_profile?: string | null
+          trans_fats?: string | null
         }
         Update: {
           allergen_celery?: boolean | null
@@ -433,7 +453,10 @@ export type Database = {
           appearance?: string | null
           brix?: string | null
           carbohydrates?: string | null
+          colour?: string | null
           compliance_references?: string | null
+          document_date?: string | null
+          document_revision?: string | null
           energy_kcal?: string | null
           energy_kj?: string | null
           fats?: string | null
@@ -446,13 +469,20 @@ export type Database = {
           ph?: string | null
           product_id?: string | null
           proteins?: string | null
+          recommended_dosage?: string | null
           salt?: string | null
           saturated_fats?: string | null
           shelf_life?: string | null
           storage_after_opening?: string | null
           storage_conditions?: string | null
           sugars?: string | null
+          supplier_address?: string | null
+          supplier_email?: string | null
+          supplier_name?: string | null
+          supplier_phone?: string | null
+          supplier_vat?: string | null
           taste_profile?: string | null
+          trans_fats?: string | null
         }
         Relationships: [
           {
