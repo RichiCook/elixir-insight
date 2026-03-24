@@ -28,8 +28,11 @@ import { EditorialBlock } from '@/components/consumer/EditorialBlock';
 import { BrandHeritage } from '@/components/consumer/BrandHeritage';
 import { StoreCTA } from '@/components/consumer/StoreCTA';
 import { AgeGate } from '@/components/consumer/AgeGate';
+import { RepairButton } from '@/components/consumer/RepairButton';
+import { RepairRequestSheet } from '@/components/consumer/RepairRequestSheet';
 import { ActivationSlot } from '@/components/consumer/ActivationRenderer';
 import { useActiveActivationsForProduct } from '@/hooks/useActivations';
+import { useRepairSettings } from '@/hooks/useRepairSettings';
 
 const LANGUAGES = ['EN', 'IT', 'DE', 'FR'] as const;
 
