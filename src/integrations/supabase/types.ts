@@ -555,6 +555,7 @@ export type Database = {
           liquid_color: string | null
           name: string
           occasion: string | null
+          product_link: string | null
           serving: string | null
           slug: string
           spirit: string | null
@@ -580,6 +581,7 @@ export type Database = {
           liquid_color?: string | null
           name: string
           occasion?: string | null
+          product_link?: string | null
           serving?: string | null
           slug: string
           spirit?: string | null
@@ -605,6 +607,7 @@ export type Database = {
           liquid_color?: string | null
           name?: string
           occasion?: string | null
+          product_link?: string | null
           serving?: string | null
           slug?: string
           spirit?: string | null

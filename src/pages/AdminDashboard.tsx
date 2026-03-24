@@ -1,7 +1,14 @@
+import { useState } from 'react';
 import { useProducts, useAdminStats } from '@/hooks/useProduct';
 import { useAuthStore } from '@/stores/authStore';
 import { useNavigate, Link } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
 
 function getCompletenessColor(val: number) {
   if (val < 40) return '#a04040';
@@ -24,10 +31,39 @@ export default function AdminDashboard() {
   const { data: stats } = useAdminStats();
   const signOut = useAuthStore((s) => s.signOut);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [showNewProduct, setShowNewProduct] = useState(false);
+  const [newProduct, setNewProduct] = useState({ name: '', slug: '', line: 'Classic', abv: '' });
+  const [creating, setCreating] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/admin/login');
+  };
+
+  const handleCreateProduct = async () => {
+    if (!newProduct.name || !newProduct.slug || !newProduct.abv) {
+      toast.error('Name, slug and ABV are required');
+      return;
+    }
+    setCreating(true);
+    const { data, error } = await supabase.from('products').insert({
+      name: newProduct.name,
+      slug: newProduct.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+      line: newProduct.line,
+      abv: newProduct.abv,
+    }).select('slug').single();
+    setCreating(false);
+    if (error) {
+      toast.error(error.message.includes('duplicate') ? 'A product with that slug already exists' : 'Failed to create product');
+      return;
+    }
+    toast.success('Product created');
+    queryClient.invalidateQueries({ queryKey: ['products'] });
+    queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+    setShowNewProduct(false);
+    setNewProduct({ name: '', slug: '', line: 'Classic', abv: '' });
+    navigate(`/admin/product/${data.slug}`);
   };
 
   return (
@@ -44,6 +80,7 @@ export default function AdminDashboard() {
           <Link to="/admin/ai-upload">
             <Button variant="outline" size="sm">AI Upload</Button>
           </Link>
+          <Button size="sm" className="bg-primary text-primary-foreground" onClick={() => setShowNewProduct(true)}>+ New Product</Button>
           <Button variant="ghost" size="sm" onClick={handleSignOut}>Sign Out</Button>
         </div>
       </header>
@@ -137,6 +174,64 @@ export default function AdminDashboard() {
           </div>
         )}
       </main>
+
+      {/* New Product Modal */}
+      {showNewProduct && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-6" onClick={() => setShowNewProduct(false)}>
+          <div className="bg-card rounded-lg border border-border p-6 w-full max-w-md space-y-4" onClick={(e) => e.stopPropagation()}>
+            <h2 className="font-display text-xl text-foreground">New Product</h2>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Product Name *</Label>
+              <Input
+                value={newProduct.name}
+                onChange={(e) => {
+                  const name = e.target.value;
+                  setNewProduct((p) => ({
+                    ...p,
+                    name,
+                    slug: name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+                  }));
+                }}
+                placeholder="e.g. Paloma"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Slug *</Label>
+              <Input
+                value={newProduct.slug}
+                onChange={(e) => setNewProduct((p) => ({ ...p, slug: e.target.value }))}
+                placeholder="e.g. paloma"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">URL path: /bottle/{newProduct.slug || '...'}</p>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Line</Label>
+              <Select value={newProduct.line} onValueChange={(v) => setNewProduct((p) => ({ ...p, line: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Classic">Classic</SelectItem>
+                  <SelectItem value="Sparkling">Sparkling</SelectItem>
+                  <SelectItem value="No Regrets">No Regrets</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">ABV (%) *</Label>
+              <Input
+                value={newProduct.abv}
+                onChange={(e) => setNewProduct((p) => ({ ...p, abv: e.target.value }))}
+                placeholder="e.g. 14.9"
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button variant="ghost" onClick={() => setShowNewProduct(false)} className="flex-1">Cancel</Button>
+              <Button onClick={handleCreateProduct} disabled={creating} className="flex-1 bg-primary text-primary-foreground">
+                {creating ? 'Creating…' : 'Create Product'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
