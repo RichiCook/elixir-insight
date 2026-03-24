@@ -1,0 +1,1 @@
+ALTER TABLE product_technical_data ADD COLUMN IF NOT EXISTS application text;

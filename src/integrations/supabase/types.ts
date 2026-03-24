@@ -353,6 +353,7 @@ export type Database = {
           allergen_soybeans: boolean | null
           allergen_sulphites: boolean | null
           appearance: string | null
+          application: string | null
           brix: string | null
           carbohydrates: string | null
           colour: string | null
@@ -402,6 +403,7 @@ export type Database = {
           allergen_soybeans?: boolean | null
           allergen_sulphites?: boolean | null
           appearance?: string | null
+          application?: string | null
           brix?: string | null
           carbohydrates?: string | null
           colour?: string | null
@@ -451,6 +453,7 @@ export type Database = {
           allergen_soybeans?: boolean | null
           allergen_sulphites?: boolean | null
           appearance?: string | null
+          application?: string | null
           brix?: string | null
           carbohydrates?: string | null
           colour?: string | null
