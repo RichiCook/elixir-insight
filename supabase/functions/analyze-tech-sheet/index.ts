@@ -7,6 +7,10 @@ const corsHeaders = {
 
 const systemPrompt = `You are a data extraction specialist for Italian food and beverage laboratory documents. Extract data and return ONLY a valid JSON object — no markdown, no explanation, no preamble. Use null for any field not found.
 
+INPUT FORMAT: The document text preserves table structure using tab-separated columns.
+Table rows appear as: Parameter\tMethod\tUnit\tResult\tLOQ\tUncertainty
+Use the tab structure to correctly match each value to its column (Parameter, Unit, Result, etc.).
+
 STEP 1 — IDENTIFY DOCUMENT TYPE:
 
 - If text contains "Rapporto di prova" OR "Test report n°" OR "UNIONE ITALIANA VINI" OR "Titolo alcolometrico volumico" → document_type = "LABORATORY_TEST_REPORT"

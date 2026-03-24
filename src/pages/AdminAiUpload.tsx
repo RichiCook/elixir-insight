@@ -439,13 +439,35 @@ function PdfTab() {
     pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
     const arrayBuffer = await pdfFile.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    let text = '';
+    let fullText = '';
+    const Y_TOLERANCE = 3;
+
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
       const content = await page.getTextContent();
-      text += content.items.map((item: any) => item.str).join(' ') + '\n';
+      const rowMap = new Map<number, Array<{ str: string; x: number }>>();
+
+      for (const item of content.items as any[]) {
+        if (!item.str?.trim()) continue;
+        const y = Math.round(item.transform[5] / Y_TOLERANCE) * Y_TOLERANCE;
+        if (!rowMap.has(y)) rowMap.set(y, []);
+        rowMap.get(y)!.push({ str: item.str, x: item.transform[4] });
+      }
+
+      const sortedRows = Array.from(rowMap.entries())
+        .sort((a, b) => b[0] - a[0])
+        .map(([_, items]) => items.sort((a, b) => a.x - b.x));
+
+      for (const row of sortedRows) {
+        if (row.length >= 3) {
+          fullText += row.map(i => i.str.trim()).join('\t') + '\n';
+        } else {
+          fullText += row.map(i => i.str.trim()).join(' ') + '\n';
+        }
+      }
+      fullText += '\n--- PAGE BREAK ---\n';
     }
-    return text;
+    return fullText;
   };
 
   const handleAnalyze = async () => {
