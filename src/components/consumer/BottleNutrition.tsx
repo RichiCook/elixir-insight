@@ -120,7 +120,7 @@ export function BottleNutrition({ data, allergensSummary, onExpand }: Props) {
     <section>
       {/* Trigger banner */}
       <button
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => { setOpen((v) => { if (!v && onExpand) onExpand(); return !v; }); }}
         className="flex items-center justify-between border-t border-b border-cc-border w-full text-left cursor-pointer"
         style={{ backgroundColor: '#f5f0ea', padding: '10px 18px' }}
       >
