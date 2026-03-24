@@ -316,6 +316,15 @@ export default function BottlePage() {
           <button className="absolute top-5 right-5 text-white/60 hover:text-white text-2xl">✕</button>
         </div>
       )}
+
+      {repairSettings?.enabled && (
+        <RepairRequestSheet
+          open={repairSheetOpen}
+          onClose={() => setRepairSheetOpen(false)}
+          product={product}
+          settings={repairSettings}
+        />
+      )}
     </div>
   );
 }
