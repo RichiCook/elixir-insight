@@ -28,6 +28,8 @@ import { EditorialBlock } from '@/components/consumer/EditorialBlock';
 import { BrandHeritage } from '@/components/consumer/BrandHeritage';
 import { StoreCTA } from '@/components/consumer/StoreCTA';
 import { AgeGate } from '@/components/consumer/AgeGate';
+import { ActivationSlot } from '@/components/consumer/ActivationRenderer';
+import { useActiveActivationsForProduct } from '@/hooks/useActivations';
 
 const LANGUAGES = ['EN', 'IT', 'DE', 'FR'] as const;
 
