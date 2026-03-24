@@ -9,8 +9,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { ChevronDown } from 'lucide-react';
+import ExcelImport from '@/components/admin/ExcelImport';
+
+// ── Constants ──────────────────────────────────────────────
 
 const THINKING_MESSAGES = [
   'Reading document structure…',
@@ -40,45 +44,18 @@ const ALLERGEN_KEYS = [
 ] as const;
 
 const SECTIONS = [
-  {
-    title: 'PRODUCT INFO',
-    fields: ['product_name', 'product_version', 'application', 'recommended_dosage', 'recommended_dosage_disclaimer', 'main_flavour_components', 'limits_of_application', 'substances_annexes', 'maximum_dosage_note', 'additional_information'],
-  },
-  {
-    title: 'INGREDIENT DECLARATION',
-    fields: ['ingredient_list_full_en', 'ingredient_list_full_it'],
-    textareas: ['ingredient_list_full_en', 'ingredient_list_full_it'],
-  },
-  {
-    title: 'NUTRITIONAL VALUES',
-    fields: ['energy_kcal', 'energy_kj', 'fats', 'saturated_fats', 'trans_fats', 'carbohydrates', 'sugars', 'fibre', 'proteins', 'salt'],
-  },
-  {
-    title: 'ORGANOLEPTIC & CHEMICAL',
-    fields: ['odor', 'appearance', 'colour', 'taste_profile', 'ph', 'brix', 'microbiological_count', 'microbiological_unit'],
-  },
-  {
-    title: 'ALLERGEN MATRIX',
-    fields: [],
-    isAllergenSection: true,
-  },
-  {
-    title: 'STORAGE',
-    fields: ['shelf_life', 'storage_conditions', 'storage_after_opening'],
-  },
-  {
-    title: 'DECLARATIONS',
-    fields: ['gmo_declaration', 'ionising_radiation', 'compliance_regulation_1', 'compliance_regulation_2', 'compliance_regulation_3', 'compliance_references'],
-  },
-  {
-    title: 'SUPPLIER',
-    fields: ['supplier_name', 'supplier_address', 'supplier_phone', 'supplier_email', 'supplier_vat'],
-  },
-  {
-    title: 'DOCUMENT',
-    fields: ['document_revision', 'document_date'],
-  },
+  { title: 'PRODUCT INFO', fields: ['product_name', 'product_version', 'application', 'recommended_dosage', 'recommended_dosage_disclaimer', 'main_flavour_components', 'limits_of_application', 'substances_annexes', 'maximum_dosage_note', 'additional_information'] },
+  { title: 'INGREDIENT DECLARATION', fields: ['ingredient_list_full_en', 'ingredient_list_full_it'], textareas: ['ingredient_list_full_en', 'ingredient_list_full_it'] },
+  { title: 'NUTRITIONAL VALUES', fields: ['energy_kcal', 'energy_kj', 'fats', 'saturated_fats', 'trans_fats', 'carbohydrates', 'sugars', 'fibre', 'proteins', 'salt'] },
+  { title: 'ORGANOLEPTIC & CHEMICAL', fields: ['odor', 'appearance', 'colour', 'taste_profile', 'ph', 'brix', 'microbiological_count', 'microbiological_unit'] },
+  { title: 'ALLERGEN MATRIX', fields: [], isAllergenSection: true },
+  { title: 'STORAGE', fields: ['shelf_life', 'storage_conditions', 'storage_after_opening'] },
+  { title: 'DECLARATIONS', fields: ['gmo_declaration', 'ionising_radiation', 'compliance_regulation_1', 'compliance_regulation_2', 'compliance_regulation_3', 'compliance_references'] },
+  { title: 'SUPPLIER', fields: ['supplier_name', 'supplier_address', 'supplier_phone', 'supplier_email', 'supplier_vat'] },
+  { title: 'DOCUMENT', fields: ['document_revision', 'document_date'] },
 ];
+
+// ── Sub-components ─────────────────────────────────────────
 
 function SectionBlock({ title, children, defaultOpen = true }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
   return (
@@ -109,6 +86,8 @@ function FieldCard({ label, value, onChange, isTextarea }: { label: string; valu
     </div>
   );
 }
+
+// ── Main component ─────────────────────────────────────────
 
 export default function AdminAiUpload() {
   const { data: products } = useProducts();
@@ -170,7 +149,6 @@ export default function AdminAiUpload() {
       toast.error('Select a product and upload a PDF first');
       return;
     }
-
     setProcessing(true);
     setThinkingIdx(0);
     setApplied(false);
@@ -188,10 +166,7 @@ export default function AdminAiUpload() {
       await supabase.storage.from('tech-sheets').upload(storagePath, file, { upsert: true });
 
       const { data: uploadRecord } = await supabase.from('tech_sheet_uploads').insert({
-        product_id: productId,
-        filename: file.name,
-        storage_path: storagePath,
-        status: 'processing',
+        product_id: productId, filename: file.name, storage_path: storagePath, status: 'processing',
       }).select().single();
 
       setUploadRecordId(uploadRecord?.id || null);
@@ -199,7 +174,6 @@ export default function AdminAiUpload() {
       const { data: aiResult, error: aiError } = await supabase.functions.invoke('analyze-tech-sheet', {
         body: { text, product_name: selectedProduct?.name },
       });
-
       if (aiError) throw aiError;
 
       const extractedData = aiResult.data;
@@ -207,10 +181,7 @@ export default function AdminAiUpload() {
       setEditedData({ ...extractedData });
 
       if (uploadRecord) {
-        await supabase.from('tech_sheet_uploads').update({
-          status: 'analyzed',
-          extracted_json: extractedData,
-        }).eq('id', uploadRecord.id);
+        await supabase.from('tech_sheet_uploads').update({ status: 'analyzed', extracted_json: extractedData }).eq('id', uploadRecord.id);
       }
 
       clearInterval(interval);
@@ -231,9 +202,7 @@ export default function AdminAiUpload() {
   const handleApply = async () => {
     if (!productId || !editedData) return;
     setApplying(true);
-
     try {
-      // 1. Upsert product_technical_data
       const techPayload: Record<string, any> = { product_id: productId };
       const techTextFields = [
         'ph', 'brix', 'energy_kj', 'energy_kcal', 'fats', 'saturated_fats', 'trans_fats',
@@ -243,10 +212,8 @@ export default function AdminAiUpload() {
         'recommended_dosage', 'supplier_name', 'supplier_address', 'supplier_phone',
         'supplier_email', 'supplier_vat', 'document_revision', 'document_date',
       ];
-
       techTextFields.forEach((k) => { techPayload[k] = editedData[k] || null; });
 
-      // Combine microbiological
       if (editedData.microbiological_count || editedData.microbiological_unit) {
         techPayload.microbiological_count = [editedData.microbiological_count, editedData.microbiological_unit].filter(Boolean).join(' ');
       }
@@ -256,58 +223,35 @@ export default function AdminAiUpload() {
       const { error: techError } = await supabase.from('product_technical_data').upsert(techPayload, { onConflict: 'product_id' });
       if (techError) throw techError;
 
-      // 2. Upsert product_translations for EN and IT ingredient lists
       if (editedData.ingredient_list_full_en) {
-        const { data: existingEn } = await supabase.from('product_translations')
-          .select('id').eq('product_id', productId).eq('language', 'EN').maybeSingle();
-
+        const { data: existingEn } = await supabase.from('product_translations').select('id').eq('product_id', productId).eq('language', 'EN').maybeSingle();
         if (existingEn) {
-          await supabase.from('product_translations')
-            .update({ ingredient_list_full: editedData.ingredient_list_full_en })
-            .eq('id', existingEn.id);
+          await supabase.from('product_translations').update({ ingredient_list_full: editedData.ingredient_list_full_en }).eq('id', existingEn.id);
         } else {
-          await supabase.from('product_translations')
-            .insert({ product_id: productId, language: 'EN', ingredient_list_full: editedData.ingredient_list_full_en });
+          await supabase.from('product_translations').insert({ product_id: productId, language: 'EN', ingredient_list_full: editedData.ingredient_list_full_en });
         }
       }
 
       if (editedData.ingredient_list_full_it) {
-        const { data: existingIt } = await supabase.from('product_translations')
-          .select('id').eq('product_id', productId).eq('language', 'IT').maybeSingle();
-
+        const { data: existingIt } = await supabase.from('product_translations').select('id').eq('product_id', productId).eq('language', 'IT').maybeSingle();
         if (existingIt) {
-          await supabase.from('product_translations')
-            .update({ ingredient_list_full: editedData.ingredient_list_full_it })
-            .eq('id', existingIt.id);
+          await supabase.from('product_translations').update({ ingredient_list_full: editedData.ingredient_list_full_it }).eq('id', existingIt.id);
         } else {
-          await supabase.from('product_translations')
-            .insert({ product_id: productId, language: 'IT', ingredient_list_full: editedData.ingredient_list_full_it });
+          await supabase.from('product_translations').insert({ product_id: productId, language: 'IT', ingredient_list_full: editedData.ingredient_list_full_it });
         }
       }
 
-      // 3. Update tech_sheet_uploads
       if (uploadRecordId) {
-        await supabase.from('tech_sheet_uploads').update({
-          status: 'complete',
-          applied_at: new Date().toISOString(),
-          extracted_json: editedData,
-        }).eq('id', uploadRecordId);
+        await supabase.from('tech_sheet_uploads').update({ status: 'complete', applied_at: new Date().toISOString(), extracted_json: editedData }).eq('id', uploadRecordId);
       }
 
-      // 4. Recalculate completeness
       const completenessFields = ['ph', 'energy_kcal', 'fats', 'carbohydrates', 'proteins', 'salt', 'odor', 'shelf_life', 'storage_conditions', 'gmo_declaration'];
       let filled = 0;
-      const total = completenessFields.length + 2; // +1 for allergens, +1 for ingredients
-
+      const total = completenessFields.length + 2;
       completenessFields.forEach((f) => { if (editedData[f]) filled++; });
-
-      // Check if any allergen was processed
       const hasAllergens = ALLERGEN_KEYS.some(({ key }) => editedData[key] !== undefined && editedData[key] !== null);
       if (hasAllergens) filled++;
-
-      // Check ingredient list
       if (editedData.ingredient_list_full_en) filled++;
-
       const completeness = Math.round((filled / total) * 100);
 
       await supabase.from('products').update({ completeness }).eq('id', productId);
@@ -336,140 +280,149 @@ export default function AdminAiUpload() {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border px-6 py-4 flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-admin font-semibold text-foreground">AI Tech Sheet Upload</h1>
-          <p className="text-xs text-muted-foreground">Extract technical data from supplier PDFs</p>
+          <h1 className="text-lg font-admin font-semibold text-foreground">Data Import</h1>
+          <p className="text-xs text-muted-foreground">Import product data from PDFs or Excel spreadsheets</p>
         </div>
         <Link to="/admin"><Button variant="ghost" size="sm">← Dashboard</Button></Link>
       </header>
 
-      <main className="p-6 max-w-4xl mx-auto space-y-6">
-        {/* Step 1: Product select */}
-        <div className="rounded-lg border border-border bg-card p-5">
-          <p className="text-xs font-admin uppercase tracking-wider text-muted-foreground mb-3">Step 1 — Select Product</p>
-          <Select value={productId} onValueChange={(v) => { setProductId(v); setExtracted(null); setApplied(false); }}>
-            <SelectTrigger><SelectValue placeholder="Choose a product…" /></SelectTrigger>
-            <SelectContent>
-              {products?.map((p) => (
-                <SelectItem key={p.id} value={p.id}>{p.name} ({p.line})</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <main className="p-6 max-w-4xl mx-auto">
+        <Tabs defaultValue="pdf" className="space-y-6">
+          <TabsList className="w-full">
+            <TabsTrigger value="pdf" className="flex-1">PDF Tech Sheet</TabsTrigger>
+            <TabsTrigger value="excel" className="flex-1">Excel Spreadsheet</TabsTrigger>
+          </TabsList>
 
-        {/* Step 2: Upload */}
-        <div className="rounded-lg border border-border bg-card p-5">
-          <p className="text-xs font-admin uppercase tracking-wider text-muted-foreground mb-3">Step 2 — Upload PDF</p>
-          <div
-            onDrop={handleDrop}
-            onDragOver={(e) => e.preventDefault()}
-            onClick={() => fileRef.current?.click()}
-            className="border-2 border-dashed border-primary/40 rounded-lg p-8 text-center cursor-pointer hover:border-primary/60 transition-colors"
-            style={{ backgroundColor: 'rgba(184,151,90,0.05)' }}
-          >
-            <input ref={fileRef} type="file" accept=".pdf" className="hidden" onChange={handleFileChange} />
-            {file ? (
-              <div>
-                <p className="text-sm text-foreground">{file.name}</p>
-                <p className="text-xs text-muted-foreground mt-1">{(file.size / 1024).toFixed(1)} KB</p>
+          {/* ── PDF Tab ── */}
+          <TabsContent value="pdf" className="space-y-6">
+            {/* Step 1: Product select */}
+            <div className="rounded-lg border border-border bg-card p-5">
+              <p className="text-xs font-admin uppercase tracking-wider text-muted-foreground mb-3">Step 1 — Select Product</p>
+              <Select value={productId} onValueChange={(v) => { setProductId(v); setExtracted(null); setApplied(false); }}>
+                <SelectTrigger><SelectValue placeholder="Choose a product…" /></SelectTrigger>
+                <SelectContent>
+                  {products?.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.name} ({p.line})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Step 2: Upload PDF */}
+            <div className="rounded-lg border border-border bg-card p-5">
+              <p className="text-xs font-admin uppercase tracking-wider text-muted-foreground mb-3">Step 2 — Upload PDF</p>
+              <div
+                onDrop={handleDrop}
+                onDragOver={(e) => e.preventDefault()}
+                onClick={() => fileRef.current?.click()}
+                className="border-2 border-dashed border-primary/40 rounded-lg p-8 text-center cursor-pointer hover:border-primary/60 transition-colors"
+                style={{ backgroundColor: 'rgba(184,151,90,0.05)' }}
+              >
+                <input ref={fileRef} type="file" accept=".pdf" className="hidden" onChange={handleFileChange} />
+                {file ? (
+                  <div>
+                    <p className="text-sm text-foreground">{file.name}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{(file.size / 1024).toFixed(1)} KB</p>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Drop a supplier PDF tech sheet here or click to browse</p>
+                    <p className="text-xs text-muted-foreground mt-1">.pdf files only</p>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div>
-                <p className="text-sm text-muted-foreground">Drop PDF here or click to browse</p>
-                <p className="text-xs text-muted-foreground mt-1">.pdf files only</p>
+            </div>
+
+            {/* Analyze button */}
+            {!extracted && (
+              <Button
+                onClick={handleAnalyze}
+                disabled={!productId || !file || processing}
+                className="w-full py-5 text-sm font-medium"
+                style={{ background: processing ? '#333' : 'linear-gradient(135deg, #4a7cc0, #4a8c5c)', color: 'white' }}
+              >
+                {processing ? THINKING_MESSAGES[thinkingIdx] : 'Analyse with AI'}
+              </Button>
+            )}
+
+            {/* Review Panel */}
+            {extracted && !applied && (
+              <div className="space-y-4">
+                <div className="rounded-lg p-4 flex items-center justify-between" style={{ backgroundColor: '#1a3a2a', border: '1px solid #2a5a3a' }}>
+                  <div>
+                    <p className="text-sm font-medium text-green-400">✓ Analysis Complete — {file?.name}</p>
+                    <p className="text-xs text-green-400/70 mt-0.5">
+                      {editedData.document_revision && `Revision ${editedData.document_revision}`}
+                      {editedData.document_date && ` · ${editedData.document_date}`}
+                      {editedData.supplier_name && ` · ${editedData.supplier_name}`}
+                    </p>
+                  </div>
+                </div>
+
+                {SECTIONS.map((section) => (
+                  <div key={section.title} className="rounded-lg border border-border bg-card p-4">
+                    <SectionBlock title={section.title}>
+                      {section.isAllergenSection ? (
+                        <div className="grid grid-cols-2 gap-3 mt-3">
+                          {ALLERGEN_KEYS.map(({ key, label }) => (
+                            <div key={key} className="flex items-center justify-between rounded-lg border border-border p-2">
+                              <div className="flex items-center gap-2">
+                                <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ backgroundColor: editedData[key] ? '#a04040' : '#4a8c5c' }} />
+                                <span className="text-xs text-foreground">{label}</span>
+                              </div>
+                              <Switch checked={!!editedData[key]} onCheckedChange={(v) => updateField(key, v)} />
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                          {section.fields.map((key) => (
+                            <FieldCard
+                              key={key}
+                              label={key}
+                              value={editedData[key]}
+                              onChange={(v) => updateField(key, v)}
+                              isTextarea={section.textareas?.includes(key)}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </SectionBlock>
+                  </div>
+                ))}
+
+                <Button
+                  onClick={handleApply}
+                  disabled={applying}
+                  className="w-full py-6 text-sm font-medium"
+                  style={{ background: 'linear-gradient(135deg, #b8975a, #d4af6e)', color: '#1a1a1a' }}
+                >
+                  {applying ? 'Saving to database…' : '✓ Apply All to Product'}
+                </Button>
+                <div className="flex gap-3">
+                  <Button variant="outline" onClick={handleAnalyze} disabled={processing} className="flex-1">Re-analyse</Button>
+                  <Button variant="outline" onClick={handleDiscard} className="flex-1">Discard</Button>
+                </div>
               </div>
             )}
-          </div>
-        </div>
 
-        {/* Analyze button */}
-        {!extracted && (
-          <Button
-            onClick={handleAnalyze}
-            disabled={!productId || !file || processing}
-            className="w-full py-5 text-sm font-medium"
-            style={{ background: processing ? '#333' : 'linear-gradient(135deg, #4a7cc0, #4a8c5c)', color: 'white' }}
-          >
-            {processing ? THINKING_MESSAGES[thinkingIdx] : 'Analyse with AI'}
-          </Button>
-        )}
-
-        {/* Review Panel */}
-        {extracted && !applied && (
-          <div className="space-y-4">
-            {/* Success banner */}
-            <div className="rounded-lg p-4 flex items-center justify-between" style={{ backgroundColor: '#1a3a2a', border: '1px solid #2a5a3a' }}>
-              <div>
-                <p className="text-sm font-medium text-green-400">✓ Analysis Complete — {file?.name}</p>
-                <p className="text-xs text-green-400/70 mt-0.5">
-                  {editedData.document_revision && `Revision ${editedData.document_revision}`}
-                  {editedData.document_date && ` · ${editedData.document_date}`}
-                  {editedData.supplier_name && ` · ${editedData.supplier_name}`}
-                </p>
+            {/* Applied success state */}
+            {applied && (
+              <div className="rounded-lg p-6 text-center" style={{ backgroundColor: '#1a3a2a', border: '1px solid #2a5a3a' }}>
+                <p className="text-lg font-medium text-green-400">🎉 All data applied to {selectedProduct?.name}</p>
+                <p className="text-sm text-green-400/70 mt-1">Completeness updated to {appliedCompleteness}%</p>
+                <Button variant="outline" className="mt-4" onClick={() => { setExtracted(null); setEditedData({}); setFile(null); setApplied(false); }}>
+                  Upload another sheet
+                </Button>
               </div>
-            </div>
+            )}
+          </TabsContent>
 
-            {/* Sections */}
-            {SECTIONS.map((section) => (
-              <div key={section.title} className="rounded-lg border border-border bg-card p-4">
-                <SectionBlock title={section.title}>
-                  {section.isAllergenSection ? (
-                    <div className="grid grid-cols-2 gap-3 mt-3">
-                      {ALLERGEN_KEYS.map(({ key, label }) => (
-                        <div key={key} className="flex items-center justify-between rounded-lg border border-border p-2">
-                          <div className="flex items-center gap-2">
-                            <span className="w-[6px] h-[6px] rounded-full flex-shrink-0" style={{ backgroundColor: editedData[key] ? '#a04040' : '#4a8c5c' }} />
-                            <span className="text-xs text-foreground">{label}</span>
-                          </div>
-                          <Switch
-                            checked={!!editedData[key]}
-                            onCheckedChange={(v) => updateField(key, v)}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-                      {section.fields.map((key) => (
-                        <FieldCard
-                          key={key}
-                          label={key}
-                          value={editedData[key]}
-                          onChange={(v) => updateField(key, v)}
-                          isTextarea={section.textareas?.includes(key)}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </SectionBlock>
-              </div>
-            ))}
-
-            {/* Action buttons */}
-            <Button
-              onClick={handleApply}
-              disabled={applying}
-              className="w-full py-6 text-sm font-medium"
-              style={{ background: 'linear-gradient(135deg, #b8975a, #d4af6e)', color: '#1a1a1a' }}
-            >
-              {applying ? 'Saving to database…' : '✓ Apply All to Product'}
-            </Button>
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={handleAnalyze} disabled={processing} className="flex-1">Re-analyse</Button>
-              <Button variant="outline" onClick={handleDiscard} className="flex-1">Discard</Button>
-            </div>
-          </div>
-        )}
-
-        {/* Applied success state */}
-        {applied && (
-          <div className="rounded-lg p-6 text-center" style={{ backgroundColor: '#1a3a2a', border: '1px solid #2a5a3a' }}>
-            <p className="text-lg font-medium text-green-400">🎉 All data applied to {selectedProduct?.name}</p>
-            <p className="text-sm text-green-400/70 mt-1">Completeness updated to {appliedCompleteness}%</p>
-            <Button variant="outline" className="mt-4" onClick={() => { setExtracted(null); setEditedData({}); setFile(null); setApplied(false); }}>
-              Upload another sheet
-            </Button>
-          </div>
-        )}
+          {/* ── Excel Tab ── */}
+          <TabsContent value="excel">
+            <ExcelImport />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
