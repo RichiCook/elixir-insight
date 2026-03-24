@@ -97,6 +97,18 @@ const THINKING_LAB_REPORT = [
   'Analysis complete ✓',
 ];
 
+const HIDE_IF_NULL_BY_DOC_TYPE: Record<string, string[]> = {
+  LABORATORY_TEST_REPORT: ['supplier_vat', 'supplier_phone', 'supplier_email'],
+  SUPPLIER_TECH_SHEET: ['laboratory_name', 'laboratory_address', 'test_report_number'],
+};
+
+const isEmptyValue = (value: unknown) => value === null || value === '' || value === undefined;
+
+const shouldHideNullField = (field: string, value: unknown, documentType: string | null) => {
+  if (!documentType || !isEmptyValue(value)) return false;
+  return HIDE_IF_NULL_BY_DOC_TYPE[documentType]?.includes(field) ?? false;
+};
+
 // ── Sub-components ─────────────────────────────────────────
 
 function SectionBlock({ title, children, defaultOpen = true }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
@@ -676,8 +688,18 @@ function PdfTab() {
                     ))}
                   </div>
                 ) : (
-                  <div className="grid gap-3 mt-3" style={{ gridTemplateColumns: section.fields.length <= 2 ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-                    {section.fields.map(f => (
+                  <div
+                    className="grid gap-3 mt-3"
+                    style={{
+                      gridTemplateColumns:
+                        section.fields.filter((f) => !shouldHideNullField(f, editedData[f], docType)).length <= 2
+                          ? '1fr'
+                          : 'repeat(auto-fit, minmax(200px, 1fr))',
+                    }}
+                  >
+                    {section.fields
+                      .filter((f) => !shouldHideNullField(f, editedData[f], docType))
+                      .map(f => (
                       <FieldCard
                         key={f} label={f} value={editedData[f]}
                         onChange={v => updateField(f, v)}
