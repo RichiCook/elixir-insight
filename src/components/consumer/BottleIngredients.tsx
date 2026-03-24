@@ -30,7 +30,10 @@ export function BottleIngredients({ translation, allergensSummary, onExpand }: P
       {translation.ingredient_list_full && (
         <>
           <button
-            onClick={() => setExpanded(!expanded)}
+            onClick={() => {
+              if (!expanded && onExpand) onExpand();
+              setExpanded(!expanded);
+            }}
             className="font-sans-consumer text-xs text-cc-gold mt-3 flex items-center gap-1"
           >
             {expanded ? 'Hide full list' : 'View full ingredient list'}
