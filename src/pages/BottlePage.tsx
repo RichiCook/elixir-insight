@@ -50,6 +50,7 @@ export default function BottlePage() {
   const { data: pairings } = useProductAiPairings(product?.id);
   const { data: productImages } = useProductImages(product?.id);
   const { data: activeActivations } = useActiveActivationsForProduct(product?.id);
+  const { data: repairSettings } = useRepairSettings();
 
   // Tracking
   usePageViewTracking(slug);
