@@ -26,23 +26,25 @@ export function BottleHero({ product, heroImageUrl }: Props) {
         />
       )}
 
-      {/* Bottle silhouette centered */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.8 }}
-        className="absolute inset-0 flex items-center justify-center"
-      >
-        <div
-          className="w-24 h-48 rounded-lg flex items-center justify-center"
-          style={{ backgroundColor: product.bottle_color || '#2a2a2a' }}
+      {/* Bottle silhouette — only when no hero image */}
+      {!heroImageUrl && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8 }}
+          className="absolute inset-0 flex items-center justify-center"
         >
           <div
-            className="w-16 h-8 rounded-sm"
-            style={{ backgroundColor: product.label_color || '#f5f0ea' }}
-          />
-        </div>
-      </motion.div>
+            className="w-24 h-48 rounded-lg flex items-center justify-center"
+            style={{ backgroundColor: product.bottle_color || '#2a2a2a' }}
+          >
+            <div
+              className="w-16 h-8 rounded-sm"
+              style={{ backgroundColor: product.label_color || '#f5f0ea' }}
+            />
+          </div>
+        </motion.div>
+      )}
 
       {/* Dot navigation at bottom */}
       <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-2">
