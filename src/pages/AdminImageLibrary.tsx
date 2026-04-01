@@ -375,70 +375,128 @@ export default function AdminImageLibrary() {
           <span className="text-[10px] text-muted-foreground ml-auto">{filteredImages.length} images</span>
         </div>
 
+        {/* Bulk action toolbar */}
+        {selectedIds.size > 0 && (
+          <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-2.5">
+            <span className="text-xs text-foreground font-medium">{selectedIds.size} selected</span>
+            <div className="flex gap-2 ml-auto">
+              <Button variant="outline" size="sm" className="h-7 text-[10px]" onClick={() => bulkApprove(true)}>
+                <Check className="w-3 h-3 mr-1 text-[#4a8c5c]" /> Approve
+              </Button>
+              <Button variant="outline" size="sm" className="h-7 text-[10px]" onClick={() => bulkApprove(false)}>
+                Unapprove
+              </Button>
+              <Button variant="outline" size="sm" className="h-7 text-[10px]" onClick={() => bulkSetFeatured(true)}>
+                ★ Feature
+              </Button>
+              <Button variant="outline" size="sm" className="h-7 text-[10px]" onClick={() => bulkSetFeatured(false)}>
+                Unfeature
+              </Button>
+              <Button variant="destructive" size="sm" className="h-7 text-[10px]" onClick={() => setConfirmBulkDelete(true)}>
+                <Trash2 className="w-3 h-3 mr-1" /> Delete
+              </Button>
+              <Button variant="ghost" size="sm" className="h-7 text-[10px]" onClick={() => setSelectedIds(new Set())}>
+                Clear
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Image grid */}
         {isLoading ? (
           <div className="flex justify-center py-20">
             <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {filteredImages.map((img: any) => {
-              const attrs = img.image_attributes?.[0];
-              return (
-                <div
-                  key={img.id}
-                  className={`group rounded-lg border bg-card overflow-hidden cursor-pointer transition-all ${
-                    selectedImage === img.id ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-primary/50'
-                  }`}
-                  onClick={() => setSelectedImage(selectedImage === img.id ? null : img.id)}
-                >
-                  <div className="relative overflow-hidden bg-muted" style={{ maxHeight: 200 }}>
-                    <img
-                      src={img.public_url}
-                      alt={attrs?.alt_text_en || img.filename}
-                      className="w-full object-cover"
-                      style={{ maxHeight: 200 }}
-                      loading="lazy"
-                    />
-                    {analysingIds.has(img.id) && (
-                      <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-                        <div className="text-center">
-                          <Sparkles className="w-5 h-5 text-primary animate-pulse mx-auto mb-2" />
-                          <p className="text-[10px] text-white">{analysingMsg[img.id] || 'Analysing…'}</p>
+          <>
+            {/* Select all row */}
+            <div className="flex items-center gap-2 pb-1">
+              <button onClick={selectAll} className="flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+                {selectedIds.size === filteredImages.length && filteredImages.length > 0
+                  ? <CheckSquare className="w-3.5 h-3.5 text-primary" />
+                  : selectedIds.size > 0
+                    ? <MinusSquare className="w-3.5 h-3.5 text-primary" />
+                    : <Square className="w-3.5 h-3.5" />
+                }
+                {selectedIds.size === filteredImages.length && filteredImages.length > 0 ? 'Deselect all' : 'Select all'}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {filteredImages.map((img: any) => {
+                const attrs = img.image_attributes?.[0];
+                const isSelected = selectedIds.has(img.id);
+                return (
+                  <div
+                    key={img.id}
+                    className={`group rounded-lg border bg-card overflow-hidden cursor-pointer transition-all ${
+                      selectedImage === img.id ? 'border-primary ring-1 ring-primary' : isSelected ? 'border-primary/60 ring-1 ring-primary/40' : 'border-border hover:border-primary/50'
+                    }`}
+                    onClick={() => setSelectedImage(selectedImage === img.id ? null : img.id)}
+                  >
+                    <div className="relative overflow-hidden bg-muted" style={{ maxHeight: 200 }}>
+                      <img
+                        src={img.public_url}
+                        alt={attrs?.alt_text_en || img.filename}
+                        className="w-full object-cover"
+                        style={{ maxHeight: 200 }}
+                        loading="lazy"
+                      />
+                      {/* Checkbox overlay */}
+                      <button
+                        className={`absolute top-2 left-2 w-5 h-5 rounded border flex items-center justify-center transition-all ${
+                          isSelected
+                            ? 'bg-primary border-primary text-primary-foreground'
+                            : 'bg-black/40 border-white/50 text-transparent group-hover:text-white/70'
+                        }`}
+                        onClick={(e) => { e.stopPropagation(); toggleSelect(img.id); }}
+                      >
+                        <Check className="w-3 h-3" />
+                      </button>
+                      {/* Approved badge */}
+                      {attrs?.is_approved && (
+                        <span className="absolute bottom-1.5 left-1.5 text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#4a8c5c]/90 text-white">✓ Approved</span>
+                      )}
+                      {analysingIds.has(img.id) && (
+                        <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                          <div className="text-center">
+                            <Sparkles className="w-5 h-5 text-primary animate-pulse mx-auto mb-2" />
+                            <p className="text-[10px] text-white">{analysingMsg[img.id] || 'Analysing…'}</p>
+                          </div>
                         </div>
+                      )}
+                      <div className="absolute top-1.5 right-1.5 flex gap-1">
+                        {attrs?.is_featured && (
+                          <span className="text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/30 text-primary">Featured</span>
+                        )}
+                        {statusBadge(img.status || 'pending')}
                       </div>
-                    )}
-                    <div className="absolute top-1.5 right-1.5 flex gap-1">
-                      {attrs?.is_featured && (
-                        <span className="text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/30 text-primary">Featured</span>
-                      )}
-                      {statusBadge(img.status || 'pending')}
+                    </div>
+                    <div className="p-2.5">
+                      <p className="text-[10px] text-foreground truncate">{img.filename}</p>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {attrs?.product_slugs?.slice(0, 3).map((s: string) => (
+                          <span key={s} className="text-[8px] bg-primary/10 text-primary px-1.5 py-0.5 rounded">{s}</span>
+                        ))}
+                      </div>
+                      <div className="flex gap-1 mt-1.5">
+                        {img.status !== 'complete' && !analysingIds.has(img.id) && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-5 text-[9px] px-2"
+                            onClick={(e) => { e.stopPropagation(); handleAnalyse(img.id, img.public_url); }}
+                          >
+                            <Sparkles className="w-3 h-3 mr-1" /> Analyse
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <div className="p-2.5">
-                    <p className="text-[10px] text-foreground truncate">{img.filename}</p>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {attrs?.product_slugs?.slice(0, 3).map((s: string) => (
-                        <span key={s} className="text-[8px] bg-primary/10 text-primary px-1.5 py-0.5 rounded">{s}</span>
-                      ))}
-                    </div>
-                    <div className="flex gap-1 mt-1.5">
-                      {img.status !== 'complete' && !analysingIds.has(img.id) && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-5 text-[9px] px-2"
-                          onClick={(e) => { e.stopPropagation(); handleAnalyse(img.id, img.public_url); }}
-                        >
-                          <Sparkles className="w-3 h-3 mr-1" /> Analyse
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          </>
         )}
 
         {/* Image detail drawer */}
