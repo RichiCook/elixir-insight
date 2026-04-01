@@ -34,9 +34,17 @@ function darkenHex(hex: string): string {
   return `rgb(${r},${g},${b})`;
 }
 
-export function EditorialBlock({ line, bottleColor, editorialImageUrl }: Props) {
-  const { title, body } = getContent(line);
+export function EditorialBlock({ line, bottleColor, editorialImageUrl, customContent }: Props) {
+  const defaults = getContent(line);
   const bg = darkenHex(bottleColor || '#2a2a2a');
+
+  // Use custom content if provided, otherwise fall back to defaults
+  const hasCustom = customContent && (customContent.heading || customContent.body);
+  const lineLabel = customContent?.line_label || `${line} Line`;
+  const title = hasCustom && customContent.heading
+    ? <>{customContent.heading.replace(customContent.heading_accent || '', '')} {customContent.heading_accent && <em className="italic text-cc-gold">{customContent.heading_accent}</em>}</>
+    : defaults.title;
+  const body = (hasCustom && customContent.body) || defaults.body;
 
   return (
     <section
