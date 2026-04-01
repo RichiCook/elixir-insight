@@ -157,6 +157,35 @@ serve(async (req) => {
     // Update brand_images status to complete
     await supabase.from("brand_images").update({ status: "complete" }).eq("id", image_id);
 
+    // Auto-link products: match product_slugs to products and create product_images entries
+    const productSlugs: string[] = attrs.product_slugs || [];
+    const bestSections: string[] = attrs.best_for_sections || [];
+    if (productSlugs.length > 0 && bestSections.length > 0) {
+      const { data: matchedProducts } = await supabase
+        .from("products")
+        .select("id, slug")
+        .in("slug", productSlugs);
+
+      if (matchedProducts && matchedProducts.length > 0) {
+        const links = [];
+        for (const product of matchedProducts) {
+          for (const section of bestSections) {
+            links.push({
+              product_id: product.id,
+              image_id: image_id,
+              section,
+              sort_order: 0,
+            });
+          }
+        }
+        // Use upsert to avoid duplicates (unique index on product_id, image_id, section)
+        await supabase.from("product_images").upsert(links, {
+          onConflict: "product_id,image_id,section",
+        });
+        console.log(`Auto-linked image ${image_id} to ${matchedProducts.length} products across ${bestSections.length} sections`);
+      }
+    }
+
     return new Response(JSON.stringify({ data: { image_id, ...attrs } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
