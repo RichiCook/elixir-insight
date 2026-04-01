@@ -72,6 +72,63 @@ export default function AdminImageLibrary() {
   const { data: selectedAttrs } = useImageAttributes(selectedImage);
   const [uploadOpen, setUploadOpen] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    if (selectedIds.size === filteredImages.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredImages.map((img: any) => img.id)));
+    }
+  };
+
+  const bulkApprove = async (approve: boolean) => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    for (const id of ids) {
+      await supabase.from('image_attributes').update({ is_approved: approve }).eq('image_id', id);
+    }
+    toast.success(`${ids.length} images ${approve ? 'approved' : 'unapproved'}`);
+    setSelectedIds(new Set());
+    queryClient.invalidateQueries({ queryKey: ['brand-images'] });
+  };
+
+  const bulkDelete = async () => {
+    setBulkDeleting(true);
+    const ids = Array.from(selectedIds);
+    for (const id of ids) {
+      const img = images?.find((i: any) => i.id === id);
+      if (img) await supabase.storage.from('brand-images').remove([img.storage_path]);
+      await supabase.from('brand_images').delete().eq('id', id);
+    }
+    toast.success(`${ids.length} images deleted`);
+    setSelectedIds(new Set());
+    setConfirmBulkDelete(false);
+    setBulkDeleting(false);
+    setSelectedImage(null);
+    queryClient.invalidateQueries({ queryKey: ['brand-images'] });
+  };
+
+  const bulkSetFeatured = async (featured: boolean) => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    for (const id of ids) {
+      await supabase.from('image_attributes').update({ is_featured: featured }).eq('image_id', id);
+    }
+    toast.success(`${ids.length} images ${featured ? 'featured' : 'unfeatured'}`);
+    setSelectedIds(new Set());
+    queryClient.invalidateQueries({ queryKey: ['brand-images'] });
+  };
 
   // Filters
   const [filterProduct, setFilterProduct] = useState('all');
