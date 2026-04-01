@@ -5,9 +5,10 @@ type Product = Database['public']['Tables']['products']['Row'];
 interface Props {
   product: Product;
   customContent?: Record<string, any>;
+  collab?: { brand_name: string; brand_color?: string | null } | null;
 }
 
-export function BottleFooter({ product, customContent }: Props) {
+export function BottleFooter({ product, customContent, collab }: Props) {
   const websiteText = customContent?.website_text || 'classycocktails.com';
   const passportLabel = customContent?.passport_label || 'Digital Nutritional Passport';
   return (
