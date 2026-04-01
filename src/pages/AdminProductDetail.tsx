@@ -1027,6 +1027,7 @@ export default function AdminProductDetail() {
               <TabsTrigger value="ean">EAN Codes</TabsTrigger>
               <TabsTrigger value="images">Images</TabsTrigger>
               <TabsTrigger value="pairings">Pairings</TabsTrigger>
+              <TabsTrigger value="layout">Layout</TabsTrigger>
             </TabsList>
 
             <TabsContent value="general">
@@ -1051,6 +1052,10 @@ export default function AdminProductDetail() {
 
             <TabsContent value="pairings">
               <PairingsTab productId={product.id} />
+            </TabsContent>
+
+            <TabsContent value="layout">
+              <LayoutTab productId={product.id} onSave={invalidateProduct} />
             </TabsContent>
           </Tabs>
         </div>
