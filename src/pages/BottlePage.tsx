@@ -135,7 +135,12 @@ export default function BottlePage() {
   const sections = getMergedSections(savedSections, defaultSections);
 
   // Render a section by key, using custom_content overrides
-  const renderSection = (key: string, content: Record<string, any>) => {
+  const renderSection = (key: string, content: Record<string, any>, blockType?: string, blockConfig?: Record<string, any>) => {
+    // Custom blocks
+    if (blockType && blockType !== 'built_in') {
+      return <CustomBlock blockType={blockType} blockConfig={blockConfig || {}} customContent={content} />;
+    }
+
     switch (key) {
       case 'hero':
         return (
