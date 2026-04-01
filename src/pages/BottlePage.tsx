@@ -288,6 +288,10 @@ export default function BottlePage() {
 
             return (
               <div key={sec.section_key}>
+                {/* before_cta slot */}
+                {sec.section_key === 'store_cta' && activeActivations && (
+                  <ActivationSlot activations={activeActivations} placement="before_cta" productSlug={product.slug} />
+                )}
                 {rendered}
                 {activationPlacement && activeActivations && (
                   <ActivationSlot activations={activeActivations} placement={activationPlacement} productSlug={product.slug} />
