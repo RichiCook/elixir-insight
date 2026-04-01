@@ -40,6 +40,7 @@ export default function AdminDefaultLayout() {
   const [saving, setSaving] = useState(false);
   const [showAddBlock, setShowAddBlock] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [imagePicker, setImagePicker] = useState<{ index: number; mode: 'single' | 'carousel' } | null>(null);
 
   useEffect(() => {
     if (savedSections && savedSections.length > 0) {
