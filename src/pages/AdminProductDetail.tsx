@@ -927,6 +927,7 @@ export default function AdminProductDetail() {
   const navigate = useNavigate();
   const { data: product, isLoading } = useProduct(slug || '');
   const { data: products } = useProducts();
+  const { data: collab } = useCollaboration(product?.id);
   const queryClient = useQueryClient();
   const [isWideScreen, setIsWideScreen] = useState(window.innerWidth >= 1280);
 
