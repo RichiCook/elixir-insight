@@ -76,6 +76,14 @@ function AppInner() {
           }
         />
         <Route
+          path="/admin/default-layout"
+          element={
+            <ProtectedRoute>
+              <AdminDefaultLayout />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin/activations"
           element={
             <ProtectedRoute>
