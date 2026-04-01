@@ -1,97 +1,91 @@
 
 
-# Fix: PDF Text Extraction Losing Table Structure
+# Collaboration Mode for Client Brand Events
 
-## Problem
+## Overview
 
-The `extractTextFromPdf` function in `AdminAiUpload.tsx` (line 446) joins all PDF text items with spaces:
-```javascript
-text += content.items.map((item: any) => item.str).join(' ') + '\n';
-```
+Add a "Collaboration Mode" to the admin panel where Classy manages custom drinks produced for client brands (e.g., Adidas events). Collaboration products live in a separate workspace with their own dashboard, and the consumer page adapts to show the client brand's identity alongside Classy's.
 
-This destroys all table structure. The Negroni lab report has data spread across 6 pages with three nutritional tables (per-100g, per-100ml, per-serving) plus mineral analysis — when flattened, the AI cannot tell which value belongs to which table/column, causing missing or incorrectly sourced fields.
+## Data Model
 
-## Solution
+**New table: `collaborations`**
+- `id` uuid PK
+- `brand_name` text (e.g. "Adidas")
+- `brand_slug` text unique (e.g. "adidas")
+- `brand_logo_url` text nullable
+- `brand_color` text (hex, used for accent theming on consumer page)
+- `contact_name`, `contact_email` text nullable
+- `event_name` text nullable (e.g. "Adidas Summer Run 2026")
+- `event_date` date nullable
+- `status` text default 'active' (active / archived)
+- `created_at` timestamptz
 
-Replace the naive text extraction with **coordinate-based table reconstruction** using PDF.js's `transform` matrix (X/Y positions per text item). Group items by Y-coordinate into rows, sort by X within each row, and output tab-separated values for tabular rows.
+**Modify `products` table** — add two nullable columns:
+- `collaboration_id` uuid nullable (FK to collaborations.id)
+- `is_collaboration` boolean default false
 
-## Changes
+This lets all existing queries keep working (collaboration products are just products with `is_collaboration = true`). The consumer page, layout system, pairings, tech data — everything works unchanged.
 
-### 1. `src/pages/AdminAiUpload.tsx` — Replace `extractTextFromPdf` (lines 437-449)
+## Admin Routes
 
-Replace the current 12-line function with coordinate-aware extraction:
+| Route | Purpose |
+|---|---|
+| `/admin/collaborations` | Collaboration dashboard — list of client brands + their drinks |
+| `/admin/collaborations/:brandSlug` | Single collaboration detail — shows that client's products grid |
+| `/admin/product/:slug` | Existing editor — works for both standard and collab products |
 
-- For each page, get all text items with their `transform[4]` (X) and `transform[5]` (Y) positions
-- Group items by Y-coordinate with ~3px tolerance to form rows
-- Sort rows top-to-bottom (descending Y — PDF coordinate system is bottom-up)
-- Within each row, sort items left-to-right by X
-- If a row has 3+ items → format as **tab-separated** (preserves column alignment)
-- If a row has 1-2 items → join with spaces (normal prose)
-- Add `--- PAGE BREAK ---` between pages
+A top-level mode switcher in the admin header toggles between "Brand Products" and "Collaborations". Both modes share the same product editor; only the dashboard view and product creation flow differ.
 
-This produces output like:
-```
-Grassi / Fat	g/100 ml	0,00
-Carboidrati / Carbohydrate	g/100 ml	10,89
-```
-instead of:
-```
-Grassi / Fat g/100 ml 0,00 Carboidrati / Carbohydrate g/100 ml 10,89
-```
+## Admin UI Changes
 
-### 2. `supabase/functions/analyze-tech-sheet/index.ts` — Add format note to system prompt
+### 1. Header Mode Switcher
+Add two pill buttons in the dashboard header: **"Brand"** (default) and **"Collabs"**. Clicking Collabs navigates to `/admin/collaborations`.
 
-Add a short preamble at the very beginning of the system prompt (before "STEP 1"):
+### 2. Collaborations Dashboard (`/admin/collaborations`)
+- Same visual style as the main dashboard
+- Header: "Collaborations" title + "＋ New Collaboration" button
+- Grid of collaboration cards showing: client logo/name, event name, product count, status badge
+- Click a card → `/admin/collaborations/:brandSlug`
 
-```
-INPUT FORMAT: The document text preserves table structure using tab-separated columns.
-Table rows appear as: Parameter\tMethod\tUnit\tResult\tLOQ\tUncertainty
-Use the tab structure to correctly match each value to its column (Parameter, Unit, Result, etc.).
-```
+### 3. Collaboration Detail Page (`/admin/collaborations/:brandSlug`)
+- Header with client brand logo + name + event info
+- Settings section: edit brand name, logo, color, event details, contact info
+- Product grid: only products where `collaboration_id` matches
+- "＋ New Collab Product" button — opens the same new product modal but pre-sets `collaboration_id` and `is_collaboration = true`, and offers a "Collab" product line option
 
-This tells the AI model to interpret tabs as column delimiters, making extraction far more reliable.
+### 4. Product Editor — Collab Awareness
+When editing a collaboration product, show a small banner at the top: "Collaboration: Adidas · Summer Run 2026" with the client's accent color. No other editor changes needed — all tabs work the same.
 
-### 3. No database or migration changes needed
+### 5. Consumer Page — Co-branding
+When a collaboration product is loaded on `/bottle/:slug`:
+- Fetch the linked collaboration record
+- Show the client brand logo alongside the Classy logo in the hero
+- Apply the client's `brand_color` as an accent override (e.g., hero gradient tint)
+- Optionally show "Created exclusively for [Brand] × Classy Cocktails" in the footer
 
-This is purely a client-side PDF parsing fix + edge function prompt update.
+## Implementation Steps
 
-## Technical Detail
+1. **Migration**: Create `collaborations` table + add `collaboration_id` and `is_collaboration` columns to `products` with RLS policies (public read, authenticated write)
+2. **Collaborations Dashboard page** (`/admin/collaborations`) — list collaborations, create new ones
+3. **Collaboration Detail page** (`/admin/collaborations/:brandSlug`) — edit collab settings + show its products
+4. **Update Dashboard header** — add Brand / Collabs mode switcher pills
+5. **Update New Product modal** — when created from a collab context, set `collaboration_id` and `is_collaboration`
+6. **Update `useProducts` hook** — add a `useCollabProducts(collaborationId)` variant that filters by collaboration
+7. **Update product editor** — show collab banner when product has `collaboration_id`
+8. **Update consumer BottlePage** — fetch collaboration data and render co-branding (logo, accent color, footer line)
+9. **Add routes** to `App.tsx` for `/admin/collaborations` and `/admin/collaborations/:brandSlug`
 
-```typescript
-const extractTextFromPdf = async (pdfFile: File): Promise<string> => {
-  const pdfjsLib = await import('pdfjs-dist');
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-  const arrayBuffer = await pdfFile.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  let fullText = '';
-  const Y_TOLERANCE = 3;
+## Files to Create
+- `src/pages/AdminCollaborations.tsx` — collaborations dashboard
+- `src/pages/AdminCollaborationDetail.tsx` — single collaboration view
+- Migration SQL for `collaborations` table + `products` column additions
 
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    const rowMap = new Map<number, Array<{str: string, x: number}>>();
-
-    for (const item of content.items as any[]) {
-      if (!item.str?.trim()) continue;
-      const y = Math.round(item.transform[5] / Y_TOLERANCE) * Y_TOLERANCE;
-      if (!rowMap.has(y)) rowMap.set(y, []);
-      rowMap.get(y)!.push({ str: item.str, x: item.transform[4] });
-    }
-
-    const sortedRows = Array.from(rowMap.entries())
-      .sort((a, b) => b[0] - a[0])
-      .map(([_, items]) => items.sort((a, b) => a.x - b.x));
-
-    for (const row of sortedRows) {
-      if (row.length >= 3) {
-        fullText += row.map(i => i.str.trim()).join('\t') + '\n';
-      } else {
-        fullText += row.map(i => i.str.trim()).join(' ') + '\n';
-      }
-    }
-    fullText += '\n--- PAGE BREAK ---\n';
-  }
-  return fullText;
-};
-```
+## Files to Modify
+- `src/App.tsx` — add routes
+- `src/pages/AdminDashboard.tsx` — add mode switcher in header
+- `src/pages/AdminProductDetail.tsx` — show collab banner
+- `src/pages/BottlePage.tsx` — co-branding rendering
+- `src/hooks/useProduct.ts` — add collaboration hooks
+- `src/components/consumer/BottleHero.tsx` — show client logo
+- `src/components/consumer/BottleFooter.tsx` — show co-brand line
 
