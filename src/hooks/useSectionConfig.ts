@@ -3,12 +3,23 @@ import { supabase } from '@/integrations/supabase/client';
 
 export interface SectionConfig {
   id?: string;
-  product_id: string;
+  product_id?: string;
   section_key: string;
   sort_order: number;
   is_visible: boolean;
   custom_content: Record<string, any>;
+  block_type: string;
+  block_config: Record<string, any>;
 }
+
+export const BLOCK_TYPES = [
+  { value: 'text', label: 'Text Block', icon: '📝' },
+  { value: 'image_text', label: 'Image + Text', icon: '🖼️' },
+  { value: 'cta', label: 'CTA Button', icon: '🔗' },
+  { value: 'video', label: 'Video Embed', icon: '🎬' },
+  { value: 'spacer', label: 'Spacer / Divider', icon: '➖' },
+  { value: 'custom_html', label: 'Custom HTML', icon: '🧩' },
+] as const;
 
 // Default section definitions with display names and which fields are editable
 export const SECTION_DEFINITIONS = [
@@ -53,11 +64,15 @@ export const DEFAULT_ORDER: Array<{
   sort_order: number;
   is_visible: boolean;
   custom_content: Record<string, any>;
+  block_type: string;
+  block_config: Record<string, any>;
 }> = SECTION_DEFINITIONS.map((s, i) => ({
   section_key: s.key,
   sort_order: i,
   is_visible: true,
   custom_content: {} as Record<string, any>,
+  block_type: 'built_in',
+  block_config: {} as Record<string, any>,
 }));
 
 export function useProductSections(productId: string | undefined) {
@@ -70,20 +85,61 @@ export function useProductSections(productId: string | undefined) {
         .eq('product_id', productId!)
         .order('sort_order', { ascending: true });
       if (error) throw error;
-      return data as SectionConfig[];
+      return (data as any[]).map(d => ({
+        ...d,
+        custom_content: (d.custom_content || {}) as Record<string, any>,
+        block_type: d.block_type || 'built_in',
+        block_config: (d.block_config || {}) as Record<string, any>,
+      })) as SectionConfig[];
     },
     enabled: !!productId,
   });
 }
 
+export function useDefaultLayoutSections() {
+  return useQuery({
+    queryKey: ['default-layout-sections'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('default_layout_sections')
+        .select('*')
+        .order('sort_order', { ascending: true });
+      if (error) throw error;
+      return (data as any[]).map(d => ({
+        ...d,
+        custom_content: (d.custom_content || {}) as Record<string, any>,
+        block_type: d.block_type || 'built_in',
+        block_config: (d.block_config || {}) as Record<string, any>,
+      })) as SectionConfig[];
+    },
+  });
+}
+
 // Merge saved config with defaults — any missing sections get appended at the end
-export function getMergedSections(saved: SectionConfig[] | undefined): Array<{
+export function getMergedSections(
+  saved: SectionConfig[] | undefined,
+  defaults?: SectionConfig[] | undefined,
+): Array<{
   section_key: string;
   sort_order: number;
   is_visible: boolean;
   custom_content: Record<string, any>;
+  block_type: string;
+  block_config: Record<string, any>;
 }> {
-  if (!saved || saved.length === 0) return [...DEFAULT_ORDER];
+  // Use global defaults if available, otherwise hardcoded defaults
+  const baseDefaults = defaults && defaults.length > 0 ? defaults : [...DEFAULT_ORDER];
+
+  if (!saved || saved.length === 0) {
+    return baseDefaults.map((d, i) => ({
+      section_key: d.section_key,
+      sort_order: d.sort_order ?? i,
+      is_visible: d.is_visible,
+      custom_content: (d.custom_content || {}) as Record<string, any>,
+      block_type: d.block_type || 'built_in',
+      block_config: (d.block_config || {}) as Record<string, any>,
+    }));
+  }
 
   const savedMap = new Map(saved.map(s => [s.section_key, s]));
   const result: typeof DEFAULT_ORDER = [];
@@ -96,14 +152,23 @@ export function getMergedSections(saved: SectionConfig[] | undefined): Array<{
       sort_order: s.sort_order,
       is_visible: s.is_visible,
       custom_content: (s.custom_content || {}) as Record<string, any>,
+      block_type: s.block_type || 'built_in',
+      block_config: (s.block_config || {}) as Record<string, any>,
     });
   }
 
-  // Then add any missing defaults
-  for (const def of DEFAULT_ORDER) {
+  // Then add any missing defaults from base
+  for (const def of baseDefaults) {
     if (!savedMap.has(def.section_key)) {
       maxOrder++;
-      result.push({ ...def, sort_order: maxOrder });
+      result.push({
+        section_key: def.section_key,
+        sort_order: maxOrder,
+        is_visible: def.is_visible,
+        custom_content: (def.custom_content || {}) as Record<string, any>,
+        block_type: def.block_type || 'built_in',
+        block_config: (def.block_config || {}) as Record<string, any>,
+      });
     }
   }
 
