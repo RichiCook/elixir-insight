@@ -526,6 +526,22 @@ export default function AdminImageLibrary() {
             </div>
           </div>
         )}
+
+        {/* Bulk delete confirmation */}
+        {confirmBulkDelete && (
+          <div className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center" onClick={() => setConfirmBulkDelete(false)}>
+            <div className="bg-card rounded-lg border border-border p-6 max-w-sm" onClick={e => e.stopPropagation()}>
+              <h3 className="text-sm font-admin font-semibold text-foreground mb-2">Delete {selectedIds.size} Images?</h3>
+              <p className="text-xs text-muted-foreground mb-4">This will permanently remove all selected images and their attributes. This action cannot be undone.</p>
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" size="sm" onClick={() => setConfirmBulkDelete(false)}>Cancel</Button>
+                <Button variant="destructive" size="sm" onClick={bulkDelete} disabled={bulkDeleting}>
+                  {bulkDeleting ? 'Deleting…' : `Delete ${selectedIds.size} Images`}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
