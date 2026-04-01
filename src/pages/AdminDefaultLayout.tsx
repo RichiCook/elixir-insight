@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { GripVertical, ChevronDown, ChevronRight, Eye, EyeOff, Plus, Trash2 } from 'lucide-react';
+import { GripVertical, ChevronDown, ChevronRight, Eye, EyeOff, Plus, Trash2, Image, X } from 'lucide-react';
 import {
   useDefaultLayoutSections,
   DEFAULT_ORDER,
