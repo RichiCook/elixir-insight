@@ -372,6 +372,13 @@ export default function AdminCollaborationDetail() {
           </div>
         </div>
       )}
+
+      {showLogoPicker && (
+        <ImagePickerDialog
+          onSelect={(url) => { set('brand_logo_url', url); setShowLogoPicker(false); }}
+          onClose={() => setShowLogoPicker(false)}
+        />
+      )}
     </div>
   );
 }
