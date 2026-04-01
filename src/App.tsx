@@ -102,6 +102,23 @@ function AppInner() {
           }
         />
 
+        <Route
+          path="/admin/collaborations"
+          element={
+            <ProtectedRoute>
+              <AdminCollaborations />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/collaborations/:brandSlug"
+          element={
+            <ProtectedRoute>
+              <AdminCollaborationDetail />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Root redirect */}
         <Route path="/" element={<Navigate to="/bottle/negroni" replace />} />
 
