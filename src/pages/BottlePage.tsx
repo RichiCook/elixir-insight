@@ -134,28 +134,30 @@ export default function BottlePage() {
       <div className="mx-auto max-w-bottle min-h-screen bg-cc-white shadow-xl">
         {/* Top nav with logo — hidden in preview mode */}
         {!isPreview && (
-          <div className="flex items-center gap-2">
-            <ClassyLogo size={24} />
-            <span className="font-sans-consumer text-[10px] tracking-[0.3em] uppercase text-cc-text-lt">
-              Classy Cocktails
-            </span>
+          <div className="flex items-center justify-between px-5 pt-4">
+            <div className="flex items-center gap-2">
+              <ClassyLogo size={24} />
+              <span className="font-sans-consumer text-[10px] tracking-[0.3em] uppercase text-cc-text-lt">
+                Classy Cocktails
+              </span>
+            </div>
+            <div className="flex gap-2">
+              {LANGUAGES.map((l) => (
+                <button
+                  key={l}
+                  onClick={() => handleLangSwitch(l)}
+                  className={`font-sans-consumer text-xs tracking-widest px-2 py-1 transition-colors ${
+                    lang === l
+                      ? 'text-cc-gold font-medium'
+                      : 'text-cc-text-lt hover:text-cc-text-md'
+                  }`}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="flex gap-2">
-            {LANGUAGES.map((l) => (
-              <button
-                key={l}
-                onClick={() => handleLangSwitch(l)}
-                className={`font-sans-consumer text-xs tracking-widest px-2 py-1 transition-colors ${
-                  lang === l
-                    ? 'text-cc-gold font-medium'
-                    : 'text-cc-text-lt hover:text-cc-text-md'
-                }`}
-              >
-                {l}
-              </button>
-            ))}
-          </div>
-        </div>
+        )}
 
         <div ref={heroRef}>
           <BottleHero product={product} heroImageUrl={heroImageUrl} />
