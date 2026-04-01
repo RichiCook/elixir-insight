@@ -229,8 +229,16 @@ export default function AdminCollaborationDetail() {
               <Input value={form.brand_name || ''} onChange={(e) => set('brand_name', e.target.value)} />
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground mb-1.5 block">Brand Logo URL</Label>
-              <Input value={form.brand_logo_url || ''} onChange={(e) => set('brand_logo_url', e.target.value)} placeholder="https://..." />
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Brand Logo</Label>
+              <div className="flex gap-2 items-center">
+                {form.brand_logo_url && (
+                  <img src={form.brand_logo_url} alt="" className="w-10 h-10 rounded border border-border object-contain bg-white" />
+                )}
+                <Input value={form.brand_logo_url || ''} onChange={(e) => set('brand_logo_url', e.target.value)} placeholder="https://..." className="flex-1" />
+                <Button type="button" variant="outline" size="sm" onClick={() => setShowLogoPicker(true)} className="shrink-0">
+                  <ImageIcon className="w-3.5 h-3.5 mr-1" /> Browse
+                </Button>
+              </div>
             </div>
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Brand Color</Label>
