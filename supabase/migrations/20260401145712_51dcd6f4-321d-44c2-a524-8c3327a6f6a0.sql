@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS product_images_product_image_section_idx ON public.product_images (product_id, image_id, section);
