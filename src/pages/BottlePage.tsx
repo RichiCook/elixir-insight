@@ -35,7 +35,10 @@ const LANGUAGES = ['EN', 'IT', 'DE', 'FR'] as const;
 
 export default function BottlePage() {
   const { slug } = useParams<{ slug: string }>();
-  const [lang, setLang] = useState<string>('EN');
+  const [searchParams] = useSearchParams();
+  const isPreview = searchParams.get('preview') === 'true';
+  const initialLang = searchParams.get('lang') || 'EN';
+  const [lang, setLang] = useState<string>(initialLang);
   const [fullscreenImage, setFullscreenImage] = useState<{ url: string; alt: string } | null>(null);
 
   const { data: product, isLoading } = useProduct(slug || '');
