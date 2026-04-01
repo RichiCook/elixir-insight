@@ -48,7 +48,12 @@ export const SECTION_DEFINITIONS = [
   ]},
 ] as const;
 
-export const DEFAULT_ORDER = SECTION_DEFINITIONS.map((s, i) => ({
+export const DEFAULT_ORDER: Array<{
+  section_key: string;
+  sort_order: number;
+  is_visible: boolean;
+  custom_content: Record<string, any>;
+}> = SECTION_DEFINITIONS.map((s, i) => ({
   section_key: s.key,
   sort_order: i,
   is_visible: true,
