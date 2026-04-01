@@ -4,6 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { BLOCK_TYPES } from '@/hooks/useSectionConfig';
+import { ImagePickerDialog } from '@/components/admin/ImagePickerDialog';
+import { Image, X } from 'lucide-react';
 
 interface Props {
   onAdd: (block: {
@@ -19,9 +21,11 @@ export function AddBlockDialog({ onAdd, onClose }: Props) {
   const [step, setStep] = useState<'pick' | 'configure'>('pick');
   const [selectedType, setSelectedType] = useState('');
   const [label, setLabel] = useState('');
-  const [config, setConfig] = useState<Record<string, string>>({});
+  const [config, setConfig] = useState<Record<string, any>>({});
+  const [showImagePicker, setShowImagePicker] = useState(false);
+  const [imagePickerTarget, setImagePickerTarget] = useState<'single' | 'carousel'>('single');
 
-  const setConfigField = (k: string, v: string) => setConfig(prev => ({ ...prev, [k]: v }));
+  const setConfigField = (k: string, v: any) => setConfig(prev => ({ ...prev, [k]: v }));
 
   const handleAdd = () => {
     if (!label.trim()) return;
@@ -33,6 +37,11 @@ export function AddBlockDialog({ onAdd, onClose }: Props) {
       custom_content: {},
     });
     onClose();
+  };
+
+  const openImagePicker = (target: 'single' | 'carousel') => {
+    setImagePickerTarget(target);
+    setShowImagePicker(true);
   };
 
   return (
@@ -85,8 +94,20 @@ export function AddBlockDialog({ onAdd, onClose }: Props) {
             {selectedType === 'image_text' && (
               <>
                 <div>
-                  <Label className="text-[10px] text-muted-foreground mb-1 block">Image URL</Label>
-                  <Input value={config.image_url || ''} onChange={(e) => setConfigField('image_url', e.target.value)} className="h-8 text-xs" placeholder="https://..." />
+                  <Label className="text-[10px] text-muted-foreground mb-1 block">Image</Label>
+                  <div className="flex items-center gap-2">
+                    {config.image_url ? (
+                      <div className="relative w-16 h-16 rounded border border-border overflow-hidden shrink-0">
+                        <img src={config.image_url} alt="" className="w-full h-full object-cover" />
+                        <button onClick={() => setConfigField('image_url', '')} className="absolute top-0 right-0 bg-black/60 p-0.5 rounded-bl">
+                          <X className="w-3 h-3 text-white" />
+                        </button>
+                      </div>
+                    ) : null}
+                    <Button variant="outline" size="sm" onClick={() => openImagePicker('single')} className="text-xs h-8">
+                      <Image className="w-3 h-3 mr-1" /> Choose Image
+                    </Button>
+                  </div>
                 </div>
                 <div>
                   <Label className="text-[10px] text-muted-foreground mb-1 block">Heading</Label>
@@ -95,6 +116,38 @@ export function AddBlockDialog({ onAdd, onClose }: Props) {
                 <div>
                   <Label className="text-[10px] text-muted-foreground mb-1 block">Body Text</Label>
                   <Textarea value={config.body || ''} onChange={(e) => setConfigField('body', e.target.value)} rows={3} className="text-xs" />
+                </div>
+              </>
+            )}
+
+            {selectedType === 'image_carousel' && (
+              <>
+                <div>
+                  <Label className="text-[10px] text-muted-foreground mb-1 block">Images</Label>
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {(config.images as string[] || []).map((url: string, i: number) => (
+                      <div key={i} className="relative w-14 h-14 rounded border border-border overflow-hidden">
+                        <img src={url} alt="" className="w-full h-full object-cover" />
+                        <button
+                          onClick={() => setConfigField('images', (config.images as string[]).filter((_: string, j: number) => j !== i))}
+                          className="absolute top-0 right-0 bg-black/60 p-0.5 rounded-bl"
+                        >
+                          <X className="w-2.5 h-2.5 text-white" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => openImagePicker('carousel')} className="text-xs h-8">
+                    <Image className="w-3 h-3 mr-1" /> Add Images
+                  </Button>
+                </div>
+                <div>
+                  <Label className="text-[10px] text-muted-foreground mb-1 block">Heading (optional)</Label>
+                  <Input value={config.heading || ''} onChange={(e) => setConfigField('heading', e.target.value)} className="h-8 text-xs" />
+                </div>
+                <div>
+                  <Label className="text-[10px] text-muted-foreground mb-1 block">Auto-play (seconds, 0 = off)</Label>
+                  <Input type="number" value={config.autoplay || '0'} onChange={(e) => setConfigField('autoplay', e.target.value)} className="h-8 text-xs" />
                 </div>
               </>
             )}
@@ -148,6 +201,27 @@ export function AddBlockDialog({ onAdd, onClose }: Props) {
           <Button variant="ghost" onClick={onClose} className="w-full">Cancel</Button>
         )}
       </div>
+
+      {showImagePicker && imagePickerTarget === 'single' && (
+        <ImagePickerDialog
+          onSelect={(url) => {
+            setConfigField('image_url', url);
+            setShowImagePicker(false);
+          }}
+          onClose={() => setShowImagePicker(false)}
+        />
+      )}
+      {showImagePicker && imagePickerTarget === 'carousel' && (
+        <ImagePickerDialog
+          multiple
+          onSelect={() => {}}
+          onSelectMultiple={(urls) => {
+            setConfigField('images', [...(config.images || []), ...urls]);
+            setShowImagePicker(false);
+          }}
+          onClose={() => setShowImagePicker(false)}
+        />
+      )}
     </div>
   );
 }
