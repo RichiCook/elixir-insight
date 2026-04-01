@@ -595,7 +595,7 @@ const SECTIONS = ['hero', 'editorial', 'serve_moment', 'pairing', 'gallery'] as 
 
 function ImagesTab({ productId }: { productId: string }) {
   const { data: productImages, refetch } = useProductImages(productId);
-  const { data: allImages } = useApprovedBrandImages();
+  
   const queryClient = useQueryClient();
   const [adding, setAdding] = useState(false);
   const [selectedSection, setSelectedSection] = useState<string>('hero');
