@@ -312,6 +312,19 @@ export default function AdminCollaborationDetail() {
             <h2 className="font-display text-xl text-foreground">New Collab Product</h2>
             <p className="text-xs text-muted-foreground">For {collab.brand_name}{collab.event_name ? ` · ${collab.event_name}` : ''}</p>
             <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Base on existing product</Label>
+              <Select value={newProduct.baseProductId || '_none'} onValueChange={handleBaseProductChange}>
+                <SelectTrigger><SelectValue placeholder="Start from scratch" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">Start from scratch</SelectItem>
+                  {mainProducts?.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.name} ({p.line})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground mt-1">Copies all data: translations, tech specs, pairings, layout, etc.</p>
+            </div>
+            <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Product Name *</Label>
               <Input value={newProduct.name} onChange={(e) => {
                 const name = e.target.value;
