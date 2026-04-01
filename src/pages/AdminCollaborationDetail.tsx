@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { useProducts } from '@/hooks/useProduct';
 
 function useCollaboration(brandSlug: string) {
   return useQuery({
@@ -58,8 +59,9 @@ export default function AdminCollaborationDetail() {
   const [form, setForm] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
   const [showNewProduct, setShowNewProduct] = useState(false);
-  const [newProduct, setNewProduct] = useState({ name: '', slug: '', line: 'Collab', abv: '' });
+  const [newProduct, setNewProduct] = useState({ name: '', slug: '', line: 'Collab', abv: '', baseProductId: '' });
   const [creating, setCreating] = useState(false);
+  const { data: mainProducts } = useProducts();
 
   useEffect(() => {
     if (collab) setForm({ ...collab });
@@ -84,30 +86,88 @@ export default function AdminCollaborationDetail() {
     queryClient.invalidateQueries({ queryKey: ['collaboration', brandSlug] });
   };
 
+  const handleBaseProductChange = (productId: string) => {
+    if (productId === '_none') {
+      setNewProduct((p) => ({ ...p, baseProductId: '' }));
+      return;
+    }
+    const base = mainProducts?.find((p) => p.id === productId);
+    setNewProduct((p) => ({
+      ...p,
+      baseProductId: productId,
+      line: base?.line || p.line,
+      abv: base?.abv || p.abv,
+    }));
+  };
+
   const handleCreateProduct = async () => {
     if (!collab || !newProduct.name || !newProduct.slug || !newProduct.abv) {
       toast.error('Name, slug, and ABV are required');
       return;
     }
     setCreating(true);
-    const { data, error } = await supabase.from('products').insert({
-      name: newProduct.name,
-      slug: newProduct.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
-      line: newProduct.line,
-      abv: newProduct.abv,
-      collaboration_id: collab.id,
-      is_collaboration: true,
-    }).select('slug').single();
-    setCreating(false);
-    if (error) {
-      toast.error(error.message.includes('duplicate') ? 'Slug already exists' : 'Failed to create');
-      return;
+    try {
+      const baseId = newProduct.baseProductId;
+      const baseProduct = baseId ? mainProducts?.find((p) => p.id === baseId) : null;
+
+      const insertPayload: Record<string, any> = {
+        name: newProduct.name,
+        slug: newProduct.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+        line: newProduct.line,
+        abv: newProduct.abv,
+        collaboration_id: collab.id,
+        is_collaboration: true,
+      };
+      if (baseProduct) {
+        const copyFields = ['serving', 'spirit', 'garnish', 'glass', 'ice', 'flavour', 'liquid_color', 'food_pairing', 'occasion', 'uk_units', 'allergens_summary', 'bottle_color', 'label_color', 'hero_bg'] as const;
+        for (const f of copyFields) {
+          if (baseProduct[f]) insertPayload[f] = baseProduct[f];
+        }
+      }
+
+      const { data, error } = await supabase.from('products').insert(insertPayload as any).select('id, slug').single();
+      if (error) throw error;
+      const newId = data.id;
+
+      if (baseId) {
+        const clone = async (table: string, multi = true) => {
+          const q = supabase.from(table as any).select('*').eq('product_id', baseId);
+          if (multi) {
+            const { data: rows } = await q;
+            if (rows?.length) {
+              await supabase.from(table as any).insert(
+                (rows as any[]).map(({ id, product_id, ...rest }: any) => ({ ...rest, product_id: newId }))
+              );
+            }
+          } else {
+            const { data: row } = await (q as any).single();
+            if (row) {
+              const { id, product_id, ...rest } = row as any;
+              await supabase.from(table as any).insert({ ...rest, product_id: newId });
+            }
+          }
+        };
+        await Promise.all([
+          clone('product_translations'),
+          clone('product_technical_data', false),
+          clone('product_composition'),
+          clone('product_serve_moments'),
+          clone('product_ai_pairings'),
+          clone('product_ean_codes'),
+          clone('product_sections'),
+        ]);
+      }
+
+      toast.success(baseId ? 'Product created from base template' : 'Product created');
+      queryClient.invalidateQueries({ queryKey: ['collab-products', collab.id] });
+      setShowNewProduct(false);
+      setNewProduct({ name: '', slug: '', line: 'Collab', abv: '', baseProductId: '' });
+      navigate(`/admin/product/${data.slug}`);
+    } catch (err: any) {
+      toast.error(err.message?.includes('duplicate') ? 'Slug already exists' : 'Failed to create');
+    } finally {
+      setCreating(false);
     }
-    toast.success('Product created');
-    queryClient.invalidateQueries({ queryKey: ['collab-products', collab.id] });
-    setShowNewProduct(false);
-    setNewProduct({ name: '', slug: '', line: 'Collab', abv: '' });
-    navigate(`/admin/product/${data.slug}`);
   };
 
   if (isLoading) {
@@ -251,6 +311,19 @@ export default function AdminCollaborationDetail() {
           <div className="bg-card rounded-lg border border-border p-6 w-full max-w-md space-y-4" onClick={(e) => e.stopPropagation()}>
             <h2 className="font-display text-xl text-foreground">New Collab Product</h2>
             <p className="text-xs text-muted-foreground">For {collab.brand_name}{collab.event_name ? ` · ${collab.event_name}` : ''}</p>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Base on existing product</Label>
+              <Select value={newProduct.baseProductId || '_none'} onValueChange={handleBaseProductChange}>
+                <SelectTrigger><SelectValue placeholder="Start from scratch" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_none">Start from scratch</SelectItem>
+                  {mainProducts?.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.name} ({p.line})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground mt-1">Copies all data: translations, tech specs, pairings, layout, etc.</p>
+            </div>
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Product Name *</Label>
               <Input value={newProduct.name} onChange={(e) => {
