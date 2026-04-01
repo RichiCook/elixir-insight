@@ -11,7 +11,7 @@ import {
 } from '@/hooks/useProduct';
 import { useProductImages } from '@/hooks/useImages';
 import { usePageViewTracking, useSectionTracking, trackInteraction } from '@/hooks/useTracking';
-import { useProductSections, getMergedSections } from '@/hooks/useSectionConfig';
+import { useProductSections, useDefaultLayoutSections, getMergedSections } from '@/hooks/useSectionConfig';
 import { BottleHero } from '@/components/consumer/BottleHero';
 import { GenuineCard } from '@/components/consumer/GenuineCard';
 import { AbvDisplay } from '@/components/consumer/AbvDisplay';
