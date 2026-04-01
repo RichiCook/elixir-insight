@@ -8,6 +8,7 @@ import {
   useProductTechnicalData,
   useProductServeMoments,
   useProductAiPairings,
+  useCollaboration,
 } from '@/hooks/useProduct';
 import { useProductImages } from '@/hooks/useImages';
 import { usePageViewTracking, useSectionTracking, trackInteraction } from '@/hooks/useTracking';
