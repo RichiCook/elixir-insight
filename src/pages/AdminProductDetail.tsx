@@ -1054,6 +1054,9 @@ export default function AdminProductDetail() {
           </Tabs>
         </div>
       </main>
+
+      {/* Live Preview Panel — wide screens only */}
+      {isWideScreen && <LivePreviewPanel slug={product.slug} />}
     </div>
   );
 }
