@@ -86,30 +86,99 @@ export default function AdminCollaborationDetail() {
     queryClient.invalidateQueries({ queryKey: ['collaboration', brandSlug] });
   };
 
+  const handleBaseProductChange = (productId: string) => {
+    if (productId === '_none') {
+      setNewProduct((p) => ({ ...p, baseProductId: '' }));
+      return;
+    }
+    const base = mainProducts?.find((p) => p.id === productId);
+    setNewProduct((p) => ({
+      ...p,
+      baseProductId: productId,
+      line: base?.line || p.line,
+      abv: base?.abv || p.abv,
+    }));
+  };
+
   const handleCreateProduct = async () => {
     if (!collab || !newProduct.name || !newProduct.slug || !newProduct.abv) {
       toast.error('Name, slug, and ABV are required');
       return;
     }
     setCreating(true);
-    const { data, error } = await supabase.from('products').insert({
-      name: newProduct.name,
-      slug: newProduct.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
-      line: newProduct.line,
-      abv: newProduct.abv,
-      collaboration_id: collab.id,
-      is_collaboration: true,
-    }).select('slug').single();
-    setCreating(false);
-    if (error) {
-      toast.error(error.message.includes('duplicate') ? 'Slug already exists' : 'Failed to create');
-      return;
+    try {
+      const baseId = newProduct.baseProductId;
+      const baseProduct = baseId ? mainProducts?.find((p) => p.id === baseId) : null;
+
+      const insertPayload: Record<string, any> = {
+        name: newProduct.name,
+        slug: newProduct.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+        line: newProduct.line,
+        abv: newProduct.abv,
+        collaboration_id: collab.id,
+        is_collaboration: true,
+      };
+      if (baseProduct) {
+        const copyFields = ['serving', 'spirit', 'garnish', 'glass', 'ice', 'flavour', 'liquid_color', 'food_pairing', 'occasion', 'uk_units', 'allergens_summary', 'bottle_color', 'label_color', 'hero_bg'] as const;
+        for (const f of copyFields) {
+          if (baseProduct[f]) insertPayload[f] = baseProduct[f];
+        }
+      }
+
+      const { data, error } = await supabase.from('products').insert(insertPayload).select('id, slug').single();
+      if (error) throw error;
+      const newId = data.id;
+
+      if (baseId) {
+        const cloneOps: Promise<any>[] = [];
+        cloneOps.push(
+          supabase.from('product_translations').select('*').eq('product_id', baseId).then(({ data: rows }) => {
+            if (rows?.length) return supabase.from('product_translations').insert(rows.map(({ id, product_id, ...rest }) => ({ ...rest, product_id: newId })));
+          })
+        );
+        cloneOps.push(
+          supabase.from('product_technical_data').select('*').eq('product_id', baseId).single().then(({ data: row }) => {
+            if (row) { const { id, product_id, ...rest } = row; return supabase.from('product_technical_data').insert({ ...rest, product_id: newId }); }
+          })
+        );
+        cloneOps.push(
+          supabase.from('product_composition').select('*').eq('product_id', baseId).then(({ data: rows }) => {
+            if (rows?.length) return supabase.from('product_composition').insert(rows.map(({ id, product_id, ...rest }) => ({ ...rest, product_id: newId })));
+          })
+        );
+        cloneOps.push(
+          supabase.from('product_serve_moments').select('*').eq('product_id', baseId).then(({ data: rows }) => {
+            if (rows?.length) return supabase.from('product_serve_moments').insert(rows.map(({ id, product_id, ...rest }) => ({ ...rest, product_id: newId })));
+          })
+        );
+        cloneOps.push(
+          supabase.from('product_ai_pairings').select('*').eq('product_id', baseId).then(({ data: rows }) => {
+            if (rows?.length) return supabase.from('product_ai_pairings').insert(rows.map(({ id, product_id, ...rest }) => ({ ...rest, product_id: newId })));
+          })
+        );
+        cloneOps.push(
+          supabase.from('product_ean_codes').select('*').eq('product_id', baseId).then(({ data: rows }) => {
+            if (rows?.length) return supabase.from('product_ean_codes').insert(rows.map(({ id, product_id, ...rest }) => ({ ...rest, product_id: newId })));
+          })
+        );
+        cloneOps.push(
+          supabase.from('product_sections').select('*').eq('product_id', baseId).then(({ data: rows }) => {
+            if (rows?.length) return supabase.from('product_sections').insert(rows.map(({ id, product_id, ...rest }) => ({ ...rest, product_id: newId })));
+          })
+        );
+        await Promise.all(cloneOps);
+      }
+
+      toast.success(baseId ? 'Product created from base template' : 'Product created');
+      queryClient.invalidateQueries({ queryKey: ['collab-products', collab.id] });
+      setShowNewProduct(false);
+      setNewProduct({ name: '', slug: '', line: 'Collab', abv: '', baseProductId: '' });
+      navigate(`/admin/product/${data.slug}`);
+    } catch (err: any) {
+      toast.error(err.message?.includes('duplicate') ? 'Slug already exists' : 'Failed to create');
+    } finally {
+      setCreating(false);
     }
-    toast.success('Product created');
-    queryClient.invalidateQueries({ queryKey: ['collab-products', collab.id] });
-    setShowNewProduct(false);
-    setNewProduct({ name: '', slug: '', line: 'Collab', abv: '' });
-    navigate(`/admin/product/${data.slug}`);
   };
 
   if (isLoading) {
