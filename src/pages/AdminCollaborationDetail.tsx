@@ -130,43 +130,32 @@ export default function AdminCollaborationDetail() {
       const newId = data.id;
 
       if (baseId) {
-        const cloneOps: Promise<any>[] = [];
-        cloneOps.push(
-          supabase.from('product_translations').select('*').eq('product_id', baseId).then(({ data: rows }) => {
-            if (rows?.length) return supabase.from('product_translations').insert(rows.map(({ id, product_id, ...rest }) => ({ ...rest, product_id: newId })));
-          })
-        );
-        cloneOps.push(
-          supabase.from('product_technical_data').select('*').eq('product_id', baseId).single().then(({ data: row }) => {
-            if (row) { const { id, product_id, ...rest } = row; return supabase.from('product_technical_data').insert({ ...rest, product_id: newId }); }
-          })
-        );
-        cloneOps.push(
-          supabase.from('product_composition').select('*').eq('product_id', baseId).then(({ data: rows }) => {
-            if (rows?.length) return supabase.from('product_composition').insert(rows.map(({ id, product_id, ...rest }) => ({ ...rest, product_id: newId })));
-          })
-        );
-        cloneOps.push(
-          supabase.from('product_serve_moments').select('*').eq('product_id', baseId).then(({ data: rows }) => {
-            if (rows?.length) return supabase.from('product_serve_moments').insert(rows.map(({ id, product_id, ...rest }) => ({ ...rest, product_id: newId })));
-          })
-        );
-        cloneOps.push(
-          supabase.from('product_ai_pairings').select('*').eq('product_id', baseId).then(({ data: rows }) => {
-            if (rows?.length) return supabase.from('product_ai_pairings').insert(rows.map(({ id, product_id, ...rest }) => ({ ...rest, product_id: newId })));
-          })
-        );
-        cloneOps.push(
-          supabase.from('product_ean_codes').select('*').eq('product_id', baseId).then(({ data: rows }) => {
-            if (rows?.length) return supabase.from('product_ean_codes').insert(rows.map(({ id, product_id, ...rest }) => ({ ...rest, product_id: newId })));
-          })
-        );
-        cloneOps.push(
-          supabase.from('product_sections').select('*').eq('product_id', baseId).then(({ data: rows }) => {
-            if (rows?.length) return supabase.from('product_sections').insert(rows.map(({ id, product_id, ...rest }) => ({ ...rest, product_id: newId })));
-          })
-        );
-        await Promise.all(cloneOps);
+        const clone = async (table: string, multi = true) => {
+          const q = supabase.from(table as any).select('*').eq('product_id', baseId);
+          if (multi) {
+            const { data: rows } = await q;
+            if (rows?.length) {
+              await supabase.from(table as any).insert(
+                (rows as any[]).map(({ id, product_id, ...rest }: any) => ({ ...rest, product_id: newId }))
+              );
+            }
+          } else {
+            const { data: row } = await (q as any).single();
+            if (row) {
+              const { id, product_id, ...rest } = row as any;
+              await supabase.from(table as any).insert({ ...rest, product_id: newId });
+            }
+          }
+        };
+        await Promise.all([
+          clone('product_translations'),
+          clone('product_technical_data', false),
+          clone('product_composition'),
+          clone('product_serve_moments'),
+          clone('product_ai_pairings'),
+          clone('product_ean_codes'),
+          clone('product_sections'),
+        ]);
       }
 
       toast.success(baseId ? 'Product created from base template' : 'Product created');
