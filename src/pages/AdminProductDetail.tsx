@@ -8,6 +8,7 @@ import {
   useProductTranslations,
   useProductTechnicalData,
   useProductEanCodes,
+  useProductAiPairings,
 } from '@/hooks/useProduct';
 import { useProductImages, useApprovedBrandImages } from '@/hooks/useImages';
 import { Button } from '@/components/ui/button';
