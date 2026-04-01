@@ -1005,13 +1005,15 @@ export default function AdminProductDetail() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <a
-              href={`/bottle/${product.slug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button variant="outline" size="sm">Preview ↗</Button>
-            </a>
+            {!isWideScreen && (
+              <a
+                href={`/bottle/${product.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button variant="outline" size="sm">Preview ↗</Button>
+              </a>
+            )}
           </div>
         </header>
 
