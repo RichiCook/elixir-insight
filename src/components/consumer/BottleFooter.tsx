@@ -13,10 +13,10 @@ export function BottleFooter({ product, customContent }: Props) {
   return (
     <footer className="px-6 py-8 border-t border-cc-border text-center">
       <p className="font-display text-sm italic text-cc-text-lt mb-1">
-        classycocktails.com
+        {websiteText}
       </p>
       <p className="font-sans-consumer text-[10px] tracking-[0.2em] uppercase text-cc-text-lt">
-        Digital Nutritional Passport
+        {passportLabel}
       </p>
       {product.ean_int && (
         <p className="font-sans-consumer text-[10px] text-cc-text-lt mt-2">
