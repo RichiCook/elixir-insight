@@ -24,6 +24,7 @@ import { toast } from 'sonner';
 import { Plus, Trash2, GripVertical, Smartphone, RefreshCw } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { LayoutTab } from '@/components/admin/LayoutTab';
+import { ImagePickerDialog } from '@/components/admin/ImagePickerDialog';
 
 function getCompletenessColor(val: number) {
   if (val < 40) return '#a04040';
