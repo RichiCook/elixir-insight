@@ -4,6 +4,7 @@ interface Props {
   line: string;
   bottleColor: string | null;
   editorialImageUrl?: string | null;
+  customContent?: Record<string, any>;
 }
 
 function getContent(line: string) {
@@ -33,9 +34,17 @@ function darkenHex(hex: string): string {
   return `rgb(${r},${g},${b})`;
 }
 
-export function EditorialBlock({ line, bottleColor, editorialImageUrl }: Props) {
-  const { title, body } = getContent(line);
+export function EditorialBlock({ line, bottleColor, editorialImageUrl, customContent }: Props) {
+  const defaults = getContent(line);
   const bg = darkenHex(bottleColor || '#2a2a2a');
+
+  // Use custom content if provided, otherwise fall back to defaults
+  const hasCustom = customContent && (customContent.heading || customContent.body);
+  const lineLabel = customContent?.line_label || `${line} Line`;
+  const title = hasCustom && customContent.heading
+    ? <>{customContent.heading.replace(customContent.heading_accent || '', '')} {customContent.heading_accent && <em className="italic text-cc-gold">{customContent.heading_accent}</em>}</>
+    : defaults.title;
+  const body = (hasCustom && customContent.body) || defaults.body;
 
   return (
     <section
@@ -64,7 +73,7 @@ export function EditorialBlock({ line, bottleColor, editorialImageUrl }: Props) 
       />
       <div className="absolute bottom-0 left-0 right-0 p-5 pb-6 z-10">
         <p className="font-sans-consumer text-[9px] tracking-[0.18em] uppercase mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>
-          {line} Line
+          {lineLabel}
         </p>
         <h2 className="font-display text-[28px] font-normal text-white leading-[1.15] mb-4">
           {title}

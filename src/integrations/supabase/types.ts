@@ -502,6 +502,41 @@ export type Database = {
           },
         ]
       }
+      product_sections: {
+        Row: {
+          custom_content: Json | null
+          id: string
+          is_visible: boolean
+          product_id: string
+          section_key: string
+          sort_order: number
+        }
+        Insert: {
+          custom_content?: Json | null
+          id?: string
+          is_visible?: boolean
+          product_id: string
+          section_key: string
+          sort_order?: number
+        }
+        Update: {
+          custom_content?: Json | null
+          id?: string
+          is_visible?: boolean
+          product_id?: string
+          section_key?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_sections_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_serve_moments: {
         Row: {
           background_color: string | null

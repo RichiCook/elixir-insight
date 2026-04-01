@@ -22,6 +22,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from 'sonner';
 import { Plus, Trash2, GripVertical, Smartphone, RefreshCw } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { LayoutTab } from '@/components/admin/LayoutTab';
 
 function getCompletenessColor(val: number) {
   if (val < 40) return '#a04040';
@@ -1026,6 +1027,7 @@ export default function AdminProductDetail() {
               <TabsTrigger value="ean">EAN Codes</TabsTrigger>
               <TabsTrigger value="images">Images</TabsTrigger>
               <TabsTrigger value="pairings">Pairings</TabsTrigger>
+              <TabsTrigger value="layout">Layout</TabsTrigger>
             </TabsList>
 
             <TabsContent value="general">
@@ -1050,6 +1052,10 @@ export default function AdminProductDetail() {
 
             <TabsContent value="pairings">
               <PairingsTab productId={product.id} />
+            </TabsContent>
+
+            <TabsContent value="layout">
+              <LayoutTab productId={product.id} onSave={invalidateProduct} />
             </TabsContent>
           </Tabs>
         </div>
