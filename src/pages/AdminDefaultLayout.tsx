@@ -64,7 +64,7 @@ export default function AdminDefaultLayout() {
     ));
   };
 
-  const updateConfig = (index: number, fieldKey: string, value: string) => {
+  const updateConfig = (index: number, fieldKey: string, value: any) => {
     setSections(prev => prev.map((s, i) =>
       i === index ? { ...s, block_config: { ...s.block_config, [fieldKey]: value } } : s
     ));
