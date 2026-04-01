@@ -15,6 +15,7 @@ import AdminImageLibrary from '@/pages/AdminImageLibrary';
 import AdminAnalytics from '@/pages/AdminAnalytics';
 import AdminActivations from '@/pages/AdminActivations';
 import AdminActivationEditor from '@/pages/AdminActivationEditor';
+import AdminDefaultLayout from '@/pages/AdminDefaultLayout';
 import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient();
