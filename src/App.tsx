@@ -16,6 +16,8 @@ import AdminAnalytics from '@/pages/AdminAnalytics';
 import AdminActivations from '@/pages/AdminActivations';
 import AdminActivationEditor from '@/pages/AdminActivationEditor';
 import AdminDefaultLayout from '@/pages/AdminDefaultLayout';
+import AdminCollaborations from '@/pages/AdminCollaborations';
+import AdminCollaborationDetail from '@/pages/AdminCollaborationDetail';
 import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient();
@@ -96,6 +98,23 @@ function AppInner() {
           element={
             <ProtectedRoute>
               <AdminActivationEditor />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/collaborations"
+          element={
+            <ProtectedRoute>
+              <AdminCollaborations />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/collaborations/:brandSlug"
+          element={
+            <ProtectedRoute>
+              <AdminCollaborationDetail />
             </ProtectedRoute>
           }
         />

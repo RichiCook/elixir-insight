@@ -95,6 +95,13 @@ export default function AdminDashboard() {
       </header>
 
       <main className="p-6 max-w-6xl mx-auto space-y-8">
+        {/* Mode pills */}
+        <div className="flex gap-1">
+          <Button size="sm" className="bg-primary/15 text-primary border border-primary/30">Brand</Button>
+          <Link to="/admin/collaborations">
+            <Button variant="ghost" size="sm" className="text-muted-foreground">Collabs</Button>
+          </Link>
+        </div>
         {/* Stats row */}
         {stats && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

@@ -8,6 +8,7 @@ import {
   useProductTechnicalData,
   useProductServeMoments,
   useProductAiPairings,
+  useCollaboration,
 } from '@/hooks/useProduct';
 import { useProductImages } from '@/hooks/useImages';
 import { usePageViewTracking, useSectionTracking, trackInteraction } from '@/hooks/useTracking';
@@ -66,6 +67,7 @@ export default function BottlePage() {
   const { data: activeActivations } = useActiveActivationsForProduct(product?.id);
   const { data: savedSections } = useProductSections(product?.id);
   const { data: defaultSections } = useDefaultLayoutSections();
+  const { data: collab } = useCollaboration(product?.id);
 
   // Tracking
   usePageViewTracking(slug);
@@ -145,7 +147,7 @@ export default function BottlePage() {
       case 'hero':
         return (
           <div ref={heroRef}>
-            <BottleHero product={product} heroImageUrl={heroImageUrl} />
+            <BottleHero product={product} heroImageUrl={heroImageUrl} collab={collab} />
           </div>
         );
       case 'genuine_card':
@@ -249,7 +251,7 @@ export default function BottlePage() {
           </div>
         );
       case 'footer':
-        return <BottleFooter product={product} customContent={content} />;
+        return <BottleFooter product={product} customContent={content} collab={collab} />;
       default:
         return null;
     }

@@ -6,9 +6,10 @@ type Product = Database['public']['Tables']['products']['Row'];
 interface Props {
   product: Product;
   heroImageUrl?: string | null;
+  collab?: { brand_name: string; brand_logo_url?: string | null; brand_color?: string | null } | null;
 }
 
-export function BottleHero({ product, heroImageUrl }: Props) {
+export function BottleHero({ product, heroImageUrl, collab }: Props) {
   return (
     <section
       className="relative w-full overflow-hidden"
@@ -44,6 +45,19 @@ export function BottleHero({ product, heroImageUrl }: Props) {
             />
           </div>
         </motion.div>
+      )}
+
+      {/* Co-brand logo for collaborations */}
+      {collab && (
+        <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-sm">
+          {collab.brand_logo_url ? (
+            <img src={collab.brand_logo_url} alt={collab.brand_name} className="h-5 object-contain" />
+          ) : (
+            <span className="text-xs font-semibold" style={{ color: collab.brand_color || '#000' }}>{collab.brand_name}</span>
+          )}
+          <span className="text-[8px] text-cc-text-lt">×</span>
+          <span className="text-[8px] tracking-[0.15em] uppercase text-cc-text-lt">Classy</span>
+        </div>
       )}
 
       {/* Dot navigation — only show when no real hero image */}

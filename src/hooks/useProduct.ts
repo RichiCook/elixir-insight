@@ -105,11 +105,34 @@ export function useProducts() {
       const { data, error } = await supabase
         .from('products')
         .select('*')
+        .or('is_collaboration.is.null,is_collaboration.eq.false')
         .order('line')
         .order('name');
       if (error) throw error;
       return data;
     },
+  });
+}
+
+export function useCollaboration(productId: string | undefined) {
+  return useQuery({
+    queryKey: ['product-collaboration', productId],
+    queryFn: async () => {
+      const { data: product } = await supabase
+        .from('products')
+        .select('collaboration_id')
+        .eq('id', productId!)
+        .single();
+      if (!product?.collaboration_id) return null;
+      const { data, error } = await supabase
+        .from('collaborations')
+        .select('*')
+        .eq('id', product.collaboration_id)
+        .single();
+      if (error) return null;
+      return data;
+    },
+    enabled: !!productId,
   });
 }
 

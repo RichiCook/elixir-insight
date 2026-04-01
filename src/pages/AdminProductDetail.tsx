@@ -9,6 +9,7 @@ import {
   useProductTechnicalData,
   useProductEanCodes,
   useProductAiPairings,
+  useCollaboration,
 } from '@/hooks/useProduct';
 import { useProductImages, useApprovedBrandImages } from '@/hooks/useImages';
 import { Button } from '@/components/ui/button';
@@ -926,6 +927,7 @@ export default function AdminProductDetail() {
   const navigate = useNavigate();
   const { data: product, isLoading } = useProduct(slug || '');
   const { data: products } = useProducts();
+  const { data: collab } = useCollaboration(product?.id);
   const queryClient = useQueryClient();
   const [isWideScreen, setIsWideScreen] = useState(window.innerWidth >= 1280);
 
@@ -1019,6 +1021,24 @@ export default function AdminProductDetail() {
         </header>
 
         <div className="p-6 max-w-4xl">
+          {/* Collaboration banner */}
+          {collab && (
+            <div className="mb-4 rounded-lg p-3 flex items-center gap-3" style={{ backgroundColor: (collab.brand_color || '#333') + '15', borderLeft: `4px solid ${collab.brand_color || '#333'}` }}>
+              {collab.brand_logo_url ? (
+                <img src={collab.brand_logo_url} alt="" className="w-6 h-6 rounded object-contain" />
+              ) : (
+                <div className="w-6 h-6 rounded flex items-center justify-center text-xs font-bold" style={{ backgroundColor: collab.brand_color || '#333', color: '#fff' }}>
+                  {collab.brand_name.charAt(0)}
+                </div>
+              )}
+              <div>
+                <p className="text-xs text-foreground font-medium">Collaboration: {collab.brand_name}</p>
+                {collab.event_name && <p className="text-[10px] text-muted-foreground">{collab.event_name}</p>}
+              </div>
+              <Link to={`/admin/collaborations/${collab.brand_slug}`} className="ml-auto text-[10px] text-primary hover:underline">View Collab →</Link>
+            </div>
+          )}
+
           <Tabs defaultValue="general">
             <TabsList className="mb-6">
               <TabsTrigger value="general">General Info</TabsTrigger>
