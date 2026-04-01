@@ -125,15 +125,15 @@ export default function BottlePage() {
     );
   }
 
-  const showAgeGate = parseFloat(product.abv) > 0;
+  const showAgeGate = parseFloat(product.abv) > 0 && !isPreview;
 
   return (
     <div className="consumer-theme min-h-screen" style={{ backgroundColor: '#e8e4dc' }}>
       {showAgeGate && <AgeGate />}
 
       <div className="mx-auto max-w-bottle min-h-screen bg-cc-white shadow-xl">
-        {/* Top nav with logo */}
-        <div className="flex items-center justify-between px-5 pt-4">
+        {/* Top nav with logo — hidden in preview mode */}
+        {!isPreview && (
           <div className="flex items-center gap-2">
             <ClassyLogo size={24} />
             <span className="font-sans-consumer text-[10px] tracking-[0.3em] uppercase text-cc-text-lt">
