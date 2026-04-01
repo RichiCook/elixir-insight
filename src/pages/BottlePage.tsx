@@ -288,7 +288,7 @@ export default function BottlePage() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.5 }}>
           {sections.map((sec) => {
             if (!sec.is_visible) return null;
-            const rendered = renderSection(sec.section_key, sec.custom_content);
+            const rendered = renderSection(sec.section_key, sec.custom_content, sec.block_type, sec.block_config);
             if (!rendered) return null;
 
             const activationPlacement = ACTIVATION_AFTER[sec.section_key];
