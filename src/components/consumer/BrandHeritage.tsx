@@ -47,10 +47,10 @@ export function BrandHeritage({ lang, customContent }: Props) {
         />
         <div className="absolute bottom-0 left-0 right-0 p-5 pb-6 z-10">
           <p className="font-sans-consumer text-[8px] tracking-[0.18em] uppercase text-cc-gold mb-3">
-            Since 2020 · Made in Italy
+            {badgeText}
           </p>
           <h2 className="font-display text-[30px] font-light text-white leading-[1.15]">
-            A Story of <em className="italic text-cc-gold">Craft</em> & Character
+            {headingMain}{headingAccent && <em className="italic text-cc-gold">{headingAccent}</em>}{!hasCustomHeading && ' & Character'}
           </h2>
         </div>
       </section>
