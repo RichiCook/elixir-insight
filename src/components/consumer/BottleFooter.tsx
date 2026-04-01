@@ -24,6 +24,11 @@ export function BottleFooter({ product, customContent, collab }: Props) {
           EAN {product.ean_int}
         </p>
       )}
+      {collab && (
+        <p className="font-sans-consumer text-[10px] text-cc-text-lt mt-3 italic">
+          Created exclusively for {collab.brand_name} × Classy Cocktails
+        </p>
+      )}
       <div className="flex items-center justify-center gap-1 mt-4">
         <span className="w-1 h-1 rounded-full bg-cc-gold" />
         <span className="w-1 h-1 rounded-full bg-cc-gold opacity-60" />
