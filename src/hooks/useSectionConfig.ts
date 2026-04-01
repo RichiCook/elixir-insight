@@ -15,6 +15,7 @@ export interface SectionConfig {
 export const BLOCK_TYPES = [
   { value: 'text', label: 'Text Block', icon: '📝' },
   { value: 'image_text', label: 'Image + Text', icon: '🖼️' },
+  { value: 'image_carousel', label: 'Image Carousel', icon: '🎠' },
   { value: 'cta', label: 'CTA Button', icon: '🔗' },
   { value: 'video', label: 'Video Embed', icon: '🎬' },
   { value: 'spacer', label: 'Spacer / Divider', icon: '➖' },
