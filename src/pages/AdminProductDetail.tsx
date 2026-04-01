@@ -22,6 +22,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from 'sonner';
 import { Plus, Trash2, GripVertical, Smartphone, RefreshCw } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { LayoutTab } from '@/components/admin/LayoutTab';
 
 function getCompletenessColor(val: number) {
   if (val < 40) return '#a04040';
