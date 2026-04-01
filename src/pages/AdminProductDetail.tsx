@@ -935,6 +935,7 @@ export default function AdminProductDetail() {
               <TabsTrigger value="technical">Technical Data</TabsTrigger>
               <TabsTrigger value="ean">EAN Codes</TabsTrigger>
               <TabsTrigger value="images">Images</TabsTrigger>
+              <TabsTrigger value="pairings">Pairings</TabsTrigger>
             </TabsList>
 
             <TabsContent value="general">
