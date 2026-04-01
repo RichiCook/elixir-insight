@@ -189,6 +189,51 @@ export type Database = {
         }
         Relationships: []
       }
+      collaborations: {
+        Row: {
+          brand_color: string | null
+          brand_logo_url: string | null
+          brand_name: string
+          brand_slug: string
+          contact_email: string | null
+          contact_name: string | null
+          created_at: string | null
+          event_date: string | null
+          event_name: string | null
+          id: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          brand_color?: string | null
+          brand_logo_url?: string | null
+          brand_name: string
+          brand_slug: string
+          contact_email?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          event_date?: string | null
+          event_name?: string | null
+          id?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          brand_color?: string | null
+          brand_logo_url?: string | null
+          brand_name?: string
+          brand_slug?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          event_date?: string | null
+          event_name?: string | null
+          id?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       default_layout_sections: {
         Row: {
           block_config: Json | null
@@ -866,6 +911,7 @@ export type Database = {
           abv: string
           allergens_summary: string | null
           bottle_color: string | null
+          collaboration_id: string | null
           completeness: number | null
           created_at: string | null
           ean_int: string | null
@@ -876,6 +922,7 @@ export type Database = {
           hero_bg: string | null
           ice: string | null
           id: string
+          is_collaboration: boolean | null
           label_color: string | null
           line: string
           liquid_color: string | null
@@ -892,6 +939,7 @@ export type Database = {
           abv: string
           allergens_summary?: string | null
           bottle_color?: string | null
+          collaboration_id?: string | null
           completeness?: number | null
           created_at?: string | null
           ean_int?: string | null
@@ -902,6 +950,7 @@ export type Database = {
           hero_bg?: string | null
           ice?: string | null
           id?: string
+          is_collaboration?: boolean | null
           label_color?: string | null
           line: string
           liquid_color?: string | null
@@ -918,6 +967,7 @@ export type Database = {
           abv?: string
           allergens_summary?: string | null
           bottle_color?: string | null
+          collaboration_id?: string | null
           completeness?: number | null
           created_at?: string | null
           ean_int?: string | null
@@ -928,6 +978,7 @@ export type Database = {
           hero_bg?: string | null
           ice?: string | null
           id?: string
+          is_collaboration?: boolean | null
           label_color?: string | null
           line?: string
           liquid_color?: string | null
@@ -940,7 +991,15 @@ export type Database = {
           uk_units?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_collaboration_id_fkey"
+            columns: ["collaboration_id"]
+            isOneToOne: false
+            referencedRelation: "collaborations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       repair_requests: {
         Row: {
