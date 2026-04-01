@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Upload, Sparkles, X, ChevronUp, ChevronDown, Trash2, RotateCw, Check } from 'lucide-react';
+import { Upload, Sparkles, X, ChevronUp, ChevronDown, Trash2, RotateCw, Check, CheckSquare, Square, MinusSquare } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 function useBrandImages() {
   return useQuery({
