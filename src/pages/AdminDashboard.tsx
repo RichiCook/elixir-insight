@@ -74,6 +74,9 @@ export default function AdminDashboard() {
           <p className="text-xs text-muted-foreground">Classy Cocktails · PIM</p>
         </div>
         <div className="flex items-center gap-3">
+          <Link to="/admin/default-layout">
+            <Button variant="outline" size="sm">Default Layout</Button>
+          </Link>
           <Link to="/admin/images">
             <Button variant="outline" size="sm">Image Library</Button>
           </Link>

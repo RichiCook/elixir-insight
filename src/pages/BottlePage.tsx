@@ -11,7 +11,7 @@ import {
 } from '@/hooks/useProduct';
 import { useProductImages } from '@/hooks/useImages';
 import { usePageViewTracking, useSectionTracking, trackInteraction } from '@/hooks/useTracking';
-import { useProductSections, getMergedSections } from '@/hooks/useSectionConfig';
+import { useProductSections, useDefaultLayoutSections, getMergedSections } from '@/hooks/useSectionConfig';
 import { BottleHero } from '@/components/consumer/BottleHero';
 import { GenuineCard } from '@/components/consumer/GenuineCard';
 import { AbvDisplay } from '@/components/consumer/AbvDisplay';
@@ -28,6 +28,7 @@ import { CraftedWith } from '@/components/consumer/CraftedWith';
 import { EditorialBlock } from '@/components/consumer/EditorialBlock';
 import { BrandHeritage } from '@/components/consumer/BrandHeritage';
 import { StoreCTA } from '@/components/consumer/StoreCTA';
+import { CustomBlock } from '@/components/consumer/CustomBlock';
 import { AgeGate } from '@/components/consumer/AgeGate';
 import { ActivationSlot } from '@/components/consumer/ActivationRenderer';
 import { useActiveActivationsForProduct } from '@/hooks/useActivations';
@@ -64,6 +65,7 @@ export default function BottlePage() {
   const { data: productImages } = useProductImages(product?.id);
   const { data: activeActivations } = useActiveActivationsForProduct(product?.id);
   const { data: savedSections } = useProductSections(product?.id);
+  const { data: defaultSections } = useDefaultLayoutSections();
 
   // Tracking
   usePageViewTracking(slug);
@@ -130,10 +132,15 @@ export default function BottlePage() {
   }
 
   const showAgeGate = parseFloat(product.abv) > 0 && !isPreview;
-  const sections = getMergedSections(savedSections);
+  const sections = getMergedSections(savedSections, defaultSections);
 
   // Render a section by key, using custom_content overrides
-  const renderSection = (key: string, content: Record<string, any>) => {
+  const renderSection = (key: string, content: Record<string, any>, blockType?: string, blockConfig?: Record<string, any>) => {
+    // Custom blocks
+    if (blockType && blockType !== 'built_in') {
+      return <CustomBlock blockType={blockType} blockConfig={blockConfig || {}} customContent={content} />;
+    }
+
     switch (key) {
       case 'hero':
         return (
@@ -281,7 +288,7 @@ export default function BottlePage() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.5 }}>
           {sections.map((sec) => {
             if (!sec.is_visible) return null;
-            const rendered = renderSection(sec.section_key, sec.custom_content);
+            const rendered = renderSection(sec.section_key, sec.custom_content, sec.block_type, sec.block_config);
             if (!rendered) return null;
 
             const activationPlacement = ACTIVATION_AFTER[sec.section_key];

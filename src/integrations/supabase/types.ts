@@ -189,6 +189,36 @@ export type Database = {
         }
         Relationships: []
       }
+      default_layout_sections: {
+        Row: {
+          block_config: Json | null
+          block_type: string
+          custom_content: Json | null
+          id: string
+          is_visible: boolean
+          section_key: string
+          sort_order: number
+        }
+        Insert: {
+          block_config?: Json | null
+          block_type?: string
+          custom_content?: Json | null
+          id?: string
+          is_visible?: boolean
+          section_key: string
+          sort_order?: number
+        }
+        Update: {
+          block_config?: Json | null
+          block_type?: string
+          custom_content?: Json | null
+          id?: string
+          is_visible?: boolean
+          section_key?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       image_attributes: {
         Row: {
           alt_text_en: string | null
@@ -504,6 +534,8 @@ export type Database = {
       }
       product_sections: {
         Row: {
+          block_config: Json | null
+          block_type: string
           custom_content: Json | null
           id: string
           is_visible: boolean
@@ -512,6 +544,8 @@ export type Database = {
           sort_order: number
         }
         Insert: {
+          block_config?: Json | null
+          block_type?: string
           custom_content?: Json | null
           id?: string
           is_visible?: boolean
@@ -520,6 +554,8 @@ export type Database = {
           sort_order?: number
         }
         Update: {
+          block_config?: Json | null
+          block_type?: string
           custom_content?: Json | null
           id?: string
           is_visible?: boolean
