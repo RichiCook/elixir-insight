@@ -333,6 +333,28 @@ export default function AdminDefaultLayout() {
       </main>
 
       {showAddBlock && <AddBlockDialog onAdd={handleAddBlock} onClose={() => setShowAddBlock(false)} />}
+
+      {imagePicker?.mode === 'single' && (
+        <ImagePickerDialog
+          onSelect={(url) => {
+            updateConfig(imagePicker.index, 'image_url', url);
+            setImagePicker(null);
+          }}
+          onClose={() => setImagePicker(null)}
+        />
+      )}
+      {imagePicker?.mode === 'carousel' && (
+        <ImagePickerDialog
+          multiple
+          onSelect={() => {}}
+          onSelectMultiple={(urls) => {
+            const existing = (sections[imagePicker.index]?.block_config?.images as string[]) || [];
+            updateConfig(imagePicker.index, 'images', [...existing, ...urls]);
+            setImagePicker(null);
+          }}
+          onClose={() => setImagePicker(null)}
+        />
+      )}
     </div>
   );
 }
