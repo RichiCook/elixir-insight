@@ -59,8 +59,9 @@ export default function AdminCollaborationDetail() {
   const [form, setForm] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
   const [showNewProduct, setShowNewProduct] = useState(false);
-  const [newProduct, setNewProduct] = useState({ name: '', slug: '', line: 'Collab', abv: '' });
+  const [newProduct, setNewProduct] = useState({ name: '', slug: '', line: 'Collab', abv: '', baseProductId: '' });
   const [creating, setCreating] = useState(false);
+  const { data: mainProducts } = useProducts();
 
   useEffect(() => {
     if (collab) setForm({ ...collab });
