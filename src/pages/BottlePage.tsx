@@ -67,6 +67,7 @@ export default function BottlePage() {
   const { data: activeActivations } = useActiveActivationsForProduct(product?.id);
   const { data: savedSections } = useProductSections(product?.id);
   const { data: defaultSections } = useDefaultLayoutSections();
+  const { data: collab } = useCollaboration(product?.id);
 
   // Tracking
   usePageViewTracking(slug);
