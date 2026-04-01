@@ -619,6 +619,18 @@ function ImagesTab({ productId }: { productId: string }) {
       if (createErr || !created) { toast.error('Failed to register image'); return; }
       imageId = created.id;
     }
+    // Ensure image_attributes exists with is_approved = true so it shows on consumer page
+    const { data: existingAttr } = await supabase
+      .from('image_attributes')
+      .select('id')
+      .eq('image_id', imageId!)
+      .maybeSingle();
+    if (!existingAttr) {
+      await supabase.from('image_attributes').insert({ image_id: imageId, is_approved: true });
+    } else {
+      await supabase.from('image_attributes').update({ is_approved: true }).eq('id', existingAttr.id);
+    }
+
     const { error } = await supabase.from('product_images').upsert({
       product_id: productId,
       image_id: imageId,
