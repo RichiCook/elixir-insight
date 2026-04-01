@@ -125,7 +125,7 @@ export default function AdminCollaborationDetail() {
         }
       }
 
-      const { data, error } = await supabase.from('products').insert(insertPayload).select('id, slug').single();
+      const { data, error } = await supabase.from('products').insert(insertPayload as any).select('id, slug').single();
       if (error) throw error;
       const newId = data.id;
 
