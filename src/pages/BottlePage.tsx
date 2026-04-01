@@ -132,7 +132,7 @@ export default function BottlePage() {
   }
 
   const showAgeGate = parseFloat(product.abv) > 0 && !isPreview;
-  const sections = getMergedSections(savedSections);
+  const sections = getMergedSections(savedSections, defaultSections);
 
   // Render a section by key, using custom_content overrides
   const renderSection = (key: string, content: Record<string, any>) => {
