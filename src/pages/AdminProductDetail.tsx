@@ -600,7 +600,25 @@ function ImagesTab({ productId }: { productId: string }) {
   const [adding, setAdding] = useState(false);
   const [selectedSection, setSelectedSection] = useState<string>('hero');
 
-  const handleAttach = async (imageId: string) => {
+  const handleAttachUrl = async (url: string) => {
+    // Find or create brand_images record
+    let imageId: string | null = null;
+    const { data: existing } = await supabase
+      .from('brand_images')
+      .select('id')
+      .eq('public_url', url)
+      .maybeSingle();
+    if (existing) {
+      imageId = existing.id;
+    } else {
+      const { data: created, error: createErr } = await supabase
+        .from('brand_images')
+        .insert({ public_url: url, filename: url.split('/').pop() || 'image', storage_path: url, status: 'complete' })
+        .select('id')
+        .single();
+      if (createErr || !created) { toast.error('Failed to register image'); return; }
+      imageId = created.id;
+    }
     const { error } = await supabase.from('product_images').upsert({
       product_id: productId,
       image_id: imageId,
