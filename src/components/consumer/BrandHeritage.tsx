@@ -2,6 +2,7 @@ import { CrosshatchPattern, CLettermark } from './DecorativeSVG';
 
 interface Props {
   lang: string;
+  customContent?: Record<string, any>;
 }
 
 const TEXT: Record<string, string> = {
