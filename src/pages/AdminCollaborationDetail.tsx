@@ -63,6 +63,7 @@ export default function AdminCollaborationDetail() {
   const [showNewProduct, setShowNewProduct] = useState(false);
   const [newProduct, setNewProduct] = useState({ name: '', slug: '', line: 'Collab', abv: '', baseProductId: '' });
   const [creating, setCreating] = useState(false);
+  const [showLogoPicker, setShowLogoPicker] = useState(false);
   const { data: mainProducts } = useProducts();
 
   useEffect(() => {
