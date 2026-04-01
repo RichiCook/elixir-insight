@@ -4,6 +4,7 @@ interface Props {
   line: string;
   bottleColor: string | null;
   editorialImageUrl?: string | null;
+  customContent?: Record<string, any>;
 }
 
 function getContent(line: string) {
