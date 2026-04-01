@@ -6,9 +6,10 @@ type Product = Database['public']['Tables']['products']['Row'];
 interface Props {
   product: Product;
   heroImageUrl?: string | null;
+  collab?: { brand_name: string; brand_logo_url?: string | null; brand_color?: string | null } | null;
 }
 
-export function BottleHero({ product, heroImageUrl }: Props) {
+export function BottleHero({ product, heroImageUrl, collab }: Props) {
   return (
     <section
       className="relative w-full overflow-hidden"
