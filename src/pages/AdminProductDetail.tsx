@@ -957,6 +957,10 @@ export default function AdminProductDetail() {
             <TabsContent value="images">
               <ImagesTab productId={product.id} />
             </TabsContent>
+
+            <TabsContent value="pairings">
+              <PairingsTab productId={product.id} />
+            </TabsContent>
           </Tabs>
         </div>
       </main>
