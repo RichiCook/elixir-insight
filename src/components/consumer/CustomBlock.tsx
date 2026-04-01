@@ -112,8 +112,10 @@ export function CustomBlock({ blockType, blockConfig, customContent }: Props) {
 function ImageCarousel({ merged }: { merged: Record<string, any> }) {
   const images: string[] = merged.images || [];
   const autoplaySeconds = parseInt(merged.autoplay || '0', 10);
-  const [current, setCurrent] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setInterval>>();
+  const goTo = useCallback((idx: number) => {
+    setCurrent(idx);
+    if (timerRef.current) clearInterval(timerRef.current);
+  }, []);
 
   useEffect(() => {
     if (autoplaySeconds > 0 && images.length > 1) {
@@ -125,11 +127,6 @@ function ImageCarousel({ merged }: { merged: Record<string, any> }) {
   }, [autoplaySeconds, images.length]);
 
   if (!images.length) return null;
-
-  const goTo = useCallback((idx: number) => {
-    setCurrent(idx);
-    if (timerRef.current) clearInterval(timerRef.current);
-  }, []);
 
   return (
     <section className="py-4">
