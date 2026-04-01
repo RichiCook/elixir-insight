@@ -46,12 +46,14 @@ export function BottleHero({ product, heroImageUrl }: Props) {
         </motion.div>
       )}
 
-      {/* Dot navigation at bottom */}
-      <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-2">
-        <span className="w-2 h-2 rounded-full bg-cc-black opacity-80" />
-        <span className="w-2 h-2 rounded-full bg-cc-black opacity-25" />
-        <span className="w-2 h-2 rounded-full bg-cc-black opacity-25" />
-      </div>
+      {/* Dot navigation — only show when no real hero image */}
+      {!heroImageUrl && (
+        <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-cc-black opacity-80" />
+          <span className="w-2 h-2 rounded-full bg-cc-black opacity-25" />
+          <span className="w-2 h-2 rounded-full bg-cc-black opacity-25" />
+        </div>
+      )}
     </section>
   );
 }
