@@ -28,6 +28,7 @@ import { CraftedWith } from '@/components/consumer/CraftedWith';
 import { EditorialBlock } from '@/components/consumer/EditorialBlock';
 import { BrandHeritage } from '@/components/consumer/BrandHeritage';
 import { StoreCTA } from '@/components/consumer/StoreCTA';
+import { CustomBlock } from '@/components/consumer/CustomBlock';
 import { AgeGate } from '@/components/consumer/AgeGate';
 import { ActivationSlot } from '@/components/consumer/ActivationRenderer';
 import { useActiveActivationsForProduct } from '@/hooks/useActivations';
