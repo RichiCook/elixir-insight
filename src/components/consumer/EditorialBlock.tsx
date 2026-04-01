@@ -73,7 +73,7 @@ export function EditorialBlock({ line, bottleColor, editorialImageUrl, customCon
       />
       <div className="absolute bottom-0 left-0 right-0 p-5 pb-6 z-10">
         <p className="font-sans-consumer text-[9px] tracking-[0.18em] uppercase mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>
-          {line} Line
+          {lineLabel}
         </p>
         <h2 className="font-display text-[28px] font-normal text-white leading-[1.15] mb-4">
           {title}

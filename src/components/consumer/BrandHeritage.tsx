@@ -21,8 +21,16 @@ function renderText(raw: string) {
   );
 }
 
-export function BrandHeritage({ lang }: Props) {
-  const text = TEXT[lang] || TEXT.EN;
+export function BrandHeritage({ lang, customContent }: Props) {
+  const hasCustomBody = customContent && (customContent.body_en || customContent.body_it);
+  const text = hasCustomBody
+    ? (lang === 'IT' ? customContent.body_it || customContent.body_en : customContent.body_en) || TEXT[lang] || TEXT.EN
+    : TEXT[lang] || TEXT.EN;
+
+  const badgeText = customContent?.badge_text || 'Since 2020 · Made in Italy';
+  const hasCustomHeading = customContent && customContent.heading;
+  const headingMain = hasCustomHeading ? customContent.heading : 'A Story of ';
+  const headingAccent = hasCustomHeading ? customContent.heading_accent : 'Craft';
 
   return (
     <>
