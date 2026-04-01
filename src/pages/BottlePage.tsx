@@ -251,7 +251,7 @@ export default function BottlePage() {
           </div>
         );
       case 'footer':
-        return <BottleFooter product={product} customContent={content} />;
+        return <BottleFooter product={product} customContent={content} collab={collab} />;
       default:
         return null;
     }
