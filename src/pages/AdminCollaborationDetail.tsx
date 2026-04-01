@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useProducts } from '@/hooks/useProduct';
+import { ImagePickerDialog } from '@/components/admin/ImagePickerDialog';
+import { ImageIcon } from 'lucide-react';
 
 function useCollaboration(brandSlug: string) {
   return useQuery({
@@ -61,6 +63,7 @@ export default function AdminCollaborationDetail() {
   const [showNewProduct, setShowNewProduct] = useState(false);
   const [newProduct, setNewProduct] = useState({ name: '', slug: '', line: 'Collab', abv: '', baseProductId: '' });
   const [creating, setCreating] = useState(false);
+  const [showLogoPicker, setShowLogoPicker] = useState(false);
   const { data: mainProducts } = useProducts();
 
   useEffect(() => {
@@ -226,8 +229,16 @@ export default function AdminCollaborationDetail() {
               <Input value={form.brand_name || ''} onChange={(e) => set('brand_name', e.target.value)} />
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground mb-1.5 block">Brand Logo URL</Label>
-              <Input value={form.brand_logo_url || ''} onChange={(e) => set('brand_logo_url', e.target.value)} placeholder="https://..." />
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Brand Logo</Label>
+              <div className="flex gap-2 items-center">
+                {form.brand_logo_url && (
+                  <img src={form.brand_logo_url} alt="" className="w-10 h-10 rounded border border-border object-contain bg-white" />
+                )}
+                <Input value={form.brand_logo_url || ''} onChange={(e) => set('brand_logo_url', e.target.value)} placeholder="https://..." className="flex-1" />
+                <Button type="button" variant="outline" size="sm" onClick={() => setShowLogoPicker(true)} className="shrink-0">
+                  <ImageIcon className="w-3.5 h-3.5 mr-1" /> Browse
+                </Button>
+              </div>
             </div>
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Brand Color</Label>
@@ -360,6 +371,13 @@ export default function AdminCollaborationDetail() {
             </div>
           </div>
         </div>
+      )}
+
+      {showLogoPicker && (
+        <ImagePickerDialog
+          onSelect={(url) => { set('brand_logo_url', url); setShowLogoPicker(false); }}
+          onClose={() => setShowLogoPicker(false)}
+        />
       )}
     </div>
   );
