@@ -147,7 +147,7 @@ export default function BottlePage() {
       case 'hero':
         return (
           <div ref={heroRef}>
-            <BottleHero product={product} heroImageUrl={heroImageUrl} />
+            <BottleHero product={product} heroImageUrl={heroImageUrl} collab={collab} />
           </div>
         );
       case 'genuine_card':
