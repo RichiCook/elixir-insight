@@ -16,6 +16,7 @@ import {
   type SectionConfig,
 } from '@/hooks/useSectionConfig';
 import { AddBlockDialog } from '@/components/admin/AddBlockDialog';
+import { ImagePickerDialog } from '@/components/admin/ImagePickerDialog';
 
 function getBlockLabel(section: SectionConfig) {
   if (section.block_type === 'built_in') {
