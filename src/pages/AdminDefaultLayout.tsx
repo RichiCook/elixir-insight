@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { GripVertical, ChevronDown, ChevronRight, Eye, EyeOff, Plus, Trash2 } from 'lucide-react';
+import { GripVertical, ChevronDown, ChevronRight, Eye, EyeOff, Plus, Trash2, Image, X } from 'lucide-react';
 import {
   useDefaultLayoutSections,
   DEFAULT_ORDER,
@@ -16,6 +16,7 @@ import {
   type SectionConfig,
 } from '@/hooks/useSectionConfig';
 import { AddBlockDialog } from '@/components/admin/AddBlockDialog';
+import { ImagePickerDialog } from '@/components/admin/ImagePickerDialog';
 
 function getBlockLabel(section: SectionConfig) {
   if (section.block_type === 'built_in') {
@@ -39,6 +40,7 @@ export default function AdminDefaultLayout() {
   const [saving, setSaving] = useState(false);
   const [showAddBlock, setShowAddBlock] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [imagePicker, setImagePicker] = useState<{ index: number; mode: 'single' | 'carousel' } | null>(null);
 
   useEffect(() => {
     if (savedSections && savedSections.length > 0) {
@@ -62,7 +64,7 @@ export default function AdminDefaultLayout() {
     ));
   };
 
-  const updateConfig = (index: number, fieldKey: string, value: string) => {
+  const updateConfig = (index: number, fieldKey: string, value: any) => {
     setSections(prev => prev.map((s, i) =>
       i === index ? { ...s, block_config: { ...s.block_config, [fieldKey]: value } } : s
     ));
@@ -264,9 +266,42 @@ export default function AdminDefaultLayout() {
                     )}
                     {section.block_type === 'image_text' && (
                       <>
-                        <div><Label className="text-[10px] text-muted-foreground mb-1 block">Image URL</Label><Input value={section.block_config?.image_url || ''} onChange={(e) => updateConfig(index, 'image_url', e.target.value)} className="h-8 text-xs" /></div>
+                        <div>
+                          <Label className="text-[10px] text-muted-foreground mb-1 block">Image</Label>
+                          <div className="flex items-center gap-2">
+                            {section.block_config?.image_url && (
+                              <div className="relative w-16 h-16 rounded border border-border overflow-hidden shrink-0">
+                                <img src={section.block_config.image_url} alt="" className="w-full h-full object-cover" />
+                                <button onClick={() => updateConfig(index, 'image_url', '')} className="absolute top-0 right-0 bg-black/60 p-0.5 rounded-bl"><X className="w-3 h-3 text-white" /></button>
+                              </div>
+                            )}
+                            <Button variant="outline" size="sm" onClick={() => setImagePicker({ index, mode: 'single' })} className="text-xs h-8">
+                              <Image className="w-3 h-3 mr-1" /> Choose Image
+                            </Button>
+                          </div>
+                        </div>
                         <div><Label className="text-[10px] text-muted-foreground mb-1 block">Heading</Label><Input value={section.block_config?.heading || ''} onChange={(e) => updateConfig(index, 'heading', e.target.value)} className="h-8 text-xs" /></div>
                         <div><Label className="text-[10px] text-muted-foreground mb-1 block">Body</Label><Textarea value={section.block_config?.body || ''} onChange={(e) => updateConfig(index, 'body', e.target.value)} rows={3} className="text-xs" /></div>
+                      </>
+                    )}
+                    {section.block_type === 'image_carousel' && (
+                      <>
+                        <div>
+                          <Label className="text-[10px] text-muted-foreground mb-1 block">Images</Label>
+                          <div className="flex flex-wrap gap-1.5 mb-2">
+                            {((section.block_config?.images as string[]) || []).map((url: string, i: number) => (
+                              <div key={i} className="relative w-14 h-14 rounded border border-border overflow-hidden">
+                                <img src={url} alt="" className="w-full h-full object-cover" />
+                                <button onClick={() => updateConfig(index, 'images', ((section.block_config?.images as string[]) || []).filter((_: string, j: number) => j !== i))} className="absolute top-0 right-0 bg-black/60 p-0.5 rounded-bl"><X className="w-2.5 h-2.5 text-white" /></button>
+                              </div>
+                            ))}
+                          </div>
+                          <Button variant="outline" size="sm" onClick={() => setImagePicker({ index, mode: 'carousel' })} className="text-xs h-8">
+                            <Image className="w-3 h-3 mr-1" /> Add Images
+                          </Button>
+                        </div>
+                        <div><Label className="text-[10px] text-muted-foreground mb-1 block">Heading</Label><Input value={section.block_config?.heading || ''} onChange={(e) => updateConfig(index, 'heading', e.target.value)} className="h-8 text-xs" /></div>
+                        <div><Label className="text-[10px] text-muted-foreground mb-1 block">Auto-play (sec, 0=off)</Label><Input type="number" value={section.block_config?.autoplay || '0'} onChange={(e) => updateConfig(index, 'autoplay', e.target.value)} className="h-8 text-xs" /></div>
                       </>
                     )}
                     {section.block_type === 'cta' && (
@@ -298,6 +333,28 @@ export default function AdminDefaultLayout() {
       </main>
 
       {showAddBlock && <AddBlockDialog onAdd={handleAddBlock} onClose={() => setShowAddBlock(false)} />}
+
+      {imagePicker?.mode === 'single' && (
+        <ImagePickerDialog
+          onSelect={(url) => {
+            updateConfig(imagePicker.index, 'image_url', url);
+            setImagePicker(null);
+          }}
+          onClose={() => setImagePicker(null)}
+        />
+      )}
+      {imagePicker?.mode === 'carousel' && (
+        <ImagePickerDialog
+          multiple
+          onSelect={() => {}}
+          onSelectMultiple={(urls) => {
+            const existing = (sections[imagePicker.index]?.block_config?.images as string[]) || [];
+            updateConfig(imagePicker.index, 'images', [...existing, ...urls]);
+            setImagePicker(null);
+          }}
+          onClose={() => setImagePicker(null)}
+        />
+      )}
     </div>
   );
 }
