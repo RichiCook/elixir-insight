@@ -24,6 +24,7 @@ import { toast } from 'sonner';
 import { Plus, Trash2, GripVertical, Smartphone, RefreshCw } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { LayoutTab } from '@/components/admin/LayoutTab';
+import { ImagePickerDialog } from '@/components/admin/ImagePickerDialog';
 
 function getCompletenessColor(val: number) {
   if (val < 40) return '#a04040';
@@ -594,12 +595,30 @@ const SECTIONS = ['hero', 'editorial', 'serve_moment', 'pairing', 'gallery'] as 
 
 function ImagesTab({ productId }: { productId: string }) {
   const { data: productImages, refetch } = useProductImages(productId);
-  const { data: allImages } = useApprovedBrandImages();
+  
   const queryClient = useQueryClient();
   const [adding, setAdding] = useState(false);
   const [selectedSection, setSelectedSection] = useState<string>('hero');
 
-  const handleAttach = async (imageId: string) => {
+  const handleAttachUrl = async (url: string) => {
+    // Find or create brand_images record
+    let imageId: string | null = null;
+    const { data: existing } = await supabase
+      .from('brand_images')
+      .select('id')
+      .eq('public_url', url)
+      .maybeSingle();
+    if (existing) {
+      imageId = existing.id;
+    } else {
+      const { data: created, error: createErr } = await supabase
+        .from('brand_images')
+        .insert({ public_url: url, filename: url.split('/').pop() || 'image', storage_path: url, status: 'complete' })
+        .select('id')
+        .single();
+      if (createErr || !created) { toast.error('Failed to register image'); return; }
+      imageId = created.id;
+    }
     const { error } = await supabase.from('product_images').upsert({
       product_id: productId,
       image_id: imageId,
@@ -661,30 +680,11 @@ function ImagesTab({ productId }: { productId: string }) {
         </div>
       ))}
 
-      {/* Image picker modal */}
       {adding && (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-6" onClick={() => setAdding(false)}>
-          <div className="bg-card rounded-lg border border-border p-4 max-w-2xl w-full max-h-[70vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-admin font-semibold text-foreground">
-                Attach to "{selectedSection.replace('_', ' ')}"
-              </h3>
-              <Button variant="ghost" size="sm" onClick={() => setAdding(false)}>✕</Button>
-            </div>
-            <div className="grid grid-cols-4 gap-2">
-              {allImages?.map((img: any) => (
-                <button
-                  key={img.id}
-                  onClick={() => handleAttach(img.id)}
-                  className="rounded border border-border overflow-hidden hover:border-primary transition-colors"
-                >
-                  <img src={img.public_url} alt="" className="w-full aspect-square object-cover" />
-                  <p className="text-[8px] text-muted-foreground p-1 truncate">{img.filename}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        <ImagePickerDialog
+          onSelect={handleAttachUrl}
+          onClose={() => setAdding(false)}
+        />
       )}
     </div>
   );
