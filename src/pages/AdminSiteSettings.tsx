@@ -110,12 +110,16 @@ export default function AdminSiteSettings() {
         </Button>
       </main>
 
-      <ImagePickerDialog
-        open={showImagePicker}
-        onClose={() => setShowImagePicker(false)}
-        onSelect={handleFaviconSelected}
-        title="Choose Favicon"
-      />
+      {showImagePicker && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-background rounded-lg border border-border max-w-3xl w-full max-h-[80vh] overflow-auto p-4">
+            <ImagePickerDialog
+              onClose={() => setShowImagePicker(false)}
+              onSelect={handleFaviconSelected}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
