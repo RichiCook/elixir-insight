@@ -33,6 +33,7 @@ import { CustomBlock } from '@/components/consumer/CustomBlock';
 import { AgeGate } from '@/components/consumer/AgeGate';
 import { ActivationSlot } from '@/components/consumer/ActivationRenderer';
 import { useActiveActivationsForProduct } from '@/hooks/useActivations';
+import { useApplySiteSettings } from '@/hooks/useSiteSettings';
 
 const LANGUAGES = ['EN', 'IT', 'DE', 'FR'] as const;
 

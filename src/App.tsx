@@ -119,6 +119,14 @@ function AppInner() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/admin/site-settings"
+          element={
+            <ProtectedRoute>
+              <AdminSiteSettings />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Root redirect */}
         <Route path="/" element={<Navigate to="/bottle/negroni" replace />} />
