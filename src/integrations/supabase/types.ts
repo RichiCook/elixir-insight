@@ -1165,6 +1165,27 @@ export type Database = {
         }
         Relationships: []
       }
+      site_settings: {
+        Row: {
+          favicon_url: string | null
+          id: string
+          site_title: string
+          updated_at: string | null
+        }
+        Insert: {
+          favicon_url?: string | null
+          id?: string
+          site_title?: string
+          updated_at?: string | null
+        }
+        Update: {
+          favicon_url?: string | null
+          id?: string
+          site_title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       tech_sheet_uploads: {
         Row: {
           applied_at: string | null
