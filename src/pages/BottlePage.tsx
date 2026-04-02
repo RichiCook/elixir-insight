@@ -33,6 +33,7 @@ import { CustomBlock } from '@/components/consumer/CustomBlock';
 import { AgeGate } from '@/components/consumer/AgeGate';
 import { ActivationSlot } from '@/components/consumer/ActivationRenderer';
 import { useActiveActivationsForProduct } from '@/hooks/useActivations';
+import { useApplySiteSettings } from '@/hooks/useSiteSettings';
 
 const LANGUAGES = ['EN', 'IT', 'DE', 'FR'] as const;
 
@@ -68,6 +69,9 @@ export default function BottlePage() {
   const { data: savedSections } = useProductSections(product?.id);
   const { data: defaultSections } = useDefaultLayoutSections();
   const { data: collab } = useCollaboration(product?.id);
+
+  // Apply global site settings (favicon + tab title)
+  useApplySiteSettings();
 
   // Tracking
   usePageViewTracking(slug);

@@ -18,6 +18,7 @@ import AdminActivationEditor from '@/pages/AdminActivationEditor';
 import AdminDefaultLayout from '@/pages/AdminDefaultLayout';
 import AdminCollaborations from '@/pages/AdminCollaborations';
 import AdminCollaborationDetail from '@/pages/AdminCollaborationDetail';
+import AdminSiteSettings from '@/pages/AdminSiteSettings';
 import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient();
@@ -115,6 +116,14 @@ function AppInner() {
           element={
             <ProtectedRoute>
               <AdminCollaborationDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/site-settings"
+          element={
+            <ProtectedRoute>
+              <AdminSiteSettings />
             </ProtectedRoute>
           }
         />
