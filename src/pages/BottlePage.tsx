@@ -70,6 +70,9 @@ export default function BottlePage() {
   const { data: defaultSections } = useDefaultLayoutSections();
   const { data: collab } = useCollaboration(product?.id);
 
+  // Apply global site settings (favicon + tab title)
+  useApplySiteSettings();
+
   // Tracking
   usePageViewTracking(slug);
   const { observeSection } = useSectionTracking(slug);
