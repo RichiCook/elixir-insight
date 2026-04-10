@@ -393,7 +393,7 @@ function TechnicalTab({ productId }: { productId: string }) {
     if (form.raw_analytical_data) payload.raw_analytical_data = form.raw_analytical_data;
     if (techData?.id) payload.id = techData.id;
 
-    const { error } = await supabase.from('product_technical_data').upsert(payload, { onConflict: 'product_id' });
+    const { error } = await supabase.from('product_technical_data').upsert(payload as any, { onConflict: 'product_id' });
     setSaving(false);
     if (error) { toast.error('Failed to save'); return; }
     toast.success('Technical data saved');
