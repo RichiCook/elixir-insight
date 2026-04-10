@@ -31,6 +31,7 @@ export default function AdminDashboard() {
   const { data: products, isLoading } = useProducts();
   const { data: stats } = useAdminStats();
   const signOut = useAuthStore((s) => s.signOut);
+  const perms = usePermissions();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showNewProduct, setShowNewProduct] = useState(false);
