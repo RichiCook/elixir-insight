@@ -119,8 +119,21 @@ export function useProducts() {
   });
 }
 
+interface CollaborationPublic {
+  id: string;
+  brand_name: string;
+  brand_slug: string;
+  brand_logo_url: string | null;
+  brand_color: string | null;
+  event_name: string | null;
+  event_date: string | null;
+  status: string;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
 export function useCollaboration(productId: string | undefined) {
-  return useQuery({
+  return useQuery<CollaborationPublic | null>({
     queryKey: ['product-collaboration', productId],
     queryFn: async () => {
       const { data: product } = await supabase
@@ -135,7 +148,7 @@ export function useCollaboration(productId: string | undefined) {
         .eq('id', product.collaboration_id)
         .single();
       if (error) return null;
-      return data;
+      return data as CollaborationPublic;
     },
     enabled: !!productId,
   });
