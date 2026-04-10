@@ -1254,6 +1254,13 @@ export type Database = {
     }
     Functions: {
       get_product_nutrition: { Args: { p_product_id: string }; Returns: Json }
+      has_any_role: {
+        Args: {
+          _roles: Database["public"]["Enums"]["app_role"][]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
