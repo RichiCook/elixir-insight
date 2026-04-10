@@ -148,7 +148,7 @@ export function useCollaboration(productId: string | undefined) {
         .eq('id', product.collaboration_id)
         .single();
       if (error) return null;
-      return data as CollaborationPublic;
+      return data as unknown as CollaborationPublic;
     },
     enabled: !!productId,
   });
