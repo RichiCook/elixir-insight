@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useProducts, useAdminStats } from '@/hooks/useProduct';
 import { useAuthStore } from '@/stores/authStore';
+import { usePermissions } from '@/hooks/useUserRole';
 import { useNavigate, Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,6 +31,7 @@ export default function AdminDashboard() {
   const { data: products, isLoading } = useProducts();
   const { data: stats } = useAdminStats();
   const signOut = useAuthStore((s) => s.signOut);
+  const perms = usePermissions();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showNewProduct, setShowNewProduct] = useState(false);
@@ -73,26 +75,31 @@ export default function AdminDashboard() {
           <h1 className="text-lg font-admin font-semibold text-foreground">Brand Platform</h1>
           <p className="text-xs text-muted-foreground">Classy Cocktails · PIM</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Link to="/admin/default-layout">
-            <Button variant="outline" size="sm">Default Layout</Button>
-          </Link>
-          <Link to="/admin/images">
-            <Button variant="outline" size="sm">Image Library</Button>
-          </Link>
-          <Link to="/admin/ai-upload">
-            <Button variant="outline" size="sm">Data Import</Button>
-          </Link>
-          <Link to="/admin/activations">
-            <Button variant="outline" size="sm">Activations</Button>
-          </Link>
-          <Link to="/admin/analytics">
-            <Button variant="outline" size="sm">Analytics</Button>
-          </Link>
-          <Link to="/admin/site-settings">
-            <Button variant="outline" size="sm">Site Settings</Button>
-          </Link>
-          <Button size="sm" className="bg-primary text-primary-foreground" onClick={() => setShowNewProduct(true)}>+ New Product</Button>
+        <div className="flex items-center gap-3 flex-wrap">
+          {perms.canManageLayout && (
+            <Link to="/admin/default-layout"><Button variant="outline" size="sm">Default Layout</Button></Link>
+          )}
+          {perms.canManageImages && (
+            <Link to="/admin/images"><Button variant="outline" size="sm">Image Library</Button></Link>
+          )}
+          {perms.canManageProducts && (
+            <Link to="/admin/ai-upload"><Button variant="outline" size="sm">Data Import</Button></Link>
+          )}
+          {perms.canManageActivations && (
+            <Link to="/admin/activations"><Button variant="outline" size="sm">Activations</Button></Link>
+          )}
+          {perms.canViewAnalytics && (
+            <Link to="/admin/analytics"><Button variant="outline" size="sm">Analytics</Button></Link>
+          )}
+          {perms.canManageSettings && (
+            <Link to="/admin/site-settings"><Button variant="outline" size="sm">Site Settings</Button></Link>
+          )}
+          {perms.canManageUsers && (
+            <Link to="/admin/users"><Button variant="outline" size="sm">Users</Button></Link>
+          )}
+          {perms.canManageProducts && (
+            <Button size="sm" className="bg-primary text-primary-foreground" onClick={() => setShowNewProduct(true)}>+ New Product</Button>
+          )}
           <Button variant="ghost" size="sm" onClick={handleSignOut}>Sign Out</Button>
         </div>
       </header>

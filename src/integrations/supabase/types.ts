@@ -1254,6 +1254,14 @@ export type Database = {
     }
     Functions: {
       get_product_nutrition: { Args: { p_product_id: string }; Returns: Json }
+      get_user_id_by_email: { Args: { _email: string }; Returns: string }
+      has_any_role: {
+        Args: {
+          _roles: Database["public"]["Enums"]["app_role"][]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1277,7 +1285,13 @@ export type Database = {
         | "custom_html"
         | "lead_capture"
         | "lead_capture_rating"
-      app_role: "admin" | "moderator" | "user"
+      app_role:
+        | "admin"
+        | "moderator"
+        | "user"
+        | "editor"
+        | "marketing"
+        | "supply"
       repair_request_status:
         | "submitted"
         | "reviewing"
@@ -1429,7 +1443,7 @@ export const Constants = {
         "lead_capture",
         "lead_capture_rating",
       ],
-      app_role: ["admin", "moderator", "user"],
+      app_role: ["admin", "moderator", "user", "editor", "marketing", "supply"],
       repair_request_status: [
         "submitted",
         "reviewing",
