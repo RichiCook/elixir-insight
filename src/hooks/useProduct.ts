@@ -54,13 +54,18 @@ export function useProductTechnicalData(productId: string | undefined) {
   return useQuery({
     queryKey: ['product-technical-data', productId],
     queryFn: async () => {
+      // Try direct table access (works for authenticated admin users)
       const { data, error } = await supabase
         .from('product_technical_data')
         .select('*')
         .eq('product_id', productId!)
         .single();
-      if (error) throw error;
-      return data;
+      if (!error) return data;
+      // Fall back to public RPC for anonymous/consumer access (excludes supplier info)
+      const { data: rpcData, error: rpcError } = await supabase
+        .rpc('get_product_nutrition', { p_product_id: productId! });
+      if (rpcError) throw rpcError;
+      return rpcData as Record<string, any> | null;
     },
     enabled: !!productId,
   });

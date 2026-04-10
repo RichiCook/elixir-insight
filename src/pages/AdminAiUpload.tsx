@@ -292,13 +292,13 @@ function ExcelTab() {
             if (val !== null && key !== 'shelf_life_note') { prodUpdate[key] = val; fieldsCount++; }
           }
           if (Object.keys(prodUpdate).length > 0) {
-            await supabase.from('products').update(prodUpdate).eq('id', dbProduct!.id);
+            await supabase.from('products').update(prodUpdate as any).eq('id', dbProduct!.id);
           }
 
           if (pp.nutriFields) {
             const techPayload: Record<string, any> = { product_id: dbProduct!.id, ...pp.nutriFields };
             if (pp.allergenSulphites) techPayload.allergen_sulphites = true;
-            await supabase.from('product_technical_data').upsert(techPayload, { onConflict: 'product_id' });
+            await supabase.from('product_technical_data').upsert(techPayload as any, { onConflict: 'product_id' });
             fieldsCount += Object.keys(pp.nutriFields).length;
           } else if (pp.allergenSulphites) {
             await supabase.from('product_technical_data').upsert(
@@ -714,7 +714,7 @@ function PdfTab() {
       if (editedData.per_100g_anses && Object.keys(editedData.per_100g_anses).length > 0) rawData.per_100g_anses = editedData.per_100g_anses;
       if (Object.keys(rawData).length > 0) techPayload.raw_analytical_data = rawData;
 
-      const { error: techError } = await supabase.from('product_technical_data').upsert(techPayload, { onConflict: 'product_id' });
+      const { error: techError } = await supabase.from('product_technical_data').upsert(techPayload as any, { onConflict: 'product_id' });
       if (techError) throw techError;
 
       // Write ingredient translations (tech sheet only)
