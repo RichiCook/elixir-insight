@@ -130,7 +130,7 @@ export function useCollaboration(productId: string | undefined) {
         .single();
       if (!product?.collaboration_id) return null;
       const { data, error } = await supabase
-        .from('collaborations')
+        .from('collaborations_public' as any)
         .select('*')
         .eq('id', product.collaboration_id)
         .single();
