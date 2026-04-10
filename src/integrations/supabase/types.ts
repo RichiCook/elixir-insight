@@ -999,6 +999,13 @@ export type Database = {
             referencedRelation: "collaborations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "products_collaboration_id_fkey"
+            columns: ["collaboration_id"]
+            isOneToOne: false
+            referencedRelation: "collaborations_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       repair_requests: {
@@ -1250,7 +1257,45 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      collaborations_public: {
+        Row: {
+          brand_color: string | null
+          brand_logo_url: string | null
+          brand_name: string | null
+          brand_slug: string | null
+          created_at: string | null
+          event_date: string | null
+          event_name: string | null
+          id: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          brand_color?: string | null
+          brand_logo_url?: string | null
+          brand_name?: string | null
+          brand_slug?: string | null
+          created_at?: string | null
+          event_date?: string | null
+          event_name?: string | null
+          id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          brand_color?: string | null
+          brand_logo_url?: string | null
+          brand_name?: string | null
+          brand_slug?: string | null
+          created_at?: string | null
+          event_date?: string | null
+          event_name?: string | null
+          id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_product_nutrition: { Args: { p_product_id: string }; Returns: Json }
