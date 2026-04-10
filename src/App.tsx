@@ -19,6 +19,7 @@ import AdminDefaultLayout from '@/pages/AdminDefaultLayout';
 import AdminCollaborations from '@/pages/AdminCollaborations';
 import AdminCollaborationDetail from '@/pages/AdminCollaborationDetail';
 import AdminSiteSettings from '@/pages/AdminSiteSettings';
+import AdminUsers from '@/pages/AdminUsers';
 import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient();

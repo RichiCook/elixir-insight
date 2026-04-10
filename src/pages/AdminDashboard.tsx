@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useProducts, useAdminStats } from '@/hooks/useProduct';
 import { useAuthStore } from '@/stores/authStore';
+import { usePermissions } from '@/hooks/useUserRole';
 import { useNavigate, Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
