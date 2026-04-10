@@ -1277,7 +1277,13 @@ export type Database = {
         | "custom_html"
         | "lead_capture"
         | "lead_capture_rating"
-      app_role: "admin" | "moderator" | "user"
+      app_role:
+        | "admin"
+        | "moderator"
+        | "user"
+        | "editor"
+        | "marketing"
+        | "supply"
       repair_request_status:
         | "submitted"
         | "reviewing"
@@ -1429,7 +1435,7 @@ export const Constants = {
         "lead_capture",
         "lead_capture_rating",
       ],
-      app_role: ["admin", "moderator", "user"],
+      app_role: ["admin", "moderator", "user", "editor", "marketing", "supply"],
       repair_request_status: [
         "submitted",
         "reviewing",
