@@ -24,7 +24,7 @@ export function StoreCTA({ slug, onCtaClick, customButtonText, customButtonUrl, 
         {buttonText}
       </a>
       <p className="text-center font-sans-consumer text-[9px] text-cc-text-lt mt-3">
-        {footerText || <>Powered by <span className="text-cc-gold">Aitems</span> · Product Intelligence</>}
+        {footerText || <>Powered by <span className="text-cc-gold">Aitems</span> · Digital Product Passport</>}
       </p>
     </section>
   );
