@@ -1,6 +1,14 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
+function hasTrackingConsent(): boolean {
+  return localStorage.getItem('cc_tracking_consent') === 'accepted';
+}
+
+export function setTrackingConsent(accepted: boolean) {
+  localStorage.setItem('cc_tracking_consent', accepted ? 'accepted' : 'declined');
+}
+
 function getSessionId(): string {
   let id = sessionStorage.getItem('cc_session');
   if (!id) {
@@ -10,8 +18,9 @@ function getSessionId(): string {
   return id;
 }
 
-/** Fire-and-forget insert — never blocks UI */
+/** Fire-and-forget insert — never blocks UI. Skipped without consent. */
 function track(table: 'page_views' | 'scan_events' | 'section_interactions' | 'image_views', data: Record<string, any>) {
+  if (!hasTrackingConsent()) return;
   (supabase.from(table) as any).insert(data).then(() => {});
 }
 

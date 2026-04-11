@@ -40,10 +40,22 @@ export function ImagePickerDialog({ onSelect, onClose, multiple, onSelectMultipl
   const handleUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files?.length) return;
+
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'];
+    const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
+
     setUploading(true);
     try {
       for (const file of Array.from(files)) {
-        const ext = file.name.split('.').pop();
+        if (!ALLOWED_TYPES.includes(file.type)) {
+          toast.error(`"${file.name}" is not an allowed image type`);
+          continue;
+        }
+        if (file.size > MAX_SIZE) {
+          toast.error(`"${file.name}" exceeds 10 MB limit`);
+          continue;
+        }
+        const ext = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
         const path = `uploads/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
         const { error: uploadErr } = await supabase.storage.from('brand-images').upload(path, file);
         if (uploadErr) throw uploadErr;
