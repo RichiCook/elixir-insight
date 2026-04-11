@@ -135,7 +135,7 @@ export function useActiveActivationsForProduct(productId: string | undefined) {
         .from('activations')
         .select('*')
         .eq('status', 'active')
-        .lte('start_date', new Date().toISOString())
+        .or(`start_date.is.null,start_date.lte.${new Date().toISOString()}`)
         .or(`end_date.is.null,end_date.gte.${new Date().toISOString()}`);
       if (error) throw error;
       // Filter by product ID in target_product_ids (client-side since it's an array column)

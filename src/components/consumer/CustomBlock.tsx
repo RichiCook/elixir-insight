@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import DOMPurify from 'dompurify';
 
 interface Props {
   blockType: string;
@@ -71,11 +72,13 @@ export function CustomBlock({ blockType, blockConfig, customContent }: Props) {
 
     case 'video': {
       const url = merged.video_url || '';
-      let embedUrl = url;
-      const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+      let embedUrl: string | null = null;
+      const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
       if (ytMatch) embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}`;
       const vmMatch = url.match(/vimeo\.com\/(\d+)/);
       if (vmMatch) embedUrl = `https://player.vimeo.com/video/${vmMatch[1]}`;
+
+      if (!embedUrl) return null;
 
       return (
         <section className="py-4">
@@ -86,6 +89,7 @@ export function CustomBlock({ blockType, blockConfig, customContent }: Props) {
               allow="autoplay; fullscreen"
               allowFullScreen
               title="Video"
+              sandbox="allow-scripts allow-same-origin allow-presentation"
             />
           </div>
         </section>
@@ -99,7 +103,7 @@ export function CustomBlock({ blockType, blockConfig, customContent }: Props) {
       return (
         <section
           className="px-[18px] py-4"
-          dangerouslySetInnerHTML={{ __html: merged.html || '' }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(merged.html || '') }}
         />
       );
 

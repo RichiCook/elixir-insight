@@ -231,19 +231,23 @@ function ExcelTab() {
   const [progress, setProgress] = useState<ExcelProgress[]>([]);
   const [completed, setCompleted] = useState(false);
 
+  const MAX_EXCEL_SIZE = 20 * 1024 * 1024; // 20 MB
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    if (f && (f.name.endsWith('.xlsx') || f.name.endsWith('.xls'))) {
-      setFile(f); setCompleted(false); setProgress([]);
-    } else toast.error('Please select an Excel file (.xlsx or .xls)');
+    if (!f) return;
+    if (!(f.name.endsWith('.xlsx') || f.name.endsWith('.xls'))) { toast.error('Please select an Excel file (.xlsx or .xls)'); return; }
+    if (f.size > MAX_EXCEL_SIZE) { toast.error('File exceeds 20 MB limit'); return; }
+    setFile(f); setCompleted(false); setProgress([]);
   };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     const f = e.dataTransfer.files?.[0];
-    if (f && (f.name.endsWith('.xlsx') || f.name.endsWith('.xls'))) {
-      setFile(f); setCompleted(false); setProgress([]);
-    } else toast.error('Please drop an Excel file (.xlsx or .xls)');
+    if (!f) return;
+    if (!(f.name.endsWith('.xlsx') || f.name.endsWith('.xls'))) { toast.error('Please drop an Excel file (.xlsx or .xls)'); return; }
+    if (f.size > MAX_EXCEL_SIZE) { toast.error('File exceeds 20 MB limit'); return; }
+    setFile(f); setCompleted(false); setProgress([]);
   }, []);
 
   const updateStatus = (slug: string, update: Partial<ExcelProgress>) => {
@@ -489,17 +493,23 @@ function PdfTab() {
 
   const selectedProduct = products?.find(p => p.id === productId);
 
+  const MAX_PDF_SIZE = 30 * 1024 * 1024; // 30 MB
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    if (f?.type === 'application/pdf') { setFile(f); setExtracted(null); setApplied(false); setDocType(null); }
-    else toast.error('Please select a PDF file');
+    if (!f) return;
+    if (f.type !== 'application/pdf') { toast.error('Please select a PDF file'); return; }
+    if (f.size > MAX_PDF_SIZE) { toast.error('File exceeds 30 MB limit'); return; }
+    setFile(f); setExtracted(null); setApplied(false); setDocType(null);
   };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     const f = e.dataTransfer.files?.[0];
-    if (f?.type === 'application/pdf') { setFile(f); setExtracted(null); setApplied(false); setDocType(null); }
-    else toast.error('Please drop a PDF file');
+    if (!f) return;
+    if (f.type !== 'application/pdf') { toast.error('Please drop a PDF file'); return; }
+    if (f.size > MAX_PDF_SIZE) { toast.error('File exceeds 30 MB limit'); return; }
+    setFile(f); setExtracted(null); setApplied(false); setDocType(null);
   }, []);
 
   const extractTextFromPdf = async (pdfFile: File): Promise<string> => {

@@ -110,7 +110,6 @@ export function useProducts() {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .or('is_collaboration.is.null,is_collaboration.eq.false')
         .order('line')
         .order('name');
       if (error) throw error;
