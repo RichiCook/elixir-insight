@@ -447,14 +447,14 @@ ${sourceText}`;
       const regulations = Array.from(
         new Set(
           (sourceText.match(/\bReg\.?\s*(?:CE|UE)\s*\d+\/\d{4}\b/gi) ?? [])
-            .map((r) => r.replace(/\./g, "").replace(/\s+/g, " ").trim().replace(/^reg/i, "Reg")),
+            .map((r: string) => r.replace(/\./g, "").replace(/\s+/g, " ").trim().replace(/^reg/i, "Reg")),
         ),
-      );
+      ) as string[];
       if (regulations.length) {
-        extracted.compliance_regulation_1 = preferLonger(extracted.compliance_regulation_1, regulations[0] ?? null);
-        extracted.compliance_regulation_2 = preferLonger(extracted.compliance_regulation_2, regulations[1] ?? null);
-        extracted.compliance_regulation_3 = preferLonger(extracted.compliance_regulation_3, regulations[2] ?? null);
-        extracted.compliance_references = preferLonger(extracted.compliance_references, regulations.join("; "));
+        extracted.compliance_regulation_1 = preferLonger(extracted.compliance_regulation_1 as string | null, regulations[0] ?? null);
+        extracted.compliance_regulation_2 = preferLonger(extracted.compliance_regulation_2 as string | null, regulations[1] ?? null);
+        extracted.compliance_regulation_3 = preferLonger(extracted.compliance_regulation_3 as string | null, regulations[2] ?? null);
+        extracted.compliance_references = preferLonger(extracted.compliance_references as string | null, regulations.join("; "));
       }
 
       // Normalize all numeric fields
