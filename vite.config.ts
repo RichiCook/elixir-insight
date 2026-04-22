@@ -12,7 +12,7 @@ function cspPlugin(): Plugin {
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' https: data: blob:",
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com",
-    "frame-src https://www.youtube.com https://player.vimeo.com",
+    "frame-src 'self' https://www.youtube.com https://player.vimeo.com",
     "media-src 'self' https: blob:",
     "object-src 'none'",
     "base-uri 'self'",
