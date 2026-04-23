@@ -157,7 +157,8 @@ export default function BottlePage() {
       case 'genuine_card':
         return <GenuineCard product={product} />;
       case 'abv_display':
-        return <AbvDisplay product={product} />;
+        // ABV/EAN/Serving now rendered inside GenuineCard for a tighter layout
+        return null;
       case 'quick_facts':
         return (
           <div ref={serveRef}>
