@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ShieldCheck, ChevronDown } from 'lucide-react';
 
 interface TechData {
@@ -207,9 +207,17 @@ function RawAnalyticalData({ raw }: { raw: Record<string, any> | null }) {
       {analytical_results && typeof analytical_results === 'object' && Object.keys(analytical_results).length > 0 && (
         <>
           <SectionLabel>Analytical Results</SectionLabel>
-          {Object.entries(analytical_results).map(([key, val]) => (
-            <DataRow key={key} label={key.replace(/_/g, ' ')} value={typeof val === 'object' ? JSON.stringify(val) : String(val)} />
-          ))}
+          {Object.entries(analytical_results).map(([key, val]) => {
+            const raw = typeof val === 'object' ? JSON.stringify(val) : String(val);
+            // Override unit for alcoholic strength: stored as "21.50 ml/100ml" → display as "21.50% vol"
+            const display =
+              key === 'alcoholic_strength'
+                ? raw.replace(/\s*ml\s*\/\s*100\s*ml/i, '').replace(/\s*ml\s*$/i, '').trim() + '% vol'
+                : raw;
+            return (
+              <DataRow key={key} label={key.replace(/_/g, ' ')} value={display} />
+            );
+          })}
         </>
       )}
       {minerals && <MineralsSection minerals={minerals} />}

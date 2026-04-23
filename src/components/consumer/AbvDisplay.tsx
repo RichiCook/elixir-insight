@@ -16,9 +16,6 @@ export function AbvDisplay({ product }: Props) {
         <span className="font-display text-[28px] font-light text-cc-text leading-none">
           {isNoRegrets ? '0.0' : product.abv}
         </span>
-        <span className="font-sans-consumer text-sm font-light text-cc-text">
-          {isNoRegrets ? '% ALC. FREE' : '% ALC. VOL.'}
-        </span>
       </div>
 
       {/* Right: EAN + Serving */}

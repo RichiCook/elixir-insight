@@ -8,6 +8,9 @@ interface Props {
 }
 
 export function GenuineCard({ product }: Props) {
+  const handleViewDpp = () => {
+    window.dispatchEvent(new CustomEvent('dpp:open'));
+  };
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -45,7 +48,11 @@ export function GenuineCard({ product }: Props) {
             Digital Passport Available
           </span>
         </div>
-        <button className="font-sans-consumer text-[11px] border border-cc-border rounded px-4 py-1.5 text-cc-text hover:bg-cc-cream2 transition-colors">
+        <button
+          type="button"
+          onClick={handleViewDpp}
+          className="font-sans-consumer text-[11px] border border-cc-border rounded px-4 py-1.5 text-cc-text hover:bg-cc-cream2 transition-colors"
+        >
           View ↗
         </button>
       </div>
