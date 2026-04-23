@@ -22,6 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { Plus, Trash2, GripVertical, Smartphone, RefreshCw } from 'lucide-react';
+import { Sparkles, X as XIcon, Languages as LanguagesIcon } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { LayoutTab } from '@/components/admin/LayoutTab';
 import { ImagePickerDialog } from '@/components/admin/ImagePickerDialog';
