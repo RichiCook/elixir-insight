@@ -279,7 +279,64 @@ function LanguagesTab({ productId, productName }: { productId: string; productNa
     queryClient.invalidateQueries({ queryKey: ['product-translations', productId, activeLang] });
   };
 
-  const comingSoon = activeLang === 'DE' || activeLang === 'FR';
+  const handleAddLanguage = () => {
+    const code = newLangCode.trim().toUpperCase();
+    if (!code) return;
+    if (languages.includes(code)) {
+      toast.error(`${code} already added`);
+      return;
+    }
+    setLanguages((prev) => [...prev, code]);
+    setActiveLang(code);
+    setShowAddDialog(false);
+    setNewLangCode('');
+  };
+
+  const handleRemoveLanguage = async (code: string) => {
+    if (code === 'EN') { toast.error('Cannot remove English (source)'); return; }
+    if (!confirm(`Remove ${code} translation? This deletes saved data for this language.`)) return;
+    await supabase.from('product_translations').delete().eq('product_id', productId).eq('language', code);
+    setLanguages((prev) => prev.filter((l) => l !== code));
+    if (activeLang === code) setActiveLang('EN');
+    toast.success(`${code} removed`);
+  };
+
+  const handleTranslateWithAi = async () => {
+    if (activeLang === 'EN') { toast.error('Source language cannot be translated'); return; }
+    if (!enTranslation) { toast.error('Save an English translation first'); return; }
+    setTranslating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('translate-product', {
+        body: {
+          source: {
+            claim: enTranslation.claim,
+            sensory_description: enTranslation.sensory_description,
+            ingredient_list_short: enTranslation.ingredient_list_short,
+            ingredient_list_full: enTranslation.ingredient_list_full,
+            allergens_local: enTranslation.allergens_local,
+          },
+          sourceLang: 'EN',
+          targetLang: activeLang,
+          productName,
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const translations = (data as any)?.translations || {};
+      setForm((f) => ({
+        claim: translations.claim ?? f.claim,
+        sensory_description: translations.sensory_description ?? f.sensory_description,
+        ingredient_list_short: translations.ingredient_list_short ?? f.ingredient_list_short,
+        ingredient_list_full: translations.ingredient_list_full ?? f.ingredient_list_full,
+        allergens_local: translations.allergens_local ?? f.allergens_local,
+      }));
+      toast.success(`Translated to ${activeLang}. Review and save.`);
+    } catch (e: any) {
+      toast.error(e?.message || 'Translation failed');
+    } finally {
+      setTranslating(false);
+    }
+  };
 
   const fields: { key: keyof typeof form; label: string; type: 'input' | 'textarea'; badge: 'STICKER' | 'WEBSITE' }[] = [
     { key: 'claim', label: 'Claim / Sticker Copy', type: 'textarea', badge: 'STICKER' },
