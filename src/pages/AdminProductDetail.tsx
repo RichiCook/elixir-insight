@@ -190,10 +190,55 @@ function GeneralTab({ product, onSave }: { product: any; onSave: () => void }) {
 }
 
 // ─── Languages Tab ───
-function LanguagesTab({ productId }: { productId: string }) {
-  const [activeLang, setActiveLang] = useState('EN');
-  const { data: translation, refetch } = useProductTranslations(productId, activeLang);
+const AVAILABLE_LANGUAGES: { code: string; name: string }[] = [
+  { code: 'EN', name: 'English' },
+  { code: 'IT', name: 'Italian' },
+  { code: 'DE', name: 'German' },
+  { code: 'FR', name: 'French' },
+  { code: 'ES', name: 'Spanish' },
+  { code: 'PT', name: 'Portuguese' },
+  { code: 'NL', name: 'Dutch' },
+  { code: 'PL', name: 'Polish' },
+  { code: 'SV', name: 'Swedish' },
+  { code: 'DA', name: 'Danish' },
+  { code: 'FI', name: 'Finnish' },
+  { code: 'NO', name: 'Norwegian' },
+  { code: 'EL', name: 'Greek' },
+  { code: 'TR', name: 'Turkish' },
+  { code: 'CS', name: 'Czech' },
+  { code: 'RO', name: 'Romanian' },
+  { code: 'HU', name: 'Hungarian' },
+  { code: 'RU', name: 'Russian' },
+  { code: 'JA', name: 'Japanese' },
+  { code: 'ZH', name: 'Chinese' },
+  { code: 'KO', name: 'Korean' },
+  { code: 'AR', name: 'Arabic' },
+];
+
+function LanguagesTab({ productId, productName }: { productId: string; productName: string }) {
   const queryClient = useQueryClient();
+  const [languages, setLanguages] = useState<string[]>(['EN']);
+  const [activeLang, setActiveLang] = useState('EN');
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [newLangCode, setNewLangCode] = useState('');
+  const [translating, setTranslating] = useState(false);
+
+  const { data: translation, refetch } = useProductTranslations(productId, activeLang);
+  const { data: enTranslation } = useProductTranslations(productId, 'EN');
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('product_translations')
+        .select('language')
+        .eq('product_id', productId);
+      if (cancelled) return;
+      const langs = Array.from(new Set([...(data || []).map((r: any) => r.language), 'EN']));
+      setLanguages(langs);
+    })();
+    return () => { cancelled = true; };
+  }, [productId]);
 
   const [form, setForm] = useState({
     claim: '',
