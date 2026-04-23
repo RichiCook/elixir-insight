@@ -1231,7 +1231,7 @@ export default function AdminProductDetail() {
             </TabsContent>
 
             <TabsContent value="languages">
-              <LanguagesTab productId={product.id} />
+              <LanguagesTab productId={product.id} productName={product.name} />
             </TabsContent>
 
             <TabsContent value="technical">
