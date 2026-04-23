@@ -346,32 +346,93 @@ function LanguagesTab({ productId, productName }: { productId: string; productNa
     { key: 'allergens_local', label: 'Allergens (Local)', type: 'input', badge: 'STICKER' },
   ];
 
+  const availableToAdd = AVAILABLE_LANGUAGES.filter((l) => !languages.includes(l.code));
+
   return (
     <div className="space-y-4">
-      <div className="flex gap-1">
-        {(['EN', 'IT', 'DE', 'FR'] as const).map((l) => (
-          <button
-            key={l}
-            onClick={() => setActiveLang(l)}
-            className={`px-4 py-2 text-xs font-admin tracking-wider rounded-t transition-colors ${
-              activeLang === l ? 'bg-card text-primary border border-border border-b-0' : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {l}
-          </button>
+      <div className="flex gap-1 flex-wrap items-center">
+        {languages.map((l) => (
+          <div key={l} className="relative group">
+            <button
+              onClick={() => setActiveLang(l)}
+              className={`px-4 py-2 text-xs font-admin tracking-wider rounded-t transition-colors flex items-center gap-2 ${
+                activeLang === l ? 'bg-card text-primary border border-border border-b-0' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {l}
+              {l === 'EN' && <span className="text-[9px] uppercase opacity-60">source</span>}
+            </button>
+            {l !== 'EN' && activeLang === l && (
+              <button
+                onClick={() => handleRemoveLanguage(l)}
+                className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full p-0.5"
+                title={`Remove ${l}`}
+              >
+                <XIcon className="h-3 w-3" />
+              </button>
+            )}
+          </div>
         ))}
+        <button
+          onClick={() => setShowAddDialog(true)}
+          className="px-3 py-2 text-xs font-admin tracking-wider rounded-t border border-dashed border-border text-muted-foreground hover:text-primary hover:border-primary transition-colors flex items-center gap-1"
+        >
+          <Plus className="h-3 w-3" /> Add Language
+        </button>
       </div>
 
-      <div className="relative">
-        {comingSoon && (
-          <div className="absolute inset-0 z-10 bg-card/80 backdrop-blur-sm rounded-lg flex items-center justify-center">
-            <div className="text-center">
-              <p className="text-primary font-display text-xl">Coming Soon</p>
-              <p className="text-xs text-muted-foreground mt-1">Translations for {activeLang} are in progress</p>
-            </div>
+      {showAddDialog && (
+        <div className="bg-card border border-border rounded-lg p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground">Select or type a language code</Label>
+            <button onClick={() => setShowAddDialog(false)} className="text-muted-foreground hover:text-foreground">
+              <XIcon className="h-4 w-4" />
+            </button>
           </div>
-        )}
+          <div className="flex gap-2">
+            <Select value={newLangCode} onValueChange={setNewLangCode}>
+              <SelectTrigger className="flex-1">
+                <SelectValue placeholder="Pick a language…" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableToAdd.map((l) => (
+                  <SelectItem key={l.code} value={l.code}>{l.code} — {l.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input
+              placeholder="Or type code"
+              value={newLangCode}
+              onChange={(e) => setNewLangCode(e.target.value.toUpperCase())}
+              className="w-32"
+              maxLength={5}
+            />
+            <Button onClick={handleAddLanguage} className="bg-primary text-primary-foreground">Add</Button>
+          </div>
+        </div>
+      )}
 
+      {activeLang !== 'EN' && (
+        <div className="flex items-center justify-between bg-primary/5 border border-primary/20 rounded-lg px-4 py-3">
+          <div className="flex items-center gap-2 text-xs">
+            <LanguagesIcon className="h-4 w-4 text-primary" />
+            <span className="text-muted-foreground">
+              Auto-fill <span className="text-primary font-medium">{activeLang}</span> fields from English using AI.
+            </span>
+          </div>
+          <Button
+            onClick={handleTranslateWithAi}
+            disabled={translating || !enTranslation}
+            size="sm"
+            className="bg-primary text-primary-foreground"
+          >
+            <Sparkles className="h-3 w-3 mr-1.5" />
+            {translating ? 'Translating…' : 'Translate with AI'}
+          </Button>
+        </div>
+      )}
+
+      <div className="relative">
         <div className="space-y-4">
           {fields.map((f) => (
             <div key={f.key}>
