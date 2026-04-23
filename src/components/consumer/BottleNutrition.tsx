@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ShieldCheck, ChevronDown } from 'lucide-react';
 
 interface TechData {
@@ -207,9 +207,17 @@ function RawAnalyticalData({ raw }: { raw: Record<string, any> | null }) {
       {analytical_results && typeof analytical_results === 'object' && Object.keys(analytical_results).length > 0 && (
         <>
           <SectionLabel>Analytical Results</SectionLabel>
-          {Object.entries(analytical_results).map(([key, val]) => (
-            <DataRow key={key} label={key.replace(/_/g, ' ')} value={typeof val === 'object' ? JSON.stringify(val) : String(val)} />
-          ))}
+          {Object.entries(analytical_results).map(([key, val]) => {
+            const raw = typeof val === 'object' ? JSON.stringify(val) : String(val);
+            // Override unit for alcoholic strength: stored as "21.50 ml/100ml" → display as "21.50% vol"
+            const display =
+              key === 'alcoholic_strength'
+                ? raw.replace(/\s*ml\s*\/\s*100\s*ml/i, '').replace(/\s*ml\s*$/i, '').trim() + '% vol'
+                : raw;
+            return (
+              <DataRow key={key} label={key.replace(/_/g, ' ')} value={display} />
+            );
+          })}
         </>
       )}
       {minerals && <MineralsSection minerals={minerals} />}
@@ -461,6 +469,7 @@ function LabelOnlyView({ td, allergensSummary }: { td: TechData | null; allergen
 // ── MAIN COMPONENT ─────────────────────────────────────────
 export function BottleNutrition({ data, allergensSummary, onExpand }: Props) {
   const [open, setOpen] = useState(false);
+  const sectionRef = useRef<HTMLElement | null>(null);
   const td = data as TechData | null;
 
   const hasNutrition = td && (td.energy_kcal || td.energy_kj || td.carbohydrates || td.proteins || td.fats || td.salt);
@@ -481,8 +490,23 @@ export function BottleNutrition({ data, allergensSummary, onExpand }: Props) {
   if (td?.gmo_declaration || td?.ionising_radiation || td?.compliance_references || td?.supplier_name || td?.laboratory_name) subParts.push('Declarations');
   const subLabel = subParts.length > 0 ? subParts.join(' · ') : 'Nutritional · Allergens';
 
+  useEffect(() => {
+    const handler = () => {
+      if (!open) {
+        setOpen(true);
+        if (onExpand) onExpand();
+      }
+      // Allow accordion to start expanding before scrolling
+      setTimeout(() => {
+        sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 80);
+    };
+    window.addEventListener('dpp:open', handler);
+    return () => window.removeEventListener('dpp:open', handler);
+  }, [open, onExpand]);
+
   return (
-    <section>
+    <section ref={sectionRef} id="dpp-section">
       <button
         onClick={() => { setOpen(v => { if (!v && onExpand) onExpand(); return !v; }); }}
         className="flex items-center justify-between border-t border-b border-cc-border w-full text-left cursor-pointer"
