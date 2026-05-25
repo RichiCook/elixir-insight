@@ -112,20 +112,30 @@ export default function AdminAnalytics() {
   const ctaClicks = interactions.filter((i: any) => i.section_name === 'cta_click').length;
   const ctaRate = totalViews > 0 ? ((ctaClicks / totalViews) * 100).toFixed(1) : '0';
 
+  const productMap = useMemo(
+    () => new Map(products?.map((p) => [p.slug, p]) ?? []),
+    [products]
+  );
+
   // Views by product
   const productBarData = useMemo(() => {
     return Object.entries(productViewCounts)
       .sort((a, b) => b[1] - a[1])
       .map(([slug, count]) => {
-        const p = products?.find((pr) => pr.slug === slug);
+        const p = productMap.get(slug);
         return { name: p?.name || slug, views: count, line: p?.line || 'Classic' };
       });
-  }, [productViewCounts, products]);
+  }, [productViewCounts, productMap]);
+
+  const productByNameMap = useMemo(
+    () => new Map(products?.map((p) => [p.name, p]) ?? []),
+    [products]
+  );
 
   // Product detail table
   const productTableData = useMemo(() => {
     return productBarData.map((item) => {
-      const slug = products?.find((p) => p.name === item.name)?.slug || item.name;
+      const slug = productByNameMap.get(item.name)?.slug || item.name;
       const sessions = new Set(pageViews.filter((v: any) => v.product_slug === slug).map((v: any) => v.session_id)).size;
       const productInteractions = interactions.filter((i: any) => i.product_slug === slug);
       const sectionViews = productInteractions.filter((i: any) => i.interaction_type === 'view');
@@ -135,7 +145,7 @@ export default function AdminAnalytics() {
       const ctaR = item.views > 0 ? ((cta / item.views) * 100).toFixed(1) : '0';
       return { ...item, slug, sessions, avgSections, ctaClicks: cta, ctaRate: ctaR };
     });
-  }, [productBarData, pageViews, interactions, products]);
+  }, [productBarData, pageViews, interactions, productByNameMap]);
 
   // Language distribution
   const langPieData = useMemo(() => {

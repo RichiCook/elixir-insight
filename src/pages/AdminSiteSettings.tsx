@@ -7,44 +7,42 @@ import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Upload } from 'lucide-react';
 import { ImagePickerDialog } from '@/components/admin/ImagePickerDialog';
+import { useApiForm } from '@/hooks/useApiForm';
+
+interface SiteSettingsForm {
+  site_title: string;
+  favicon_url: string;
+}
 
 export default function AdminSiteSettings() {
-  const [siteTitle, setSiteTitle] = useState('');
-  const [faviconUrl, setFaviconUrl] = useState('');
   const [settingsId, setSettingsId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [showImagePicker, setShowImagePicker] = useState(false);
+  const [initial, setInitial] = useState<SiteSettingsForm | undefined>();
 
   useEffect(() => {
-    supabase.from('site_settings').select('*').limit(1).single().then(({ data }) => {
+    supabase.from('site_settings' as any).select('*').limit(1).single().then(({ data }) => {
       if (data) {
-        setSiteTitle((data as any).site_title || '');
-        setFaviconUrl((data as any).favicon_url || '');
+        setInitial({ site_title: (data as any).site_title || '', favicon_url: (data as any).favicon_url || '' });
         setSettingsId((data as any).id);
       }
       setLoading(false);
     });
   }, []);
 
-  const handleSave = async () => {
+  const { form, set, saving, handleSave } = useApiForm<SiteSettingsForm>(initial, async (data) => {
     if (!settingsId) return;
-    setSaving(true);
     const { error } = await supabase.from('site_settings' as any).update({
-      site_title: siteTitle,
-      favicon_url: faviconUrl || null,
+      site_title: data.site_title,
+      favicon_url: data.favicon_url || null,
       updated_at: new Date().toISOString(),
     } as any).eq('id', settingsId);
-    setSaving(false);
-    if (error) {
-      toast.error('Failed to save settings');
-    } else {
-      toast.success('Site settings saved');
-    }
-  };
+    if (error) toast.error('Failed to save settings');
+    else toast.success('Site settings saved');
+  });
 
   const handleFaviconSelected = (url: string) => {
-    setFaviconUrl(url);
+    set('favicon_url', url);
     setShowImagePicker(false);
   };
 
@@ -73,8 +71,8 @@ export default function AdminSiteSettings() {
         <div className="space-y-2">
           <Label>Browser Tab Title</Label>
           <Input
-            value={siteTitle}
-            onChange={(e) => setSiteTitle(e.target.value)}
+            value={form.site_title ?? ''}
+            onChange={(e) => set('site_title', e.target.value)}
             placeholder="Classy Cocktails"
           />
           <p className="text-xs text-muted-foreground">Shown in the browser tab on all consumer pages</p>
@@ -84,9 +82,9 @@ export default function AdminSiteSettings() {
         <div className="space-y-2">
           <Label>Favicon</Label>
           <div className="flex items-center gap-4">
-            {faviconUrl ? (
+            {form.favicon_url ? (
               <div className="w-12 h-12 border border-border rounded flex items-center justify-center bg-muted overflow-hidden">
-                <img src={faviconUrl} alt="Favicon preview" className="w-8 h-8 object-contain" />
+                <img src={form.favicon_url} alt="Favicon preview" className="w-8 h-8 object-contain" />
               </div>
             ) : (
               <div className="w-12 h-12 border border-border rounded flex items-center justify-center bg-muted">
@@ -97,8 +95,8 @@ export default function AdminSiteSettings() {
               <Button variant="outline" size="sm" onClick={() => setShowImagePicker(true)}>
                 <Upload className="w-3 h-3 mr-1" /> Choose Image
               </Button>
-              {faviconUrl && (
-                <Button variant="ghost" size="sm" onClick={() => setFaviconUrl('')}>Remove</Button>
+              {form.favicon_url && (
+                <Button variant="ghost" size="sm" onClick={() => set('favicon_url', '')}>Remove</Button>
               )}
             </div>
           </div>

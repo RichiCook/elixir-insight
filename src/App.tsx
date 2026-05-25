@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useAuthStore } from '@/stores/authStore';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import BottlePage from '@/pages/BottlePage';
 import AdminLogin from '@/pages/AdminLogin';
 import AdminDashboard from '@/pages/AdminDashboard';
@@ -22,7 +23,11 @@ import AdminSiteSettings from '@/pages/AdminSiteSettings';
 import AdminUsers from '@/pages/AdminUsers';
 import NotFound from '@/pages/NotFound';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { staleTime: 30_000, retry: 1 },
+  },
+});
 
 function AppInner() {
   const initialize = useAuthStore((s) => s.initialize);
@@ -35,7 +40,15 @@ function AppInner() {
     <BrowserRouter>
       <Routes>
         {/* Consumer DPP */}
-        <Route path="/bottle/:slug" element={<BottlePage />} />
+        <Route path="/bottle/:slug" element={
+          <ErrorBoundary fallback={
+            <div className="consumer-theme min-h-screen bg-cc-cream flex items-center justify-center">
+              <p className="font-sans-consumer text-sm text-cc-text-md">Something went wrong. Please scan the QR code again.</p>
+            </div>
+          }>
+            <BottlePage />
+          </ErrorBoundary>
+        } />
 
         {/* Admin */}
         <Route path="/admin/login" element={<AdminLogin />} />
@@ -43,7 +56,9 @@ function AppInner() {
           path="/admin"
           element={
             <ProtectedRoute>
-              <AdminDashboard />
+              <ErrorBoundary>
+                <AdminDashboard />
+              </ErrorBoundary>
             </ProtectedRoute>
           }
         />
@@ -51,7 +66,9 @@ function AppInner() {
           path="/admin/product/:slug"
           element={
             <ProtectedRoute>
-              <AdminProductDetail />
+              <ErrorBoundary>
+                <AdminProductDetail />
+              </ErrorBoundary>
             </ProtectedRoute>
           }
         />
@@ -59,7 +76,9 @@ function AppInner() {
           path="/admin/ai-upload"
           element={
             <ProtectedRoute>
-              <AdminAiUpload />
+              <ErrorBoundary>
+                <AdminAiUpload />
+              </ErrorBoundary>
             </ProtectedRoute>
           }
         />
@@ -67,7 +86,9 @@ function AppInner() {
           path="/admin/images"
           element={
             <ProtectedRoute>
-              <AdminImageLibrary />
+              <ErrorBoundary>
+                <AdminImageLibrary />
+              </ErrorBoundary>
             </ProtectedRoute>
           }
         />
@@ -75,7 +96,9 @@ function AppInner() {
           path="/admin/analytics"
           element={
             <ProtectedRoute>
-              <AdminAnalytics />
+              <ErrorBoundary>
+                <AdminAnalytics />
+              </ErrorBoundary>
             </ProtectedRoute>
           }
         />
@@ -83,7 +106,9 @@ function AppInner() {
           path="/admin/default-layout"
           element={
             <ProtectedRoute>
-              <AdminDefaultLayout />
+              <ErrorBoundary>
+                <AdminDefaultLayout />
+              </ErrorBoundary>
             </ProtectedRoute>
           }
         />
@@ -91,7 +116,9 @@ function AppInner() {
           path="/admin/activations"
           element={
             <ProtectedRoute>
-              <AdminActivations />
+              <ErrorBoundary>
+                <AdminActivations />
+              </ErrorBoundary>
             </ProtectedRoute>
           }
         />
@@ -99,7 +126,9 @@ function AppInner() {
           path="/admin/activations/:id"
           element={
             <ProtectedRoute>
-              <AdminActivationEditor />
+              <ErrorBoundary>
+                <AdminActivationEditor />
+              </ErrorBoundary>
             </ProtectedRoute>
           }
         />
@@ -108,7 +137,9 @@ function AppInner() {
           path="/admin/collaborations"
           element={
             <ProtectedRoute>
-              <AdminCollaborations />
+              <ErrorBoundary>
+                <AdminCollaborations />
+              </ErrorBoundary>
             </ProtectedRoute>
           }
         />
@@ -116,7 +147,9 @@ function AppInner() {
           path="/admin/collaborations/:brandSlug"
           element={
             <ProtectedRoute>
-              <AdminCollaborationDetail />
+              <ErrorBoundary>
+                <AdminCollaborationDetail />
+              </ErrorBoundary>
             </ProtectedRoute>
           }
         />
@@ -124,7 +157,9 @@ function AppInner() {
           path="/admin/site-settings"
           element={
             <ProtectedRoute>
-              <AdminSiteSettings />
+              <ErrorBoundary>
+                <AdminSiteSettings />
+              </ErrorBoundary>
             </ProtectedRoute>
           }
         />
@@ -132,13 +167,15 @@ function AppInner() {
           path="/admin/users"
           element={
             <ProtectedRoute>
-              <AdminUsers />
+              <ErrorBoundary>
+                <AdminUsers />
+              </ErrorBoundary>
             </ProtectedRoute>
           }
         />
 
         {/* Root redirect */}
-        <Route path="/" element={<Navigate to="/bottle/negroni" replace />} />
+        <Route path="/" element={<Navigate to="/admin/login" replace />} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

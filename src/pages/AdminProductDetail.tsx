@@ -26,22 +26,8 @@ import { Sparkles, X as XIcon, Languages as LanguagesIcon } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { LayoutTab } from '@/components/admin/LayoutTab';
 import { ImagePickerDialog } from '@/components/admin/ImagePickerDialog';
-
-function getCompletenessColor(val: number) {
-  if (val < 40) return '#a04040';
-  if (val < 70) return '#c09040';
-  if (val < 85) return '#b8975a';
-  return '#4a8c5c';
-}
-
-function getLineBadge(line: string) {
-  const styles: Record<string, string> = {
-    Classic: 'bg-[#b8975a]/15 text-[#b8975a]',
-    Sparkling: 'bg-[#4a7cc0]/15 text-[#6a9ce0]',
-    'No Regrets': 'bg-[#4a8c5c]/15 text-[#5aac6c]',
-  };
-  return styles[line] || styles.Classic;
-}
+import { PRODUCT_LINES, getCompletenessColor, getLineBadge } from '@/constants/app';
+import { useApiForm } from '@/hooks/useApiForm';
 
 function Badge({ type }: { type: 'STICKER' | 'WEBSITE' | 'BOTTLE' }) {
   const colors = {
@@ -65,37 +51,28 @@ const MARKETS = ['INT', 'IT', 'DE', 'FR', 'UK'] as const;
 
 // ─── General Info Tab ───
 function GeneralTab({ product, onSave }: { product: any; onSave: () => void }) {
-  const [form, setForm] = useState({ ...product });
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => { setForm({ ...product }); }, [product]);
-
-  const set = (key: string, val: string) => setForm((f: any) => ({ ...f, [key]: val }));
-
-  const handleSave = async () => {
-    setSaving(true);
+  const { form, set, saving, handleSave } = useApiForm<Record<string, any>>(product, async (data) => {
     const { error } = await supabase.from('products').update({
-      line: form.line,
-      spirit: form.spirit,
-      abv: form.abv,
-      serving: form.serving,
-      garnish: form.garnish,
-      glass: form.glass,
-      ice: form.ice,
-      flavour: form.flavour,
-      food_pairing: form.food_pairing,
-      occasion: form.occasion,
-      uk_units: form.uk_units,
-      allergens_summary: form.allergens_summary,
-      hero_bg: form.hero_bg,
-      bottle_color: form.bottle_color,
-      product_link: form.product_link || null,
+      line: data.line,
+      spirit: data.spirit,
+      abv: data.abv,
+      serving: data.serving,
+      garnish: data.garnish,
+      glass: data.glass,
+      ice: data.ice,
+      flavour: data.flavour,
+      food_pairing: data.food_pairing,
+      occasion: data.occasion,
+      uk_units: data.uk_units,
+      allergens_summary: data.allergens_summary,
+      hero_bg: data.hero_bg,
+      bottle_color: data.bottle_color,
+      product_link: data.product_link || null,
     }).eq('id', product.id);
-    setSaving(false);
     if (error) { toast.error('Failed to save'); return; }
     toast.success('Product updated');
     onSave();
-  };
+  });
 
   const fields: { key: string; label: string; badges: ('STICKER' | 'WEBSITE' | 'BOTTLE')[] }[] = [
     { key: 'spirit', label: 'Spirit', badges: ['STICKER', 'WEBSITE'] },
@@ -123,9 +100,7 @@ function GeneralTab({ product, onSave }: { product: any; onSave: () => void }) {
         <Select value={form.line} onValueChange={(v) => set('line', v)}>
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="Classic">Classic</SelectItem>
-            <SelectItem value="Sparkling">Sparkling</SelectItem>
-            <SelectItem value="No Regrets">No Regrets</SelectItem>
+            {PRODUCT_LINES.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
@@ -538,31 +513,23 @@ function RawDataSection({ raw }: { raw: Record<string, any> }) {
 function TechnicalTab({ productId }: { productId: string }) {
   const { data: techData, refetch } = useProductTechnicalData(productId);
   const queryClient = useQueryClient();
-  const [form, setForm] = useState<Record<string, any>>({});
-  const [saving, setSaving] = useState(false);
   const [flushing, setFlushing] = useState(false);
 
-  useEffect(() => {
-    if (techData) setForm({ ...techData });
-    else setForm({});
-  }, [techData]);
+  const { form, setForm, set, saving, handleSave } = useApiForm<Record<string, any>>(
+    techData ?? undefined,
+    async (data) => {
+      const payload: Record<string, any> = { product_id: productId };
+      ALL_TEXT_FIELDS.forEach((k) => { payload[k] = data[k] || null; });
+      ALLERGENS.forEach((a) => { payload[`allergen_${a}`] = !!data[`allergen_${a}`]; });
+      if (data.raw_analytical_data) payload.raw_analytical_data = data.raw_analytical_data;
+      if (techData?.id) payload.id = techData.id;
 
-  const set = (key: string, val: any) => setForm((f) => ({ ...f, [key]: val }));
-
-  const handleSave = async () => {
-    setSaving(true);
-    const payload: Record<string, any> = { product_id: productId };
-    ALL_TEXT_FIELDS.forEach((k) => { payload[k] = form[k] || null; });
-    ALLERGENS.forEach((a) => { payload[`allergen_${a}`] = !!form[`allergen_${a}`]; });
-    if (form.raw_analytical_data) payload.raw_analytical_data = form.raw_analytical_data;
-    if (techData?.id) payload.id = techData.id;
-
-    const { error } = await supabase.from('product_technical_data').upsert(payload as any, { onConflict: 'product_id' });
-    setSaving(false);
-    if (error) { toast.error('Failed to save'); return; }
-    toast.success('Technical data saved');
-    queryClient.invalidateQueries({ queryKey: ['product-technical-data', productId] });
-  };
+      const { error } = await supabase.from('product_technical_data').upsert(payload as any, { onConflict: 'product_id' });
+      if (error) { toast.error('Failed to save'); return; }
+      toast.success('Technical data saved');
+      queryClient.invalidateQueries({ queryKey: ['product-technical-data', productId] });
+    }
+  );
 
   const handleFlush = async () => {
     if (!confirm('This will permanently delete all technical data and tech sheet upload records for this product. Continue?')) return;

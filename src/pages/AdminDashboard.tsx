@@ -10,22 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-
-function getCompletenessColor(val: number) {
-  if (val < 40) return '#a04040';
-  if (val < 70) return '#c09040';
-  if (val < 85) return '#b8975a';
-  return '#4a8c5c';
-}
-
-function getLineBadge(line: string) {
-  const styles: Record<string, string> = {
-    Classic: 'bg-[#b8975a]/15 text-[#b8975a] border-[#b8975a]/20',
-    Sparkling: 'bg-[#4a7cc0]/15 text-[#6a9ce0] border-[#4a7cc0]/20',
-    'No Regrets': 'bg-[#4a8c5c]/15 text-[#5aac6c] border-[#4a8c5c]/20',
-  };
-  return styles[line] || styles.Classic;
-}
+import { PRODUCT_LINES, getCompletenessColor, getLineBadge } from '@/constants/app';
 
 export default function AdminDashboard() {
   const { data: products, isLoading } = useProducts();
@@ -37,6 +22,7 @@ export default function AdminDashboard() {
   const [showNewProduct, setShowNewProduct] = useState(false);
   const [newProduct, setNewProduct] = useState({ name: '', slug: '', line: 'Classic', abv: '' });
   const [creating, setCreating] = useState(false);
+  const [search, setSearch] = useState('');
 
   const handleSignOut = async () => {
     await signOut();
@@ -141,13 +127,23 @@ export default function AdminDashboard() {
         )}
 
         {/* Product grid */}
+        <Input
+          placeholder="Search products…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="max-w-sm"
+        />
         {isLoading ? (
           <div className="flex justify-center py-20">
             <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {products?.map((product) => (
+            {products?.filter((p) => {
+              if (!search) return true;
+              const q = search.toLowerCase();
+              return p.name.toLowerCase().includes(q) || p.slug.toLowerCase().includes(q) || p.line?.toLowerCase().includes(q);
+            }).map((product) => (
               <Link
                 key={product.id}
                 to={`/admin/product/${product.slug}`}
@@ -235,9 +231,7 @@ export default function AdminDashboard() {
               <Select value={newProduct.line} onValueChange={(v) => setNewProduct((p) => ({ ...p, line: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Classic">Classic</SelectItem>
-                  <SelectItem value="Sparkling">Sparkling</SelectItem>
-                  <SelectItem value="No Regrets">No Regrets</SelectItem>
+                  {PRODUCT_LINES.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuthStore } from '@/stores/authStore';
 
 export function useProduct(slug: string) {
   return useQuery({
@@ -51,17 +52,18 @@ export function useProductComposition(productId: string | undefined) {
 }
 
 export function useProductTechnicalData(productId: string | undefined) {
+  const isAuthenticated = !!useAuthStore((s) => s.user);
   return useQuery({
-    queryKey: ['product-technical-data', productId],
+    queryKey: ['product-technical-data', productId, isAuthenticated],
     queryFn: async () => {
-      // Try direct table access (works for authenticated admin users)
-      const { data, error } = await supabase
-        .from('product_technical_data')
-        .select('*')
-        .eq('product_id', productId!)
-        .single();
-      if (!error) return data;
-      // Fall back to public RPC for anonymous/consumer access (excludes supplier info)
+      if (isAuthenticated) {
+        const { data, error } = await supabase
+          .from('product_technical_data')
+          .select('*')
+          .eq('product_id', productId!)
+          .single();
+        if (!error) return data;
+      }
       const { data: rpcData, error: rpcError } = await supabase
         .rpc('get_product_nutrition', { p_product_id: productId! });
       if (rpcError) throw rpcError;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,6 +10,8 @@ import { toast } from 'sonner';
 import { useProducts } from '@/hooks/useProduct';
 import { ImagePickerDialog } from '@/components/admin/ImagePickerDialog';
 import { ImageIcon } from 'lucide-react';
+import { PRODUCT_LINES, getCompletenessColor } from '@/constants/app';
+import { useApiForm } from '@/hooks/useApiForm';
 
 function useCollaboration(brandSlug: string) {
   return useQuery({
@@ -44,13 +46,6 @@ function useCollabProducts(collaborationId: string | undefined) {
   });
 }
 
-function getCompletenessColor(val: number) {
-  if (val < 40) return '#a04040';
-  if (val < 70) return '#c09040';
-  if (val < 85) return '#b8975a';
-  return '#4a8c5c';
-}
-
 export default function AdminCollaborationDetail() {
   const { brandSlug } = useParams<{ brandSlug: string }>();
   const { data: collab, isLoading } = useCollaboration(brandSlug || '');
@@ -58,36 +53,31 @@ export default function AdminCollaborationDetail() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  const [form, setForm] = useState<Record<string, any>>({});
-  const [saving, setSaving] = useState(false);
   const [showNewProduct, setShowNewProduct] = useState(false);
   const [newProduct, setNewProduct] = useState({ name: '', slug: '', line: 'Collab', abv: '', baseProductId: '' });
   const [creating, setCreating] = useState(false);
   const [showLogoPicker, setShowLogoPicker] = useState(false);
   const { data: mainProducts } = useProducts();
 
-  useEffect(() => {
-    if (collab) setForm({ ...collab });
-  }, [collab]);
-
-  const handleSave = async () => {
-    if (!collab) return;
-    setSaving(true);
-    const { error } = await supabase.from('collaborations').update({
-      brand_name: form.brand_name,
-      brand_logo_url: form.brand_logo_url || null,
-      brand_color: form.brand_color || '#000000',
-      contact_name: form.contact_name || null,
-      contact_email: form.contact_email || null,
-      event_name: form.event_name || null,
-      event_date: form.event_date || null,
-      status: form.status || 'active',
-    }).eq('id', collab.id);
-    setSaving(false);
-    if (error) { toast.error('Failed to save'); return; }
-    toast.success('Collaboration updated');
-    queryClient.invalidateQueries({ queryKey: ['collaboration', brandSlug] });
-  };
+  const { form, set, saving, handleSave } = useApiForm<Record<string, any>>(
+    collab ? { ...collab } : undefined,
+    async (data) => {
+      if (!collab) return;
+      const { error } = await supabase.from('collaborations').update({
+        brand_name: data.brand_name,
+        brand_logo_url: data.brand_logo_url || null,
+        brand_color: data.brand_color || '#000000',
+        contact_name: data.contact_name || null,
+        contact_email: data.contact_email || null,
+        event_name: data.event_name || null,
+        event_date: data.event_date || null,
+        status: data.status || 'active',
+      }).eq('id', collab.id);
+      if (error) { toast.error('Failed to save'); return; }
+      toast.success('Collaboration updated');
+      queryClient.invalidateQueries({ queryKey: ['collaboration', brandSlug] });
+    }
+  );
 
   const handleBaseProductChange = (productId: string) => {
     if (productId === '_none') {
@@ -188,8 +178,6 @@ export default function AdminCollaborationDetail() {
       </div>
     );
   }
-
-  const set = (key: string, val: any) => setForm((f) => ({ ...f, [key]: val }));
 
   return (
     <div className="min-h-screen bg-background">
@@ -353,9 +341,7 @@ export default function AdminCollaborationDetail() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Collab">Collab</SelectItem>
-                  <SelectItem value="Classic">Classic</SelectItem>
-                  <SelectItem value="Sparkling">Sparkling</SelectItem>
-                  <SelectItem value="No Regrets">No Regrets</SelectItem>
+                  {PRODUCT_LINES.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
