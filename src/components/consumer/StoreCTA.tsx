@@ -8,7 +8,10 @@ interface Props {
 
 export function StoreCTA({ slug, onCtaClick, customButtonText, customButtonUrl, customFooterText }: Props) {
   const buttonText = customButtonText || 'View on our Store ↗';
-  const buttonUrl = customButtonUrl || `https://classycocktails.com/products/${slug}`;
+  const isSafeUrl = (url: string) => /^https?:\/\//i.test(url);
+  const buttonUrl = (customButtonUrl && isSafeUrl(customButtonUrl))
+    ? customButtonUrl
+    : `https://classycocktails.com/products/${slug}`;
   const footerText = customFooterText || '';
 
   return (

@@ -97,7 +97,7 @@ export default function AdminActivationEditor() {
         name: isNew && duplicateId ? `${existing.name} (Copy)` : existing.name,
         brand_id: existing.brand_id,
         activation_type: existing.activation_type,
-        content: existing.content || {},
+        content: { ...(existing.content || {}), reward_code: existing.reward_code ?? undefined },
         targeting_mode: existing.targeting_mode,
         target_product_ids: existing.target_product_ids || [],
         target_collection_ids: existing.target_collection_ids || [],
@@ -117,8 +117,11 @@ export default function AdminActivationEditor() {
       toast.error('Name and brand are required');
       return;
     }
+    const { reward_code: rewardCodeFromContent, ...contentWithoutRewardCode } = draft.content;
     const payload = {
       ...draft,
+      reward_code: rewardCodeFromContent || null,
+      content: contentWithoutRewardCode,
       status: publish ? 'active' as ActivationStatus : draft.status,
     };
     try {

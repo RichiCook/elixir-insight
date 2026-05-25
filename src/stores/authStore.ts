@@ -17,11 +17,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   loading: true,
 
   initialize: async () => {
-    supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       set({ session, user: session?.user ?? null, loading: false });
     });
     const { data: { session } } = await supabase.auth.getSession();
     set({ session, user: session?.user ?? null, loading: false });
+    return () => subscription.unsubscribe();
   },
 
   signIn: async (email: string, password: string) => {

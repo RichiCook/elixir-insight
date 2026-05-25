@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -10,7 +9,6 @@ export default function AdminLogin() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
   const signIn = useAuthStore((s) => s.signIn);
   const navigate = useNavigate();
 
@@ -18,27 +16,12 @@ export default function AdminLogin() {
     e.preventDefault();
     setLoading(true);
     setError('');
-
-    if (mode === 'signup') {
-      const { error: signUpErr } = await supabase.auth.signUp({ email, password });
-      if (signUpErr) {
-        setError(signUpErr.message);
-        setLoading(false);
-        return;
-      }
-      // Auto-assign admin role for qualifying emails
-      await supabase.rpc('maybe_assign_admin');
-      navigate('/admin');
+    const { error: err } = await signIn(email, password);
+    if (err) {
+      setError('Invalid credentials');
+      setLoading(false);
     } else {
-      const { error: err } = await signIn(email, password);
-      if (err) {
-        setError('Invalid credentials');
-        setLoading(false);
-      } else {
-        // Also check admin assignment on login
-        await supabase.rpc('maybe_assign_admin');
-        navigate('/admin');
-      }
+      navigate('/admin');
     }
   };
 
@@ -75,26 +58,12 @@ export default function AdminLogin() {
             <p className="text-sm text-destructive">{error}</p>
           )}
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading
-              ? mode === 'signup' ? 'Creating account…' : 'Signing in…'
-              : mode === 'signup' ? 'Create Account' : 'Sign In'}
+            {loading ? 'Signing in…' : 'Sign In'}
           </Button>
         </form>
 
-        <p className="text-center text-sm text-muted-foreground">
-          {mode === 'login' ? (
-            <>Don't have an account?{' '}
-              <button onClick={() => { setMode('signup'); setError(''); }} className="text-primary underline">
-                Sign up
-              </button>
-            </>
-          ) : (
-            <>Already have an account?{' '}
-              <button onClick={() => { setMode('login'); setError(''); }} className="text-primary underline">
-                Sign in
-              </button>
-            </>
-          )}
+        <p className="text-center text-xs text-muted-foreground">
+          Contact your administrator to get access.
         </p>
       </div>
     </div>

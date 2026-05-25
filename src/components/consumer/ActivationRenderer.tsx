@@ -24,6 +24,10 @@ export function ActivationSlot({ activations, placement, productSlug }: Props) {
   );
 }
 
+function safeUrl(url: unknown): string | undefined {
+  return typeof url === 'string' && /^https?:\/\//i.test(url) ? url : undefined;
+}
+
 function ActivationCard({ activation, productSlug }: { activation: Activation; productSlug: string }) {
   const { activation_type, content } = activation;
 
@@ -65,9 +69,9 @@ function TextImageActivation({ content }: { content: Record<string, any> }) {
           {content.body && (
             <p className="font-sans-consumer text-sm text-white/70 leading-relaxed">{content.body}</p>
           )}
-          {content.cta_text && content.cta_url && (
+          {content.cta_text && safeUrl(content.cta_url) && (
             <a
-              href={content.cta_url}
+              href={safeUrl(content.cta_url)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block mt-4 px-5 py-2 rounded-full text-xs font-medium tracking-wider uppercase"
@@ -84,6 +88,15 @@ function TextImageActivation({ content }: { content: Record<string, any> }) {
 
 // -- Video --
 function VideoActivation({ content }: { content: Record<string, any> }) {
+  const url = content.video_url || '';
+  let embedUrl: string | null = null;
+  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]+)/);
+  if (ytMatch) embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}${content.autoplay ? '?autoplay=1&mute=1' : ''}`;
+  const vmMatch = url.match(/vimeo\.com\/(\d+)/);
+  if (vmMatch) embedUrl = `https://player.vimeo.com/video/${vmMatch[1]}${content.autoplay ? '?autoplay=1&muted=1' : ''}`;
+
+  if (!embedUrl) return null;
+
   return (
     <motion.section
       initial={{ opacity: 0, y: 20 }}
@@ -94,11 +107,12 @@ function VideoActivation({ content }: { content: Record<string, any> }) {
       <div className="rounded-xl overflow-hidden bg-black">
         <div className="relative" style={{ paddingBottom: '56.25%' }}>
           <iframe
-            src={`${content.video_url}${content.autoplay ? '?autoplay=1&mute=1' : ''}`}
+            src={embedUrl}
             className="absolute inset-0 w-full h-full"
             allow="autoplay; fullscreen"
             allowFullScreen
             title={content.caption || 'Video'}
+            sandbox="allow-scripts allow-same-origin allow-presentation"
           />
         </div>
         {content.caption && (
@@ -119,7 +133,7 @@ function BannerCtaActivation({ content }: { content: Record<string, any> }) {
       className="px-5 py-4"
     >
       <a
-        href={content.cta_url || '#'}
+        href={safeUrl(content.cta_url) || '#'}
         target="_blank"
         rel="noopener noreferrer"
         className="block rounded-xl p-5 text-center transition-transform hover:scale-[1.01]"
@@ -145,7 +159,7 @@ function CustomHtmlActivation({ content }: { content: Record<string, any> }) {
         srcDoc={`<!DOCTYPE html><html><head><style>body{margin:0;font-family:system-ui;color:#333}</style></head><body>${content.html}</body></html>`}
         className="w-full rounded-xl border-0"
         style={{ minHeight: 200 }}
-        sandbox="allow-scripts"
+        sandbox="allow-forms allow-popups"
         title="Custom content"
       />
     </section>
@@ -330,10 +344,10 @@ function LeadCaptureRatingActivation({ activation, productSlug }: { activation: 
               <p className="font-sans-consumer text-sm mt-2" style={{ color: '#5a5a5a' }}>
                 {content.success_message || 'Thank you!'}
               </p>
-              {content.reward_code && (
+              {activation.reward_code && (
                 <div className="mt-3 inline-block px-4 py-2 rounded-lg" style={{ backgroundColor: '#b8975a', color: '#fff' }}>
                   <p className="text-[10px] uppercase tracking-wider mb-1">Your reward code</p>
-                  <p className="font-mono text-lg font-bold">{content.reward_code}</p>
+                  <p className="font-mono text-lg font-bold">{activation.reward_code}</p>
                 </div>
               )}
             </motion.div>

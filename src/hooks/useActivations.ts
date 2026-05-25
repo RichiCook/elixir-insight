@@ -11,6 +11,7 @@ export interface Activation {
   brand_id: string;
   activation_type: ActivationType;
   content: Record<string, any>;
+  reward_code: string | null;
   targeting_mode: TargetingMode;
   target_product_ids: string[];
   target_collection_ids: string[];
