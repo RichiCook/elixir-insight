@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
 import { Toaster as Sonner } from '@/components/ui/sonner';
@@ -7,24 +7,36 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { useAuthStore } from '@/stores/authStore';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+
+// Eager — used on consumer QR-scan path or auth path (must load immediately)
 import BottlePage from '@/pages/BottlePage';
 import AdminLogin from '@/pages/AdminLogin';
-import AdminDashboard from '@/pages/AdminDashboard';
-import AdminProductDetail from '@/pages/AdminProductDetail';
-import AdminAiUpload from '@/pages/AdminAiUpload';
-import AdminImageLibrary from '@/pages/AdminImageLibrary';
-import AdminAnalytics from '@/pages/AdminAnalytics';
-import AdminActivations from '@/pages/AdminActivations';
-import AdminActivationEditor from '@/pages/AdminActivationEditor';
-import AdminDefaultLayout from '@/pages/AdminDefaultLayout';
-import AdminCollaborations from '@/pages/AdminCollaborations';
-import AdminCollaborationDetail from '@/pages/AdminCollaborationDetail';
-import AdminSiteSettings from '@/pages/AdminSiteSettings';
-import AdminUsers from '@/pages/AdminUsers';
 import AdminForgotPassword from '@/pages/AdminForgotPassword';
 import AdminResetPassword from '@/pages/AdminResetPassword';
 import PrivacyPolicy from '@/pages/PrivacyPolicy';
 import NotFound from '@/pages/NotFound';
+
+// Lazy — admin-only routes, split into their own chunks
+const AdminDashboard           = lazy(() => import('@/pages/AdminDashboard'));
+const AdminProductDetail       = lazy(() => import('@/pages/AdminProductDetail'));
+const AdminAiUpload            = lazy(() => import('@/pages/AdminAiUpload'));
+const AdminImageLibrary        = lazy(() => import('@/pages/AdminImageLibrary'));
+const AdminAnalytics           = lazy(() => import('@/pages/AdminAnalytics'));
+const AdminActivations         = lazy(() => import('@/pages/AdminActivations'));
+const AdminActivationEditor    = lazy(() => import('@/pages/AdminActivationEditor'));
+const AdminDefaultLayout       = lazy(() => import('@/pages/AdminDefaultLayout'));
+const AdminCollaborations      = lazy(() => import('@/pages/AdminCollaborations'));
+const AdminCollaborationDetail = lazy(() => import('@/pages/AdminCollaborationDetail'));
+const AdminSiteSettings        = lazy(() => import('@/pages/AdminSiteSettings'));
+const AdminUsers               = lazy(() => import('@/pages/AdminUsers'));
+
+function AdminLoadingSpinner() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -43,6 +55,7 @@ function AppInner() {
 
   return (
     <BrowserRouter>
+      <Suspense fallback={<AdminLoadingSpinner />}>
       <Routes>
         {/* Consumer DPP */}
         <Route path="/bottle/:slug" element={
@@ -189,6 +202,7 @@ function AppInner() {
 
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

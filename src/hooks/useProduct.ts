@@ -197,3 +197,20 @@ export function useAdminStats() {
     },
   });
 }
+
+
+export function useProductAvailableLanguages(productId: string | undefined) {
+  return useQuery({
+    queryKey: ['product-available-languages', productId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('product_translations')
+        .select('language')
+        .eq('product_id', productId!);
+      if (error) throw error;
+      return (data ?? []).map((r) => r.language as string);
+    },
+    enabled: !!productId,
+    staleTime: 60_000,
+  });
+}

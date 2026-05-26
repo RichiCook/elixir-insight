@@ -14,7 +14,7 @@ export function AbvDisplay({ product }: Props) {
       {/* Left: ABV */}
       <div className="flex items-baseline gap-1.5">
         <span className="font-display text-[28px] font-light text-cc-text leading-none">
-          {isNoRegrets ? '0.0' : product.abv}
+          {isNoRegrets ? '0.0' : (product.abv ?? '0.0')}
         </span>
       </div>
 

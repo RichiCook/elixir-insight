@@ -1,18 +1,11 @@
 import { useParams, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useState, useCallback } from 'react';
-import {
-  useProduct,
-  useProductTranslations,
-  useProductComposition,
-  useProductTechnicalData,
-  useProductServeMoments,
-  useProductAiPairings,
-  useCollaboration,
-} from '@/hooks/useProduct';
-import { useProductImages } from '@/hooks/useImages';
-import { usePageViewTracking, useSectionTracking, trackInteraction } from '@/hooks/useTracking';
-import { useProductSections, useDefaultLayoutSections, getMergedSections } from '@/hooks/useSectionConfig';
+import { useState, useCallback, useEffect } from 'react';
+import { useBottlePageData } from '@/hooks/useBottlePageData';
+import { usePageViewTracking, useSectionTracking, trackInteraction, hasTrackingConsent } from '@/hooks/useTracking';
+import { supabase } from '@/integrations/supabase/client';
+import { useDefaultLayoutSections, getMergedSections } from '@/hooks/useSectionConfig';
+import { useProductTechnicalData } from '@/hooks/useProduct';
 import { CookieBanner } from '@/components/consumer/CookieBanner';
 import { BottleHero } from '@/components/consumer/BottleHero';
 import { GenuineCard } from '@/components/consumer/GenuineCard';
@@ -33,10 +26,7 @@ import { StoreCTA } from '@/components/consumer/StoreCTA';
 import { CustomBlock } from '@/components/consumer/CustomBlock';
 import { AgeGate } from '@/components/consumer/AgeGate';
 import { ActivationSlot } from '@/components/consumer/ActivationRenderer';
-import { useActiveActivationsForProduct } from '@/hooks/useActivations';
 import { useApplySiteSettings } from '@/hooks/useSiteSettings';
-
-const LANGUAGES = ['EN', 'IT', 'DE', 'FR'] as const;
 
 // Map section keys to activation placement names
 const ACTIVATION_AFTER: Record<string, string> = {
@@ -59,17 +49,26 @@ export default function BottlePage() {
   const [lang, setLang] = useState<string>(initialLang);
   const [fullscreenImage, setFullscreenImage] = useState<{ url: string; alt: string } | null>(null);
 
-  const { data: product, isLoading } = useProduct(slug || '');
-  const { data: translation } = useProductTranslations(product?.id, lang);
-  const { data: composition } = useProductComposition(product?.id);
+  // Single RPC — replaces 10 sequential hooks
+  const { data: pageData, isLoading } = useBottlePageData(slug, lang);
+  const product       = pageData?.product ?? null;
+  const translation   = pageData?.translation ?? null;
+  const composition   = pageData?.composition ?? [];
+  const serveMoments  = pageData?.serve_moments ?? [];
+  const pairings      = pageData?.pairings ?? [];
+  const productImages = pageData?.images ?? [];
+  const activeActivations = pageData?.activations ?? [];
+  const savedSections = pageData?.sections ?? [];
+  const collab        = pageData?.collaboration ?? null;
+  const availableLangs = pageData?.available_languages ?? ['EN'];
+
+  // Technical/nutritional data still fetched separately (admin-only columns
+  // are gated by a dedicated RPC — get_product_nutrition — already called
+  // inside get_bottle_page_data; useProductTechnicalData is kept for the
+  // nutrition component which expects its specific shape from the RPC).
   const { data: technicalData } = useProductTechnicalData(product?.id);
-  const { data: serveMoments } = useProductServeMoments(product?.id);
-  const { data: pairings } = useProductAiPairings(product?.id);
-  const { data: productImages } = useProductImages(product?.id);
-  const { data: activeActivations } = useActiveActivationsForProduct(product?.id);
-  const { data: savedSections } = useProductSections(product?.id);
+
   const { data: defaultSections } = useDefaultLayoutSections();
-  const { data: collab } = useCollaboration(product?.id);
 
   // Apply global site settings (favicon + tab title)
   useApplySiteSettings();
@@ -77,6 +76,19 @@ export default function BottlePage() {
   // Tracking
   usePageViewTracking(slug);
   const { observeSection } = useSectionTracking(slug);
+
+  // Record QR / direct scan in scan_events (fire-and-forget, consent-gated)
+  const isQrScan = searchParams.get('source') === 'qr';
+  useEffect(() => {
+    if (!product?.id || !hasTrackingConsent()) return;
+    supabase.from('scan_events').insert({
+      product_id: product.id,
+      source: isQrScan ? 'qr' : 'direct',
+      user_agent: navigator.userAgent,
+      lang,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?.id]);
 
   const heroRef = useCallback((el: HTMLElement | null) => observeSection(el, 'hero'), [observeSection]);
   const serveRef = useCallback((el: HTMLElement | null) => observeSection(el, 'how_to_serve'), [observeSection]);
@@ -138,7 +150,7 @@ export default function BottlePage() {
     );
   }
 
-  const showAgeGate = parseFloat(product.abv) > 0 && !isPreview;
+  const showAgeGate = parseFloat(product.abv ?? '0') > 0 && !isPreview;
   const sections = getMergedSections(savedSections, defaultSections);
 
   // Render a section by key, using custom_content overrides
@@ -278,7 +290,7 @@ export default function BottlePage() {
               </span>
             </div>
             <div className="flex gap-2">
-              {LANGUAGES.map((l) => (
+              {availableLangs.map((l) => (
                 <button
                   key={l}
                   onClick={() => handleLangSwitch(l)}

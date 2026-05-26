@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-function hasTrackingConsent(): boolean {
+export function hasTrackingConsent(): boolean {
   return localStorage.getItem('cc_tracking_consent') === 'accepted';
 }
 
