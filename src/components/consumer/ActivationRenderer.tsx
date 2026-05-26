@@ -172,10 +172,12 @@ function LeadCaptureActivation({ activation, productSlug }: { activation: Activa
   const submitLead = useSubmitActivationLead();
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState<Record<string, string>>({});
+  const [consented, setConsented] = useState(false);
   const fields = content.fields || ['name', 'email'];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!consented) return;
     const sessionId = sessionStorage.getItem('cc_session') || '';
     submitLead.mutate({
       activation_id: activation.id,
@@ -240,9 +242,26 @@ function LeadCaptureActivation({ activation, productSlug }: { activation: Activa
                   style={{ borderColor: '#e5e0d8', backgroundColor: '#fff', color: '#2a2a2a' }}
                 />
               )}
+              {/* GDPR consent — required before submit */}
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={consented}
+                  onChange={(e) => setConsented(e.target.checked)}
+                  required
+                  className="mt-0.5 shrink-0"
+                />
+                <span className="font-sans-consumer text-[10px] leading-relaxed" style={{ color: '#9a9a9a' }}>
+                  I agree to Classy Cocktails processing my data for this promotion.{' '}
+                  <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: '#b8975a' }}>
+                    Privacy Policy
+                  </a>
+                </span>
+              </label>
               <button
                 type="submit"
-                className="w-full py-2.5 rounded-full text-xs font-medium tracking-wider uppercase"
+                disabled={!consented}
+                className="w-full py-2.5 rounded-full text-xs font-medium tracking-wider uppercase disabled:opacity-40"
                 style={{ backgroundColor: '#b8975a', color: '#fff' }}
               >
                 {content.submit_text || 'Submit'}
@@ -262,6 +281,7 @@ function LeadCaptureRatingActivation({ activation, productSlug }: { activation: 
   const [step, setStep] = useState<'rating' | 'form' | 'done'>('rating');
   const [rating, setRating] = useState(0);
   const [form, setForm] = useState<Record<string, string>>({});
+  const [consented, setConsented] = useState(false);
   const maxRating = content.max_rating || 5;
   const fields = content.fields || ['name', 'email'];
 
@@ -329,9 +349,23 @@ function LeadCaptureRatingActivation({ activation, productSlug }: { activation: 
               {fields.includes('phone') && (
                 <input type="tel" placeholder="Phone" value={form.phone || ''} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} className="w-full px-4 py-2.5 rounded-lg text-sm border" style={{ borderColor: '#e5e0d8', backgroundColor: '#fff', color: '#2a2a2a' }} />
               )}
+              {/* GDPR consent — required before submit */}
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={consented}
+                  onChange={(e) => setConsented(e.target.checked)}
+                  required
+                  className="mt-0.5 shrink-0"
+                />
+                <span className="font-sans-consumer text-[10px] leading-relaxed" style={{ color: '#9a9a9a' }}>
+                  I agree to Classy Cocktails processing my data for this promotion.{' '}
+                  <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: '#b8975a' }}>Privacy Policy</a>
+                </span>
+              </label>
               <div className="flex gap-2">
                 <button type="button" onClick={() => setStep('rating')} className="flex-1 py-2.5 rounded-full text-xs border" style={{ borderColor: '#e5e0d8', color: '#9a9a9a' }}>Back</button>
-                <button type="submit" className="flex-1 py-2.5 rounded-full text-xs font-medium tracking-wider uppercase" style={{ backgroundColor: '#b8975a', color: '#fff' }}>
+                <button type="submit" disabled={!consented} className="flex-1 py-2.5 rounded-full text-xs font-medium tracking-wider uppercase disabled:opacity-40" style={{ backgroundColor: '#b8975a', color: '#fff' }}>
                   {content.submit_text || 'Submit'}
                 </button>
               </div>

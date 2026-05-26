@@ -21,6 +21,9 @@ import AdminCollaborations from '@/pages/AdminCollaborations';
 import AdminCollaborationDetail from '@/pages/AdminCollaborationDetail';
 import AdminSiteSettings from '@/pages/AdminSiteSettings';
 import AdminUsers from '@/pages/AdminUsers';
+import AdminForgotPassword from '@/pages/AdminForgotPassword';
+import AdminResetPassword from '@/pages/AdminResetPassword';
+import PrivacyPolicy from '@/pages/PrivacyPolicy';
 import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient({
@@ -52,8 +55,13 @@ function AppInner() {
           </ErrorBoundary>
         } />
 
+        {/* Privacy policy — public, no auth required */}
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+
         {/* Admin */}
         <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
+        <Route path="/admin/reset-password" element={<AdminResetPassword />} />
         <Route
           path="/admin"
           element={

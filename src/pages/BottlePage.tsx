@@ -13,6 +13,7 @@ import {
 import { useProductImages } from '@/hooks/useImages';
 import { usePageViewTracking, useSectionTracking, trackInteraction } from '@/hooks/useTracking';
 import { useProductSections, useDefaultLayoutSections, getMergedSections } from '@/hooks/useSectionConfig';
+import { CookieBanner } from '@/components/consumer/CookieBanner';
 import { BottleHero } from '@/components/consumer/BottleHero';
 import { GenuineCard } from '@/components/consumer/GenuineCard';
 import { AbvDisplay } from '@/components/consumer/AbvDisplay';
@@ -315,6 +316,9 @@ export default function BottlePage() {
           })}
         </motion.div>
       </div>
+
+      {/* GDPR cookie consent — only shown on first visit when consent is unset */}
+      {!isPreview && <CookieBanner />}
 
       {/* Fullscreen image viewer */}
       {fullscreenImage && (

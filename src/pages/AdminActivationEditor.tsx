@@ -37,7 +37,9 @@ const PLACEMENT_OPTIONS = [
   { value: 'after_nutrition', label: 'After Nutritional Passport' },
   { value: 'before_cta', label: 'Before Store CTA' },
   { value: 'after_editorial', label: 'After Editorial' },
-  { value: 'overlay_modal', label: 'Overlay / Modal' },
+  // overlay_modal is defined in the DB but has no consumer renderer — omitted
+  // until the modal component is implemented.
+  // { value: 'overlay_modal', label: 'Overlay / Modal' },
 ];
 
 interface ActivationDraft {

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import type { Database } from '@/integrations/supabase/types';
 
 type Product = Database['public']['Tables']['products']['Row'];
@@ -34,6 +35,18 @@ export function BottleFooter({ product, customContent, collab }: Props) {
         <span className="w-1 h-1 rounded-full bg-cc-gold opacity-60" />
         <span className="w-1 h-1 rounded-full bg-cc-gold opacity-30" />
       </div>
+      <p className="font-sans-consumer text-[9px] text-cc-text-lt mt-4">
+        Drink responsibly. Not for sale to persons under 18.
+      </p>
+      <p className="font-sans-consumer text-[9px] mt-2">
+        <Link to="/privacy" className="text-cc-text-lt hover:text-cc-gold transition-colors">
+          Privacy Policy
+        </Link>
+        {' · '}
+        <a href="mailto:privacy@classycocktails.com" className="text-cc-text-lt hover:text-cc-gold transition-colors">
+          Data Requests
+        </a>
+      </p>
     </footer>
   );
 }

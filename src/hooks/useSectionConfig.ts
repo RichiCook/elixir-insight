@@ -38,7 +38,7 @@ export const SECTION_DEFINITIONS = [
   { key: 'store_cta', label: 'Store CTA Button', editableFields: [
     { key: 'button_text', label: 'Button Text', type: 'input' as const, default: 'View on our Store ↗' },
     { key: 'button_url', label: 'Button URL', type: 'input' as const, default: '' },
-    { key: 'footer_text', label: 'Footer Text', type: 'input' as const, default: 'Powered by Aitems · Product Intelligence' },
+    { key: 'footer_text', label: 'Footer Text', type: 'input' as const, default: 'Digital Product Passport' },
   ]},
   { key: 'editorial', label: 'Editorial Block', editableFields: [
     { key: 'line_label', label: 'Line Label (e.g. "Classic Line")', type: 'input' as const, default: '' },
