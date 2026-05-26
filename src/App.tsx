@@ -31,10 +31,12 @@ const queryClient = new QueryClient({
 
 function AppInner() {
   const initialize = useAuthStore((s) => s.initialize);
+  const cleanup = useAuthStore((s) => s.cleanup);
 
   useEffect(() => {
     initialize();
-  }, [initialize]);
+    return cleanup;
+  }, [initialize, cleanup]);
 
   return (
     <BrowserRouter>

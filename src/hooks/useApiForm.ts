@@ -6,6 +6,7 @@ export function useApiForm<T extends Record<string, any>>(
 ) {
   const [form, setForm] = useState<T>({} as T);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<Error | null>(null);
 
   useEffect(() => {
     setForm(initialData ? { ...initialData } : {} as T);
@@ -16,12 +17,15 @@ export function useApiForm<T extends Record<string, any>>(
 
   const handleSave = async () => {
     setSaving(true);
+    setSaveError(null);
     try {
       await onSave(form);
+    } catch (e) {
+      setSaveError(e instanceof Error ? e : new Error('Save failed'));
     } finally {
       setSaving(false);
     }
   };
 
-  return { form, setForm, saving, set, handleSave };
+  return { form, setForm, saving, saveError, set, handleSave };
 }

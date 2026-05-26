@@ -6,23 +6,39 @@ interface AuthState {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  initialize: () => Promise<void>;
+  initialize: () => void;
+  cleanup: () => void;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
+
+// Module-level reference so cleanup() can unsubscribe the listener
+// regardless of which component calls it.
+let _unsubscribe: (() => void) | null = null;
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   session: null,
   loading: true,
 
-  initialize: async () => {
+  initialize: () => {
+    // Set up the realtime auth listener first so we never miss a transition.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       set({ session, user: session?.user ?? null, loading: false });
     });
-    const { data: { session } } = await supabase.auth.getSession();
-    set({ session, user: session?.user ?? null, loading: false });
-    return () => subscription.unsubscribe();
+    _unsubscribe = () => subscription.unsubscribe();
+
+    // Hydrate from the persisted session (localStorage) immediately.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      set({ session, user: session?.user ?? null, loading: false });
+    });
+  },
+
+  // Call this from the useEffect cleanup in AppInner to avoid listener leaks
+  // across hot-reloads and StrictMode double-invocations.
+  cleanup: () => {
+    _unsubscribe?.();
+    _unsubscribe = null;
   },
 
   signIn: async (email: string, password: string) => {

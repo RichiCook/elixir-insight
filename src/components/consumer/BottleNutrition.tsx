@@ -340,12 +340,12 @@ function TechSheetView({ td, allergensSummary }: { td: TechData; allergensSummar
       {/* Footer */}
       <div className="flex justify-between items-center" style={{ background: '#f5f0ea', borderTop: '1px solid #e5e0d8', padding: '12px 18px', marginTop: 16 }}>
         <div className="flex items-center gap-[6px]">
-          <span className="rounded-full" style={{ width: 6, height: 6, backgroundColor: '#4a8c5c' }} />
+          <span className="rounded-full" style={{ width: 6, height: 6, backgroundColor: '#9a9a9a' }} />
           <span className="font-sans-consumer" style={{ fontSize: 9, fontWeight: 300, color: '#9a9a9a' }}>
-            Verified · {td.supplier_name || 'Label Data'} · EU Compliant
+            Provided by {td.supplier_name || 'supplier'} · verify against product label
           </span>
         </div>
-        <span className="font-sans-consumer uppercase" style={{ fontSize: 8, letterSpacing: '0.1em', color: 'rgba(184,151,90,0.6)' }}>EU Reg. 1169/2011</span>
+        <span className="font-sans-consumer uppercase" style={{ fontSize: 8, letterSpacing: '0.1em', color: 'rgba(154,154,154,0.6)' }}>Reg. 1169/2011</span>
       </div>
     </>
   );
@@ -431,12 +431,12 @@ function LabReportView({ td }: { td: TechData }) {
       {/* Footer */}
       <div className="flex justify-between items-center" style={{ background: '#f5f0ea', borderTop: '1px solid #e5e0d8', padding: '12px 18px', marginTop: 16 }}>
         <div className="flex items-center gap-[6px]">
-          <span className="rounded-full" style={{ width: 6, height: 6, backgroundColor: '#4a8c5c' }} />
+          <span className="rounded-full" style={{ width: 6, height: 6, backgroundColor: '#9a9a9a' }} />
           <span className="font-sans-consumer" style={{ fontSize: 9, fontWeight: 300, color: '#9a9a9a' }}>
-            Analytical data · {td.laboratory_name || 'Laboratory'} · {td.compliance_references || 'EU Compliant'}
+            {td.laboratory_name || 'Laboratory report'} · verify against product label
           </span>
         </div>
-        <span className="font-sans-consumer uppercase" style={{ fontSize: 8, letterSpacing: '0.1em', color: 'rgba(184,151,90,0.6)' }}>EU Reg. 1169/2011</span>
+        <span className="font-sans-consumer uppercase" style={{ fontSize: 8, letterSpacing: '0.1em', color: 'rgba(154,154,154,0.6)' }}>Reg. 1169/2011</span>
       </div>
     </>
   );

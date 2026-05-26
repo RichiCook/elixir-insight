@@ -30,6 +30,18 @@ Deno.serve(async (req) => {
     });
   }
 
+  // Role check: only admin, supply, and editor may invoke AI translation
+  const { data: roleRows } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id)
+    .in("role", ["admin", "supply", "editor"]);
+  if (!roleRows || roleRows.length === 0) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const body = await req.json();
     const source = body.source as Record<string, string | null>;

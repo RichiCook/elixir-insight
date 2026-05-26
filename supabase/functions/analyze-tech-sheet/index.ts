@@ -282,6 +282,18 @@ serve(async (req) => {
     });
   }
 
+  // Role check: only admin, supply, and editor may invoke AI analysis
+  const { data: roleRows } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id)
+    .in("role", ["admin", "supply", "editor"]);
+  if (!roleRows || roleRows.length === 0) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const { text, extracted_text, product_name, filename, product_id } = await req.json();
     const sourceText = extracted_text ?? text ?? "";
