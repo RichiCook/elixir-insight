@@ -236,7 +236,7 @@ export default function AdminDashboard() {
                 onChange={(e) => setNewProduct((p) => ({ ...p, slug: e.target.value }))}
                 placeholder="e.g. paloma"
               />
-              <p className="text-[10px] text-muted-foreground mt-1">URL path: /bottle/{newProduct.slug || '...'}</p>
+              <p className="text-[10px] text-muted-foreground mt-1">URL: /b/{activeBrand?.slug ?? 'classy'}/{newProduct.slug || '...'}</p>
             </div>
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Line</Label>

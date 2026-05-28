@@ -12,6 +12,7 @@ import { ImagePickerDialog } from '@/components/admin/ImagePickerDialog';
 import { ImageIcon } from 'lucide-react';
 import { PRODUCT_LINES, getCompletenessColor } from '@/constants/app';
 import { useApiForm } from '@/hooks/useApiForm';
+import { useBrandStore } from '@/stores/brandStore';
 
 function useCollaboration(brandSlug: string) {
   return useQuery({
@@ -52,6 +53,7 @@ export default function AdminCollaborationDetail() {
   const { data: products } = useCollabProducts(collab?.id);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const activeBrand = useBrandStore((s) => s.activeBrand);
 
   const [showNewProduct, setShowNewProduct] = useState(false);
   const [newProduct, setNewProduct] = useState({ name: '', slug: '', line: 'Collab', abv: '', baseProductId: '' });
@@ -333,7 +335,7 @@ export default function AdminCollaborationDetail() {
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Slug *</Label>
               <Input value={newProduct.slug} onChange={(e) => setNewProduct((p) => ({ ...p, slug: e.target.value }))} />
-              <p className="text-[10px] text-muted-foreground mt-1">URL: /bottle/{newProduct.slug || '...'}</p>
+              <p className="text-[10px] text-muted-foreground mt-1">URL: /b/{activeBrand?.slug ?? 'classy'}/{newProduct.slug || '...'}</p>
             </div>
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Line</Label>

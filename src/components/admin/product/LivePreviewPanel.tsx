@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Smartphone, RefreshCw } from 'lucide-react';
 
-export function LivePreviewPanel({ slug }: { slug: string }) {
+export function LivePreviewPanel({ slug, brandSlug = 'classy' }: { slug: string; brandSlug?: string }) {
   const [previewLang, setPreviewLang] = useState('EN');
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [iframeKey, setIframeKey] = useState(0);
@@ -15,7 +15,7 @@ export function LivePreviewPanel({ slug }: { slug: string }) {
     return () => { delete (window as any).__refreshPreview; };
   }, [refreshPreview]);
 
-  const previewUrl = `/bottle/${slug}?lang=${previewLang}&preview=true`;
+  const previewUrl = `/b/${brandSlug}/${slug}?lang=${previewLang}&preview=true`;
 
   return (
     <div className="w-[390px] shrink-0 border-l border-border bg-card flex flex-col sticky top-0 h-screen">

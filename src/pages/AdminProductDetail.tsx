@@ -13,6 +13,7 @@ import { EanTab } from '@/components/admin/product/EanTab';
 import { ImagesTab } from '@/components/admin/product/ImagesTab';
 import { PairingsTab } from '@/components/admin/product/PairingsTab';
 import { LivePreviewPanel } from '@/components/admin/product/LivePreviewPanel';
+import { useBrandStore } from '@/stores/brandStore';
 
 export default function AdminProductDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -21,6 +22,7 @@ export default function AdminProductDetail() {
   const { data: products } = useProducts();
   const { data: collab } = useCollaboration(product?.id);
   const queryClient = useQueryClient();
+  const activeBrand = useBrandStore((s) => s.activeBrand);
   const [isWideScreen, setIsWideScreen] = useState(window.innerWidth >= 1280);
 
   useEffect(() => {
@@ -95,7 +97,7 @@ export default function AdminProductDetail() {
             </div>
           </div>
           {!isWideScreen && (
-            <a href={`/bottle/${product.slug}`} target="_blank" rel="noopener noreferrer">
+            <a href={`/b/${activeBrand?.slug ?? 'classy'}/${product.slug}`} target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm">Preview ↗</Button>
             </a>
           )}
@@ -155,7 +157,7 @@ export default function AdminProductDetail() {
         </div>
       </main>
 
-      {isWideScreen && <LivePreviewPanel slug={product.slug} />}
+      {isWideScreen && <LivePreviewPanel slug={product.slug} brandSlug={activeBrand?.slug ?? 'classy'} />}
     </div>
   );
 }
