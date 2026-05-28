@@ -298,8 +298,8 @@ serve(async (req) => {
     const { text, extracted_text, product_name, filename, product_id } = await req.json();
     const sourceText = extracted_text ?? text ?? "";
     if (!sourceText) throw new Error("No extracted text provided");
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const GOOGLE_AI_API_KEY = Deno.env.get("GOOGLE_AI_API_KEY");
+    if (!GOOGLE_AI_API_KEY) throw new Error("GOOGLE_AI_API_KEY is not configured");
 
     const userPrompt = `Extract ALL technical data from this product document for "${product_name || 'Unknown Product'}".
 Document context: filename=${filename || 'unknown'}, product_id=${product_id || 'unknown'}.
@@ -309,14 +309,14 @@ IMPORTANT: Extract EVERY single data point from the document. Do not skip any an
 Document text:
 ${sourceText}`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${GOOGLE_AI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
