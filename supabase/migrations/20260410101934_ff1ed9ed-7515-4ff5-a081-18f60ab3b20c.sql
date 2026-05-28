@@ -17,9 +17,15 @@ CREATE POLICY "Admin read collaborations"
 -- 4. Grant anon/authenticated SELECT on the public view (for consumer pages)
 GRANT SELECT ON public.collaborations_public TO anon, authenticated;
 
--- 5. Fix repair_settings: drop permissive auth read, add admin-only read
-DROP POLICY IF EXISTS "Auth read repair_settings" ON public.repair_settings;
-
-CREATE POLICY "Admin read repair_settings"
-  ON public.repair_settings FOR SELECT TO authenticated
-  USING (has_role(auth.uid(), 'admin'::app_role));
+-- 5. Fix repair_settings: drop permissive auth read, add admin-only read (table may not exist on fresh installs)
+DO $$ BEGIN
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'repair_settings') THEN
+    DROP POLICY IF EXISTS "Auth read repair_settings" ON public.repair_settings;
+    BEGIN
+      CREATE POLICY "Admin read repair_settings"
+        ON public.repair_settings FOR SELECT TO authenticated
+        USING (has_role(auth.uid(), 'admin'::app_role));
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END;
+  END IF;
+END $$;

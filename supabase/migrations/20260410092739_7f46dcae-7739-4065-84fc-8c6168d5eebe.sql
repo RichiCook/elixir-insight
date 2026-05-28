@@ -23,9 +23,16 @@ FROM public.product_technical_data;
 
 GRANT SELECT ON public.product_nutrition_public TO anon, authenticated;
 
--- 2. Restrict repair_settings to auth-only
-DROP POLICY IF EXISTS "Public read repair_settings" ON public.repair_settings;
-CREATE POLICY "Auth read repair_settings" ON public.repair_settings FOR SELECT TO authenticated USING (true);
+-- 2. Restrict repair_settings to auth-only (table may not exist on fresh installs)
+DO $$ BEGIN
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'repair_settings') THEN
+    DROP POLICY IF EXISTS "Public read repair_settings" ON public.repair_settings;
+    BEGIN
+      CREATE POLICY "Auth read repair_settings" ON public.repair_settings FOR SELECT TO authenticated USING (true);
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END;
+  END IF;
+END $$;
 
 -- 3. Tighten write policies to admin role on admin-managed tables
 
@@ -161,23 +168,31 @@ CREATE POLICY "Admins can insert image_attributes" ON public.image_attributes FO
 CREATE POLICY "Admins can update image_attributes" ON public.image_attributes FOR UPDATE TO authenticated USING (public.has_role(auth.uid(), 'admin'));
 CREATE POLICY "Admins can delete image_attributes" ON public.image_attributes FOR DELETE TO authenticated USING (public.has_role(auth.uid(), 'admin'));
 
--- repair_settings
-DROP POLICY IF EXISTS "Auth insert repair_settings" ON public.repair_settings;
-DROP POLICY IF EXISTS "Auth update repair_settings" ON public.repair_settings;
-DROP POLICY IF EXISTS "Auth delete repair_settings" ON public.repair_settings;
-CREATE POLICY "Admins can insert repair_settings" ON public.repair_settings FOR INSERT TO authenticated WITH CHECK (public.has_role(auth.uid(), 'admin'));
-CREATE POLICY "Admins can update repair_settings" ON public.repair_settings FOR UPDATE TO authenticated USING (public.has_role(auth.uid(), 'admin'));
-CREATE POLICY "Admins can delete repair_settings" ON public.repair_settings FOR DELETE TO authenticated USING (public.has_role(auth.uid(), 'admin'));
+-- repair_settings (table may not exist on fresh installs)
+DO $$ BEGIN
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'repair_settings') THEN
+    DROP POLICY IF EXISTS "Auth insert repair_settings" ON public.repair_settings;
+    DROP POLICY IF EXISTS "Auth update repair_settings" ON public.repair_settings;
+    DROP POLICY IF EXISTS "Auth delete repair_settings" ON public.repair_settings;
+    BEGIN CREATE POLICY "Admins can insert repair_settings" ON public.repair_settings FOR INSERT TO authenticated WITH CHECK (public.has_role(auth.uid(), 'admin')); EXCEPTION WHEN duplicate_object THEN NULL; END;
+    BEGIN CREATE POLICY "Admins can update repair_settings" ON public.repair_settings FOR UPDATE TO authenticated USING (public.has_role(auth.uid(), 'admin')); EXCEPTION WHEN duplicate_object THEN NULL; END;
+    BEGIN CREATE POLICY "Admins can delete repair_settings" ON public.repair_settings FOR DELETE TO authenticated USING (public.has_role(auth.uid(), 'admin')); EXCEPTION WHEN duplicate_object THEN NULL; END;
+  END IF;
+END $$;
 
--- repair_requests (keep public insert for consumers, but restrict admin ops)
-DROP POLICY IF EXISTS "Auth insert repair_requests" ON public.repair_requests;
-DROP POLICY IF EXISTS "Auth update repair_requests" ON public.repair_requests;
-DROP POLICY IF EXISTS "Auth delete repair_requests" ON public.repair_requests;
-DROP POLICY IF EXISTS "Auth read repair_requests" ON public.repair_requests;
-CREATE POLICY "Admins can read repair_requests" ON public.repair_requests FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'));
-CREATE POLICY "Admins can insert repair_requests" ON public.repair_requests FOR INSERT TO authenticated WITH CHECK (public.has_role(auth.uid(), 'admin'));
-CREATE POLICY "Admins can update repair_requests" ON public.repair_requests FOR UPDATE TO authenticated USING (public.has_role(auth.uid(), 'admin'));
-CREATE POLICY "Admins can delete repair_requests" ON public.repair_requests FOR DELETE TO authenticated USING (public.has_role(auth.uid(), 'admin'));
+-- repair_requests (table may not exist on fresh installs)
+DO $$ BEGIN
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'repair_requests') THEN
+    DROP POLICY IF EXISTS "Auth insert repair_requests" ON public.repair_requests;
+    DROP POLICY IF EXISTS "Auth update repair_requests" ON public.repair_requests;
+    DROP POLICY IF EXISTS "Auth delete repair_requests" ON public.repair_requests;
+    DROP POLICY IF EXISTS "Auth read repair_requests" ON public.repair_requests;
+    BEGIN CREATE POLICY "Admins can read repair_requests" ON public.repair_requests FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin')); EXCEPTION WHEN duplicate_object THEN NULL; END;
+    BEGIN CREATE POLICY "Admins can insert repair_requests" ON public.repair_requests FOR INSERT TO authenticated WITH CHECK (public.has_role(auth.uid(), 'admin')); EXCEPTION WHEN duplicate_object THEN NULL; END;
+    BEGIN CREATE POLICY "Admins can update repair_requests" ON public.repair_requests FOR UPDATE TO authenticated USING (public.has_role(auth.uid(), 'admin')); EXCEPTION WHEN duplicate_object THEN NULL; END;
+    BEGIN CREATE POLICY "Admins can delete repair_requests" ON public.repair_requests FOR DELETE TO authenticated USING (public.has_role(auth.uid(), 'admin')); EXCEPTION WHEN duplicate_object THEN NULL; END;
+  END IF;
+END $$;
 
 -- activations read - keep existing auth + public policies, just tighten auth read to admin
 DROP POLICY IF EXISTS "Auth read activations" ON public.activations;
