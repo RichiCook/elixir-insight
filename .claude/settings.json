@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=ieetamojfomrtyzgmpnw"
+    }
+  },
+  "permissions": {
+    "allow": [
+      "Bash(supabase db push --linked)",
+      "Bash(supabase db push --linked *)",
+      "Bash(supabase db query --linked *)",
+      "Bash(supabase link *)",
+      "Bash(supabase migration *)",
+      "Bash(supabase projects *)",
+      "Bash(supabase orgs *)"
+    ]
+  }
+}

@@ -111,8 +111,19 @@ export interface BottleCollaboration {
   [key: string]: unknown;
 }
 
+export interface BottleBrand {
+  id: string;
+  name: string;
+  slug: string;
+  logo_url: string | null;
+  primary_color: string | null;
+  description: string | null;
+  website_url: string | null;
+}
+
 export interface BottlePageData {
   product: BottleProduct;
+  brand: BottleBrand;
   translation: BottleTranslation | null;
   composition: BottleCompositionItem[];
   serve_moments: BottleServeMoment[];
@@ -129,18 +140,23 @@ export interface BottlePageData {
 // Hook
 // ---------------------------------------------------------------------------
 
-export function useBottlePageData(slug: string | undefined, lang: string) {
+export function useBottlePageData(
+  brandSlug: string | undefined,
+  productSlug: string | undefined,
+  lang: string,
+) {
   return useQuery({
-    queryKey: ['bottle-page', slug, lang],
+    queryKey: ['bottle-page', brandSlug, productSlug, lang],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('get_bottle_page_data', {
-        p_slug: slug!,
-        p_lang: lang,
+        p_brand_slug: brandSlug!,
+        p_slug:       productSlug!,
+        p_lang:       lang,
       });
       if (error) throw error;
       return data as BottlePageData | null;
     },
-    enabled: !!slug,
+    enabled: !!brandSlug && !!productSlug,
     staleTime: 60_000,
   });
 }

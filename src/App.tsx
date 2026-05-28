@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, Navigate, useParams } from 'react-router-dom';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -30,6 +30,12 @@ const AdminCollaborationDetail = lazy(() => import('@/pages/AdminCollaborationDe
 const AdminSiteSettings        = lazy(() => import('@/pages/AdminSiteSettings'));
 const AdminUsers               = lazy(() => import('@/pages/AdminUsers'));
 
+/** Redirect /bottle/:slug → /b/classy/:slug for backward-compat QR codes */
+function LegacyBottleRedirect() {
+  const { slug } = useParams<{ slug: string }>();
+  return <Navigate to={`/b/classy/${slug}`} replace />;
+}
+
 function AdminLoadingSpinner() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
@@ -57,8 +63,8 @@ function AppInner() {
     <BrowserRouter>
       <Suspense fallback={<AdminLoadingSpinner />}>
       <Routes>
-        {/* Consumer DPP */}
-        <Route path="/bottle/:slug" element={
+        {/* Consumer DPP — /b/:brandSlug/:productSlug */}
+        <Route path="/b/:brandSlug/:productSlug" element={
           <ErrorBoundary fallback={
             <div className="consumer-theme min-h-screen bg-cc-cream flex items-center justify-center">
               <p className="font-sans-consumer text-sm text-cc-text-md">Something went wrong. Please scan the QR code again.</p>
@@ -67,6 +73,8 @@ function AppInner() {
             <BottlePage />
           </ErrorBoundary>
         } />
+        {/* Legacy redirect: /bottle/:slug → /b/classy/:slug */}
+        <Route path="/bottle/:slug" element={<LegacyBottleRedirect />} />
 
         {/* Privacy policy — public, no auth required */}
         <Route path="/privacy" element={<PrivacyPolicy />} />

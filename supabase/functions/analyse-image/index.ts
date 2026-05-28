@@ -47,12 +47,28 @@ serve(async (req) => {
     // Update status to analysing
     await supabase.from("brand_images").update({ status: "analysing" }).eq("id", image_id);
 
-    const systemPrompt = `You are an expert brand image analyst for Classy Cocktails, a premium ready-to-drink cocktail brand with three lines: Classic (alcoholic cocktails), No Regrets (alcohol-free), and Sparkling (carbonated aperitivo). The 12 products are: negroni, cosmopolitan, espresso-martini, daiquiri, margarita, pornstar-martini, paper-plane, penicillin, spicy-paloma, spritz, no-regrets-negroni, no-regrets-moment. Analyse the provided image thoroughly and extract all attributes using the provided function.`;
+    // Resolve brand context dynamically from the image's brand_id
+    const { data: imageRow } = await supabase
+      .from("brand_images")
+      .select("brand_id, brands(name, description)")
+      .eq("id", image_id)
+      .single();
+    const brandName = (imageRow?.brands as any)?.name ?? "the brand";
+    const brandDescription = (imageRow?.brands as any)?.description ?? "a premium beverage brand";
+
+    // Resolve product slugs for this brand
+    const { data: brandProducts } = await supabase
+      .from("products")
+      .select("slug")
+      .eq("brand_id", imageRow?.brand_id ?? "");
+    const productSlugs = (brandProducts ?? []).map((p: any) => p.slug).join(", ") || "unknown";
+
+    const systemPrompt = `You are an expert brand image analyst for ${brandName}, ${brandDescription}. Products: ${productSlugs}. Analyse the provided image thoroughly and extract all attributes using the provided function.`;
 
     const userPrompt = `Analyse this brand image comprehensively. Extract:
 - Alt text in English and Italian (concise, descriptive, accessibility-focused)
 - Scene description (natural language, 2-3 sentences)
-- Any Classy Cocktails products visible (by slug if recognisable from the list)
+- Any ${brandName} products visible (by slug if recognisable from the list)
 - Foods, props, and objects visible
 - People: present? how many? setting (solo/couple/group)?
 - Setting: bar, home, outdoor, studio, table, restaurant
@@ -63,7 +79,7 @@ serve(async (req) => {
 - Composition: portrait, landscape, square, close_up, lifestyle, flat_lay
 - Brightness: dark, medium, bright
 - Best sections this image suits: hero, editorial, serve_moment, pairing, heritage, gallery
-- Which product lines it suits: Classic, No Regrets, Sparkling
+- Which product lines / collections it suits (infer from products list)
 - Whether context involves alcohol`;
 
     const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {

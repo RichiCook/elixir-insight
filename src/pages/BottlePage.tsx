@@ -42,7 +42,7 @@ const ACTIVATION_AFTER: Record<string, string> = {
 };
 
 export default function BottlePage() {
-  const { slug } = useParams<{ slug: string }>();
+  const { brandSlug, productSlug } = useParams<{ brandSlug: string; productSlug: string }>();
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get('preview') === 'true';
   const initialLang = searchParams.get('lang') || 'EN';
@@ -50,7 +50,7 @@ export default function BottlePage() {
   const [fullscreenImage, setFullscreenImage] = useState<{ url: string; alt: string } | null>(null);
 
   // Single RPC — replaces 10 sequential hooks
-  const { data: pageData, isLoading } = useBottlePageData(slug, lang);
+  const { data: pageData, isLoading } = useBottlePageData(brandSlug, productSlug, lang);
   const product       = pageData?.product ?? null;
   const translation   = pageData?.translation ?? null;
   const composition   = pageData?.composition ?? [];
@@ -73,19 +73,22 @@ export default function BottlePage() {
   // Apply global site settings (favicon + tab title)
   useApplySiteSettings();
 
-  // Tracking
-  usePageViewTracking(slug);
-  const { observeSection } = useSectionTracking(slug);
+  // Tracking (use productSlug as the tracking key)
+  usePageViewTracking(productSlug);
+  const { observeSection } = useSectionTracking(productSlug);
 
   // Record QR / direct scan in scan_events (fire-and-forget, consent-gated)
   const isQrScan = searchParams.get('source') === 'qr';
   useEffect(() => {
     if (!product?.id || !hasTrackingConsent()) return;
     supabase.from('scan_events').insert({
-      product_id: product.id,
-      source: isQrScan ? 'qr' : 'direct',
-      user_agent: navigator.userAgent,
-      lang,
+      product_id:   product.id,
+      product_slug: product.slug,
+      brand_id:     pageData?.brand?.id,
+      brand_slug:   brandSlug,
+      source:       isQrScan ? 'qr' : 'direct',
+      user_agent:   navigator.userAgent,
+      language:     lang,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product?.id]);
@@ -127,12 +130,12 @@ export default function BottlePage() {
 
   // Interaction handlers
   const handleLangSwitch = (newLang: string) => {
-    if (slug && newLang !== lang) trackInteraction(slug, 'language_switch', 'click', { from: lang, to: newLang });
+    if (productSlug && newLang !== lang) trackInteraction(productSlug, 'language_switch', 'click', { from: lang, to: newLang });
     setLang(newLang);
   };
-  const handleCtaClick = () => { if (slug) trackInteraction(slug, 'cta_click', 'click'); };
-  const handleIngredientExpand = () => { if (slug) trackInteraction(slug, 'ingredients', 'expand'); };
-  const handleNutritionExpand = () => { if (slug) trackInteraction(slug, 'nutritional_passport', 'expand'); };
+  const handleCtaClick = () => { if (productSlug) trackInteraction(productSlug, 'cta_click', 'click'); };
+  const handleIngredientExpand = () => { if (productSlug) trackInteraction(productSlug, 'ingredients', 'expand'); };
+  const handleNutritionExpand = () => { if (productSlug) trackInteraction(productSlug, 'nutritional_passport', 'expand'); };
 
   if (isLoading) {
     return (

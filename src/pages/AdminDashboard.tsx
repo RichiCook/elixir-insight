@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { PRODUCT_LINES, getCompletenessColor, getLineBadge } from '@/constants/app';
+import { BrandSwitcher } from '@/components/admin/BrandSwitcher';
+import { useBrandStore } from '@/stores/brandStore';
 
 export default function AdminDashboard() {
   const { data: products, isLoading } = useProducts();
@@ -19,6 +21,7 @@ export default function AdminDashboard() {
   const perms = usePermissions();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const activeBrand = useBrandStore((s) => s.activeBrand);
   const [showNewProduct, setShowNewProduct] = useState(false);
   const [newProduct, setNewProduct] = useState({ name: '', slug: '', line: 'Classic', abv: '' });
   const [creating, setCreating] = useState(false);
@@ -35,11 +38,17 @@ export default function AdminDashboard() {
       return;
     }
     setCreating(true);
+    if (!activeBrand?.id) {
+      toast.error('No active brand selected');
+      setCreating(false);
+      return;
+    }
     const { data, error } = await supabase.from('products').insert({
-      name: newProduct.name,
-      slug: newProduct.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
-      line: newProduct.line,
-      abv: newProduct.abv,
+      name:     newProduct.name,
+      slug:     newProduct.slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+      line:     newProduct.line,
+      abv:      newProduct.abv,
+      brand_id: activeBrand.id,
     }).select('slug').single();
     setCreating(false);
     if (error) {
@@ -57,9 +66,12 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border px-6 py-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-admin font-semibold text-foreground">Brand Platform</h1>
-          <p className="text-xs text-muted-foreground">Classy Cocktails · PIM</p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-lg font-admin font-semibold text-foreground">Brand Platform</h1>
+            <p className="text-xs text-muted-foreground">{activeBrand?.name ?? 'Select a brand'} · PIM</p>
+          </div>
+          <BrandSwitcher />
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           {perms.canManageLayout && (
