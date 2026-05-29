@@ -7,11 +7,15 @@ interface Props {
   product: Product;
   customContent?: Record<string, any>;
   collab?: { brand_name: string; brand_color?: string | null } | null;
+  brandName?: string;
+  brandWebsiteUrl?: string;
+  brandPrivacyEmail?: string;
 }
 
-export function BottleFooter({ product, customContent, collab }: Props) {
-  const websiteText = customContent?.website_text || 'classycocktails.com';
+export function BottleFooter({ product, customContent, collab, brandName = 'Classy Cocktails', brandWebsiteUrl, brandPrivacyEmail }: Props) {
+  const websiteText = customContent?.website_text || (brandWebsiteUrl ? brandWebsiteUrl.replace(/^https?:\/\//, '') : 'classycocktails.com');
   const passportLabel = customContent?.passport_label || 'Digital Nutritional Passport';
+  const privacyEmail = brandPrivacyEmail || 'privacy@classycocktails.com';
   return (
     <footer className="px-6 py-8 border-t border-cc-border text-center">
       <p className="font-display text-sm italic text-cc-text-lt mb-1">
@@ -27,7 +31,7 @@ export function BottleFooter({ product, customContent, collab }: Props) {
       )}
       {collab && (
         <p className="font-sans-consumer text-[10px] text-cc-text-lt mt-3 italic">
-          Created exclusively for {collab.brand_name} × Classy Cocktails
+          Created exclusively for {collab.brand_name} × {brandName}
         </p>
       )}
       <div className="flex items-center justify-center gap-1 mt-4">
@@ -43,7 +47,7 @@ export function BottleFooter({ product, customContent, collab }: Props) {
           Privacy Policy
         </Link>
         {' · '}
-        <a href="mailto:privacy@classycocktails.com" className="text-cc-text-lt hover:text-cc-gold transition-colors">
+        <a href={`mailto:${privacyEmail}`} className="text-cc-text-lt hover:text-cc-gold transition-colors">
           Data Requests
         </a>
       </p>

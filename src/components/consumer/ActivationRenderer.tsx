@@ -6,9 +6,10 @@ interface Props {
   activations: Activation[];
   placement: string;
   productSlug: string;
+  brandName?: string;
 }
 
-export function ActivationSlot({ activations, placement, productSlug }: Props) {
+export function ActivationSlot({ activations, placement, productSlug, brandName = 'Classy Cocktails' }: Props) {
   const filtered = activations
     .filter((a) => a.placement === placement)
     .sort((a, b) => (b.priority || 0) - (a.priority || 0));
@@ -252,7 +253,7 @@ function LeadCaptureActivation({ activation, productSlug }: { activation: Activa
                   className="mt-0.5 shrink-0"
                 />
                 <span className="font-sans-consumer text-[10px] leading-relaxed" style={{ color: '#9a9a9a' }}>
-                  I agree to Classy Cocktails processing my data for this promotion.{' '}
+                  I agree to {brandName} processing my data for this promotion.{' '}
                   <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: '#b8975a' }}>
                     Privacy Policy
                   </a>
@@ -359,7 +360,7 @@ function LeadCaptureRatingActivation({ activation, productSlug }: { activation: 
                   className="mt-0.5 shrink-0"
                 />
                 <span className="font-sans-consumer text-[10px] leading-relaxed" style={{ color: '#9a9a9a' }}>
-                  I agree to Classy Cocktails processing my data for this promotion.{' '}
+                  I agree to {brandName} processing my data for this promotion.{' '}
                   <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: '#b8975a' }}>Privacy Policy</a>
                 </span>
               </label>

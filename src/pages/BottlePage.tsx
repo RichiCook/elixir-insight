@@ -52,6 +52,7 @@ export default function BottlePage() {
   // Single RPC — replaces 10 sequential hooks
   const { data: pageData, isLoading } = useBottlePageData(brandSlug, productSlug, lang);
   const product       = pageData?.product ?? null;
+  const brand         = pageData?.brand ?? null;
   const translation   = pageData?.translation ?? null;
   const composition   = pageData?.composition ?? [];
   const serveMoments  = pageData?.serve_moments ?? [];
@@ -223,6 +224,8 @@ export default function BottlePage() {
         return (
           <StoreCTA
             slug={product.slug}
+            productLink={product.product_link}
+            brandWebsiteUrl={brand?.website_url}
             onCtaClick={handleCtaClick}
             customButtonText={content.button_text}
             customButtonUrl={content.button_url}
@@ -272,7 +275,15 @@ export default function BottlePage() {
           </div>
         );
       case 'footer':
-        return <BottleFooter product={product} customContent={content} collab={collab} />;
+        return (
+          <BottleFooter
+            product={product}
+            customContent={content}
+            collab={collab}
+            brandName={brand?.name}
+            brandWebsiteUrl={brand?.website_url ?? undefined}
+          />
+        );
       default:
         return null;
     }
@@ -280,16 +291,24 @@ export default function BottlePage() {
 
   return (
     <div className="consumer-theme min-h-screen" style={{ backgroundColor: '#e8e4dc' }}>
-      {showAgeGate && <AgeGate />}
+      {showAgeGate && (
+        <AgeGate
+          brandName={brand?.name}
+          brandWebsiteUrl={brand?.website_url ?? undefined}
+        />
+      )}
 
       <div className="mx-auto max-w-bottle min-h-screen bg-cc-white shadow-xl">
         {/* Top nav — hidden in preview mode */}
         {!isPreview && (
           <div className="flex items-center justify-between px-5 pt-4">
             <div className="flex items-center gap-2">
-              <ClassyLogo size={24} />
+              {brand?.logo_url
+                ? <img src={brand.logo_url} alt={brand.name} className="h-6 w-auto object-contain" />
+                : <ClassyLogo size={24} />
+              }
               <span className="font-sans-consumer text-[10px] tracking-[0.3em] uppercase text-cc-text-lt">
-                Classy Cocktails
+                {brand?.name ?? 'Classy Cocktails'}
               </span>
             </div>
             <div className="flex gap-2">
@@ -320,11 +339,11 @@ export default function BottlePage() {
               <div key={sec.section_key}>
                 {/* before_cta slot */}
                 {sec.section_key === 'store_cta' && activeActivations && (
-                  <ActivationSlot activations={activeActivations} placement="before_cta" productSlug={product.slug} />
+                  <ActivationSlot activations={activeActivations} placement="before_cta" productSlug={product.slug} brandName={brand?.name} />
                 )}
                 {rendered}
                 {activationPlacement && activeActivations && (
-                  <ActivationSlot activations={activeActivations} placement={activationPlacement} productSlug={product.slug} />
+                  <ActivationSlot activations={activeActivations} placement={activationPlacement} productSlug={product.slug} brandName={brand?.name} />
                 )}
               </div>
             );

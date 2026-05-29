@@ -1,17 +1,20 @@
 interface Props {
   slug: string;
+  productLink?: string | null;
+  brandWebsiteUrl?: string | null;
   onCtaClick?: () => void;
   customButtonText?: string;
   customButtonUrl?: string;
   customFooterText?: string;
 }
 
-export function StoreCTA({ slug, onCtaClick, customButtonText, customButtonUrl, customFooterText }: Props) {
+export function StoreCTA({ slug, productLink, brandWebsiteUrl, onCtaClick, customButtonText, customButtonUrl, customFooterText }: Props) {
   const buttonText = customButtonText || 'View on our Store ↗';
   const isSafeUrl = (url: string) => /^https?:\/\//i.test(url);
+  const defaultUrl = productLink || (brandWebsiteUrl ? `${brandWebsiteUrl.replace(/\/$/, '')}/products/${slug}` : `https://classycocktails.com/products/${slug}`);
   const buttonUrl = (customButtonUrl && isSafeUrl(customButtonUrl))
     ? customButtonUrl
-    : `https://classycocktails.com/products/${slug}`;
+    : defaultUrl;
   const footerText = customFooterText || '';
 
   return (

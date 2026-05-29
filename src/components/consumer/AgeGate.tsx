@@ -3,7 +3,12 @@ import { ClassyLogo } from './ClassyLogo';
 
 const STORAGE_KEY = 'cc_age_verified';
 
-export function AgeGate() {
+interface Props {
+  brandName?: string;
+  brandWebsiteUrl?: string;
+}
+
+export function AgeGate({ brandName = 'Classy Cocktails', brandWebsiteUrl = 'https://classycocktails.com' }: Props) {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -20,7 +25,7 @@ export function AgeGate() {
   };
 
   const handleNo = () => {
-    window.location.href = 'https://classycocktails.com';
+    window.location.href = brandWebsiteUrl;
   };
 
   return (
@@ -36,7 +41,7 @@ export function AgeGate() {
           <ClassyLogo size={40} />
         </div>
         <p className="font-sans-consumer text-[10px] tracking-[0.2em] uppercase text-cc-text-lt mb-6">
-          Classy Cocktails
+          {brandName}
         </p>
         <h2 className="font-display text-2xl font-normal text-cc-text mb-8">
           Are you of legal drinking age?
