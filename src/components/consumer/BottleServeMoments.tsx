@@ -1,22 +1,26 @@
 import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import type { Database } from '@/integrations/supabase/types';
+import { t, getRowTranslation } from '@/lib/consumerI18n';
 
-type ServeMoment = Database['public']['Tables']['product_serve_moments']['Row'];
+type ServeMoment = Database['public']['Tables']['product_serve_moments']['Row'] & {
+  translations?: Record<string, Record<string, string>> | null;
+};
 
 interface Props {
   moments: ServeMoment[];
   line: string;
+  lang?: string;
   serveMomentImages?: Record<number, string>; // sort_order -> image url
 }
 
-function getSectionHeading(line: string) {
-  if (line === 'No Regrets') return 'Any Moment, No Regrets';
-  if (line === 'Sparkling') return 'Made for the Aperitivo';
-  return 'The Perfect Occasion';
+function getSectionHeading(line: string, lang: string) {
+  if (line === 'No Regrets') return t(lang, 'any_moment');
+  if (line === 'Sparkling') return t(lang, 'made_for_aperitivo');
+  return t(lang, 'perfect_occasion');
 }
 
-export function BottleServeMoments({ moments, line, serveMomentImages }: Props) {
+export function BottleServeMoments({ moments, line, lang = 'EN', serveMomentImages }: Props) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -45,7 +49,7 @@ export function BottleServeMoments({ moments, line, serveMomentImages }: Props) 
   return (
     <section className="py-8 border-t border-cc-border">
       <h2 className="font-display text-[30px] font-light text-cc-black text-center mb-6 px-6">
-        {getSectionHeading(line)}
+        {getSectionHeading(line, lang)}
       </h2>
 
       {/* Horizontal scroll carousel with right-edge fade */}
@@ -65,6 +69,10 @@ export function BottleServeMoments({ moments, line, serveMomentImages }: Props) 
           `}</style>
           {moments.map((m, i) => {
             const imageUrl = serveMomentImages?.[i];
+            const tr = getRowTranslation(m, lang);
+            const title = tr.title || m.title;
+            const description = tr.description || m.description;
+            const occasion = tr.occasion || m.occasion;
             return (
               <motion.div
                 key={m.id}
@@ -85,7 +93,7 @@ export function BottleServeMoments({ moments, line, serveMomentImages }: Props) 
                 }}
               >
                 {imageUrl ? (
-                  <img src={imageUrl} alt={m.title} className="w-full h-full object-cover" loading="lazy" />
+                  <img src={imageUrl} alt={title ?? ''} className="w-full h-full object-cover" loading="lazy" />
                 ) : (
                   <span className="text-[52px]">{m.emoji}</span>
                 )}
@@ -94,13 +102,13 @@ export function BottleServeMoments({ moments, line, serveMomentImages }: Props) 
               {/* Text body */}
               <div className="p-4 bg-cc-white">
                 <p className="font-sans-consumer text-[9px] tracking-[0.16em] uppercase text-cc-gold mb-1">
-                  {m.occasion}
+                  {occasion}
                 </p>
                 <p className="font-display text-lg text-cc-text font-light mb-1">
-                  {m.title}
+                  {title}
                 </p>
                 <p className="font-sans-consumer text-[11px] font-light text-cc-text-lt leading-relaxed">
-                  {m.description}
+                  {description}
                 </p>
               </div>
               </motion.div>

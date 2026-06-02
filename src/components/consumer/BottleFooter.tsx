@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { Database } from '@/integrations/supabase/types';
+import { t, getLocalizedContent } from '@/lib/consumerI18n';
 
 type Product = Database['public']['Tables']['products']['Row'];
 
@@ -10,12 +11,16 @@ interface Props {
   brandName?: string;
   brandWebsiteUrl?: string;
   brandPrivacyEmail?: string;
+  lang?: string;
 }
 
-export function BottleFooter({ product, customContent, collab, brandName = 'Classy Cocktails', brandWebsiteUrl, brandPrivacyEmail }: Props) {
-  const websiteText = customContent?.website_text || (brandWebsiteUrl ? brandWebsiteUrl.replace(/^https?:\/\//, '') : 'classycocktails.com');
-  const passportLabel = customContent?.passport_label || 'Digital Nutritional Passport';
+export function BottleFooter({ product, customContent, collab, brandName = 'Classy Cocktails', brandWebsiteUrl, brandPrivacyEmail, lang = 'EN' }: Props) {
+  const websiteText = getLocalizedContent(customContent, 'website_text', lang)
+    || (brandWebsiteUrl ? brandWebsiteUrl.replace(/^https?:\/\//, '') : 'classycocktails.com');
+  const passportLabel = getLocalizedContent(customContent, 'passport_label', lang)
+    || t(lang, 'digital_nutritional_passport');
   const privacyEmail = brandPrivacyEmail || 'privacy@classycocktails.com';
+
   return (
     <footer className="px-6 py-8 border-t border-cc-border text-center">
       <p className="font-display text-sm italic text-cc-text-lt mb-1">
@@ -40,15 +45,15 @@ export function BottleFooter({ product, customContent, collab, brandName = 'Clas
         <span className="w-1 h-1 rounded-full bg-cc-gold opacity-30" />
       </div>
       <p className="font-sans-consumer text-[9px] text-cc-text-lt mt-4">
-        Drink responsibly. Not for sale to persons under 18.
+        {t(lang, 'drink_responsibly')}
       </p>
       <p className="font-sans-consumer text-[9px] mt-2">
         <Link to="/privacy" className="text-cc-text-lt hover:text-cc-gold transition-colors">
-          Privacy Policy
+          {t(lang, 'privacy_policy')}
         </Link>
         {' · '}
         <a href={`mailto:${privacyEmail}`} className="text-cc-text-lt hover:text-cc-gold transition-colors">
-          Data Requests
+          {t(lang, 'data_requests')}
         </a>
       </p>
     </footer>

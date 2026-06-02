@@ -179,7 +179,7 @@ export default function BottlePage() {
       case 'quick_facts':
         return (
           <div ref={serveRef}>
-            <BottleQuickFacts product={product} />
+            <BottleQuickFacts product={product} lang={lang} />
           </div>
         );
       case 'crafted_with':
@@ -193,25 +193,25 @@ export default function BottlePage() {
       case 'composition':
         return composition && composition.length > 0 ? (
           <div ref={compositionRef}>
-            <BottleComposition composition={composition} />
+            <BottleComposition composition={composition} lang={lang} />
           </div>
         ) : null;
       case 'serve_moments':
         return serveMoments && serveMoments.length > 0 ? (
           <div ref={momentsRef}>
-            <BottleServeMoments moments={serveMoments} line={product.line} serveMomentImages={serveMomentImageMap} />
+            <BottleServeMoments moments={serveMoments} line={product.line} lang={lang} serveMomentImages={serveMomentImageMap} />
           </div>
         ) : null;
       case 'pairings':
         return pairings && pairings.length > 0 ? (
           <div ref={pairingsRef}>
-            <BottlePairings pairings={pairings} />
+            <BottlePairings pairings={pairings} lang={lang} />
           </div>
         ) : null;
       case 'ingredients':
         return translation ? (
           <div ref={ingredientsRef}>
-            <BottleIngredients translation={translation} allergensSummary={product.allergens_summary} onExpand={handleIngredientExpand} />
+            <BottleIngredients translation={translation} allergensSummary={product.allergens_summary} onExpand={handleIngredientExpand} lang={lang} />
           </div>
         ) : null;
       case 'nutrition':
@@ -227,9 +227,8 @@ export default function BottlePage() {
             productLink={product.product_link}
             brandWebsiteUrl={brand?.website_url}
             onCtaClick={handleCtaClick}
-            customButtonText={content.button_text}
-            customButtonUrl={content.button_url}
-            customFooterText={content.footer_text}
+            customContent={content}
+            lang={lang}
           />
         );
       case 'editorial':
@@ -240,6 +239,7 @@ export default function BottlePage() {
               bottleColor={product.bottle_color}
               editorialImageUrl={editorialImageUrl}
               customContent={content}
+              lang={lang}
             />
           </div>
         );
@@ -282,6 +282,7 @@ export default function BottlePage() {
             collab={collab}
             brandName={brand?.name}
             brandWebsiteUrl={brand?.website_url ?? undefined}
+            lang={lang}
           />
         );
       default:

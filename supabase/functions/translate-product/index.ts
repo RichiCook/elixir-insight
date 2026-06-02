@@ -58,10 +58,9 @@ Deno.serve(async (req) => {
     const GOOGLE_AI_API_KEY = Deno.env.get("GOOGLE_AI_API_KEY");
     if (!GOOGLE_AI_API_KEY) throw new Error("GOOGLE_AI_API_KEY is not configured");
 
-    const fields = ["claim", "sensory_description", "ingredient_list_short", "ingredient_list_full", "allergens_local"];
+    // Translate all non-empty string values in `source` — generic, not limited to product_translations fields
     const payload: Record<string, string> = {};
-    for (const f of fields) {
-      const v = source[f];
+    for (const [f, v] of Object.entries(source)) {
       if (typeof v === "string" && v.trim()) payload[f] = v;
     }
 

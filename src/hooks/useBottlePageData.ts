@@ -46,7 +46,9 @@ export interface BottleServeMoment {
   product_id: string;
   title: string | null;
   description: string | null;
+  occasion: string | null;
   sort_order: number;
+  translations: Record<string, Record<string, string>> | null;
   [key: string]: unknown;
 }
 
@@ -88,8 +90,10 @@ export interface BottlePairing {
   id: string;
   product_id: string;
   name: string;
+  subtitle: string | null;
   description: string | null;
   sort_order: number;
+  translations: Record<string, Record<string, string>> | null;
 }
 
 export interface BottleActivation {

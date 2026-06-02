@@ -1,13 +1,16 @@
 import { CrosshatchPattern, CLettermark } from './DecorativeSVG';
+import { getLocalizedContent } from '@/lib/consumerI18n';
 
 interface Props {
   lang: string;
   customContent?: Record<string, any>;
 }
 
-const TEXT: Record<string, string> = {
-  EN: 'Every bottle from Classy Cocktails starts with an obsession: to bring the world\'s great cocktails — crafted by the best bartenders — to your table, ready to pour. Mixed by <gold>Patrick Pistolesi</gold>, one of Italy\'s most celebrated bartenders, each recipe is dialled to perfection, then locked in a bottle.',
-  IT: 'Ogni bottiglia di Classy Cocktails nasce da un\'ossessione: portare i grandi cocktail del mondo — realizzati dai migliori bartender — sulla tua tavola, pronti da versare. Ideati da <gold>Patrick Pistolesi</gold>, uno dei bartender più celebrati d\'Italia, ogni ricetta è calibrata alla perfezione, poi chiusa in una bottiglia.',
+// Default fallback text keyed by language — used when no custom content is set.
+// Add more language keys here as needed.
+const DEFAULT_TEXT: Record<string, string> = {
+  EN: "Every bottle from Classy Cocktails starts with an obsession: to bring the world's great cocktails — crafted by the best bartenders — to your table, ready to pour. Mixed by <gold>Patrick Pistolesi</gold>, one of Italy's most celebrated bartenders, each recipe is dialled to perfection, then locked in a bottle.",
+  IT: "Ogni bottiglia di Classy Cocktails nasce da un'ossessione: portare i grandi cocktail del mondo — realizzati dai migliori bartender — sulla tua tavola, pronti da versare. Ideati da <gold>Patrick Pistolesi</gold>, uno dei bartender più celebrati d'Italia, ogni ricetta è calibrata alla perfezione, poi chiusa in una bottiglia.",
 };
 
 function renderText(raw: string) {
@@ -22,15 +25,15 @@ function renderText(raw: string) {
 }
 
 export function BrandHeritage({ lang, customContent }: Props) {
-  const hasCustomBody = customContent && (customContent.body_en || customContent.body_it);
-  const text = hasCustomBody
-    ? (lang === 'IT' ? customContent.body_it || customContent.body_en : customContent.body_en) || TEXT[lang] || TEXT.EN
-    : TEXT[lang] || TEXT.EN;
+  // Localized body — checks `body_it`, `body_en`, `body` in that order (for IT),
+  // then falls back to the built-in DEFAULT_TEXT for the active language.
+  const localizedBody = getLocalizedContent(customContent, 'body', lang);
+  const text = localizedBody || DEFAULT_TEXT[lang.toUpperCase()] || DEFAULT_TEXT.EN;
 
-  const badgeText = customContent?.badge_text || 'Since 2020 · Made in Italy';
-  const hasCustomHeading = customContent && customContent.heading;
-  const headingMain = hasCustomHeading ? customContent.heading : 'A Story of ';
-  const headingAccent = hasCustomHeading ? customContent.heading_accent : 'Craft';
+  const badgeText = getLocalizedContent(customContent, 'badge_text', lang) || 'Since 2020 · Made in Italy';
+  const headingMain = getLocalizedContent(customContent, 'heading', lang) || 'A Story of ';
+  const headingAccent = getLocalizedContent(customContent, 'heading_accent', lang) || 'Craft';
+  const hasCustomHeading = !!(customContent && (customContent.heading || customContent[`heading_${lang.toLowerCase()}`] || customContent.heading_en));
 
   return (
     <>

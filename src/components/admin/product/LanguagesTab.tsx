@@ -45,6 +45,9 @@ const EMPTY_FORM = {
   allergens_local: '',
 };
 
+// Section keys whose custom_content has translatable text fields
+const TRANSLATABLE_SECTION_KEYS = ['editorial', 'brand_heritage', 'store_cta', 'footer'];
+
 export function LanguagesTab({ productId, productName }: { productId: string; productName: string }) {
   const queryClient = useQueryClient();
   const [languages, setLanguages] = useState<string[]>(['EN']);
@@ -52,6 +55,7 @@ export function LanguagesTab({ productId, productName }: { productId: string; pr
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newLangCode, setNewLangCode] = useState('');
   const [translating, setTranslating] = useState(false);
+  const [translateAllProgress, setTranslateAllProgress] = useState<string | null>(null);
 
   const { data: translation } = useProductTranslations(productId, activeLang);
   const { data: enTranslation } = useProductTranslations(productId, 'EN');
@@ -122,28 +126,33 @@ export function LanguagesTab({ productId, productName }: { productId: string; pr
     toast.success(`${code} removed`);
   };
 
+  // ---------------------------------------------------------------------------
+  // AI translate: product_translations fields only
+  // ---------------------------------------------------------------------------
+  const callTranslate = async (source: Record<string, string>, targetLang: string) => {
+    const { data, error } = await supabase.functions.invoke('translate-product', {
+      body: { source, sourceLang: 'EN', targetLang, productName },
+    });
+    if (error) throw error;
+    if ((data as any)?.error) throw new Error((data as any).error);
+    return (data as any)?.translations || {};
+  };
+
   const handleTranslateWithAi = async () => {
     if (activeLang === 'EN') { toast.error('Source language cannot be translated'); return; }
     if (!enTranslation) { toast.error('Save an English translation first'); return; }
     setTranslating(true);
     try {
-      const { data, error } = await supabase.functions.invoke('translate-product', {
-        body: {
-          source: {
-            claim: enTranslation.claim,
-            sensory_description: enTranslation.sensory_description,
-            ingredient_list_short: enTranslation.ingredient_list_short,
-            ingredient_list_full: enTranslation.ingredient_list_full,
-            allergens_local: enTranslation.allergens_local,
-          },
-          sourceLang: 'EN',
-          targetLang: activeLang,
-          productName,
+      const translations = await callTranslate(
+        {
+          claim: enTranslation.claim || '',
+          sensory_description: enTranslation.sensory_description || '',
+          ingredient_list_short: enTranslation.ingredient_list_short || '',
+          ingredient_list_full: enTranslation.ingredient_list_full || '',
+          allergens_local: enTranslation.allergens_local || '',
         },
-      });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
-      const translations = (data as any)?.translations || {};
+        activeLang,
+      );
       setForm((f) => ({
         claim: translations.claim ?? f.claim,
         sensory_description: translations.sensory_description ?? f.sensory_description,
@@ -156,6 +165,113 @@ export function LanguagesTab({ productId, productName }: { productId: string; pr
       toast.error(e?.message || 'Translation failed');
     } finally {
       setTranslating(false);
+    }
+  };
+
+  // ---------------------------------------------------------------------------
+  // AI translate ALL content: product fields + serve moments + pairings + sections
+  // ---------------------------------------------------------------------------
+  const handleTranslateAll = async () => {
+    if (activeLang === 'EN') { toast.error('English is the source language'); return; }
+    if (!enTranslation) { toast.error('Save an English translation first'); return; }
+    setTranslateAllProgress('Starting…');
+    const lang = activeLang;
+
+    try {
+      // 1 — product_translations fields
+      setTranslateAllProgress('Translating product copy…');
+      const productTranslations = await callTranslate(
+        {
+          claim: enTranslation.claim || '',
+          sensory_description: enTranslation.sensory_description || '',
+          ingredient_list_short: enTranslation.ingredient_list_short || '',
+          ingredient_list_full: enTranslation.ingredient_list_full || '',
+          allergens_local: enTranslation.allergens_local || '',
+        },
+        lang,
+      );
+      await supabase.from('product_translations').upsert(
+        { product_id: productId, language: lang, ...productTranslations },
+        { onConflict: 'product_id,language' },
+      );
+      queryClient.invalidateQueries({ queryKey: ['product-translations', productId, lang] });
+
+      // 2 — serve moments
+      setTranslateAllProgress('Translating serve moments…');
+      const { data: moments } = await supabase
+        .from('product_serve_moments')
+        .select('id, title, description, occasion, translations')
+        .eq('product_id', productId);
+
+      for (const m of moments ?? []) {
+        const source: Record<string, string> = {};
+        if (m.title) source.title = m.title;
+        if (m.description) source.description = m.description;
+        if (m.occasion) source.occasion = m.occasion;
+        if (Object.keys(source).length === 0) continue;
+        const t = await callTranslate(source, lang);
+        const existing = (m.translations as Record<string, any>) || {};
+        await supabase
+          .from('product_serve_moments')
+          .update({ translations: { ...existing, [lang]: t } })
+          .eq('id', m.id);
+      }
+
+      // 3 — pairings
+      setTranslateAllProgress('Translating pairings…');
+      const { data: pairings } = await supabase
+        .from('product_ai_pairings')
+        .select('id, name, subtitle, translations')
+        .eq('product_id', productId);
+
+      for (const p of pairings ?? []) {
+        const source: Record<string, string> = {};
+        if (p.name) source.name = p.name;
+        if (p.subtitle) source.subtitle = p.subtitle;
+        if (Object.keys(source).length === 0) continue;
+        const t = await callTranslate(source, lang);
+        const existing = (p.translations as Record<string, any>) || {};
+        await supabase
+          .from('product_ai_pairings')
+          .update({ translations: { ...existing, [lang]: t } })
+          .eq('id', p.id);
+      }
+
+      // 4 — section custom_content
+      setTranslateAllProgress('Translating section content…');
+      const { data: sections } = await supabase
+        .from('product_sections')
+        .select('id, section_key, custom_content')
+        .eq('product_id', productId)
+        .in('section_key', TRANSLATABLE_SECTION_KEYS);
+
+      for (const sec of sections ?? []) {
+        const cc = (sec.custom_content as Record<string, any>) || {};
+        // Extract english source fields (look for _en suffix or bare key as fallback)
+        const source: Record<string, string> = {};
+        const textKeys = ['heading', 'body', 'badge_text', 'heading_accent', 'button_text', 'footer_text', 'passport_label', 'website_text'];
+        for (const key of textKeys) {
+          const val = cc[`${key}_en`] || cc[key];
+          if (typeof val === 'string' && val.trim()) source[key] = val;
+        }
+        if (Object.keys(source).length === 0) continue;
+        const t = await callTranslate(source, lang);
+        // Write back as `${key}_${lang.toLowerCase()}` suffixed keys
+        const updates: Record<string, string> = {};
+        for (const [k, v] of Object.entries(t)) {
+          updates[`${k}_${lang.toLowerCase()}`] = v;
+        }
+        await supabase
+          .from('product_sections')
+          .update({ custom_content: { ...cc, ...updates } })
+          .eq('id', sec.id);
+      }
+
+      toast.success(`All content translated to ${lang} ✓`);
+    } catch (e: any) {
+      toast.error(e?.message || 'Translation failed');
+    } finally {
+      setTranslateAllProgress(null);
     }
   };
 
@@ -234,22 +350,45 @@ export function LanguagesTab({ productId, productName }: { productId: string; pr
       )}
 
       {activeLang !== 'EN' && (
-        <div className="flex items-center justify-between bg-primary/5 border border-primary/20 rounded-lg px-4 py-3">
-          <div className="flex items-center gap-2 text-xs">
-            <LanguagesIcon className="h-4 w-4 text-primary" />
-            <span className="text-muted-foreground">
-              Auto-fill <span className="text-primary font-medium">{activeLang}</span> fields from English using AI.
-            </span>
+        <div className="flex flex-col gap-2 bg-primary/5 border border-primary/20 rounded-lg px-4 py-3">
+          {/* Row 1 — product fields only */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs">
+              <LanguagesIcon className="h-4 w-4 text-primary" />
+              <span className="text-muted-foreground">
+                Auto-fill <span className="text-primary font-medium">{activeLang}</span> fields from English using AI.
+              </span>
+            </div>
+            <Button
+              onClick={handleTranslateWithAi}
+              disabled={translating || !!translateAllProgress || !enTranslation}
+              size="sm"
+              variant="outline"
+              className="border-primary/30 text-primary"
+            >
+              <Sparkles className="h-3 w-3 mr-1.5" />
+              {translating ? 'Translating…' : 'Translate fields'}
+            </Button>
           </div>
-          <Button
-            onClick={handleTranslateWithAi}
-            disabled={translating || !enTranslation}
-            size="sm"
-            className="bg-primary text-primary-foreground"
-          >
-            <Sparkles className="h-3 w-3 mr-1.5" />
-            {translating ? 'Translating…' : 'Translate with AI'}
-          </Button>
+
+          {/* Row 2 — translate everything */}
+          <div className="flex items-center justify-between border-t border-primary/10 pt-2 mt-1">
+            <div className="flex items-center gap-2 text-xs">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="text-muted-foreground">
+                Translate <span className="text-primary font-medium">everything</span> — fields, serve moments, pairings & section content.
+              </span>
+            </div>
+            <Button
+              onClick={handleTranslateAll}
+              disabled={translating || !!translateAllProgress || !enTranslation}
+              size="sm"
+              className="bg-primary text-primary-foreground"
+            >
+              <Sparkles className="h-3 w-3 mr-1.5" />
+              {translateAllProgress ?? `Translate all → ${activeLang}`}
+            </Button>
+          </div>
         </div>
       )}
 

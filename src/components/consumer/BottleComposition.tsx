@@ -1,17 +1,19 @@
 import { motion } from 'framer-motion';
 import type { Database } from '@/integrations/supabase/types';
+import { t } from '@/lib/consumerI18n';
 
 type Composition = Database['public']['Tables']['product_composition']['Row'];
 
 interface Props {
   composition: Composition[];
+  lang?: string;
 }
 
-export function BottleComposition({ composition }: Props) {
+export function BottleComposition({ composition, lang = 'EN' }: Props) {
   return (
     <section className="px-6 py-8 border-t border-cc-border">
       <h2 className="font-display text-lg font-light tracking-wide text-cc-black mb-5">
-        Composition
+        {t(lang, 'composition')}
       </h2>
 
       {/* Horizontal bar */}

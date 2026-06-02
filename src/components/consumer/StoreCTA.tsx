@@ -1,3 +1,5 @@
+import { t, getLocalizedContent } from '@/lib/consumerI18n';
+
 interface Props {
   slug: string;
   productLink?: string | null;
@@ -6,16 +8,38 @@ interface Props {
   customButtonText?: string;
   customButtonUrl?: string;
   customFooterText?: string;
+  customContent?: Record<string, any>;
+  lang?: string;
 }
 
-export function StoreCTA({ slug, productLink, brandWebsiteUrl, onCtaClick, customButtonText, customButtonUrl, customFooterText }: Props) {
-  const buttonText = customButtonText || 'View on our Store ↗';
+export function StoreCTA({
+  slug,
+  productLink,
+  brandWebsiteUrl,
+  onCtaClick,
+  customButtonText,
+  customButtonUrl,
+  customFooterText,
+  customContent,
+  lang = 'EN',
+}: Props) {
   const isSafeUrl = (url: string) => /^https?:\/\//i.test(url);
-  const defaultUrl = productLink || (brandWebsiteUrl ? `${brandWebsiteUrl.replace(/\/$/, '')}/products/${slug}` : `https://classycocktails.com/products/${slug}`);
-  const buttonUrl = (customButtonUrl && isSafeUrl(customButtonUrl))
-    ? customButtonUrl
-    : defaultUrl;
-  const footerText = customFooterText || '';
+  const defaultUrl = productLink || (brandWebsiteUrl
+    ? `${brandWebsiteUrl.replace(/\/$/, '')}/products/${slug}`
+    : `https://classycocktails.com/products/${slug}`);
+
+  // Button text: explicit prop > localized custom_content > i18n default
+  const localizedButtonText = getLocalizedContent(customContent, 'button_text', lang);
+  const buttonText = customButtonText || localizedButtonText || t(lang, 'view_on_store');
+
+  // Button URL: explicit prop > localized custom_content > default
+  const localizedButtonUrl = getLocalizedContent(customContent, 'button_url', lang);
+  const rawButtonUrl = customButtonUrl || localizedButtonUrl;
+  const buttonUrl = rawButtonUrl && isSafeUrl(rawButtonUrl) ? rawButtonUrl : defaultUrl;
+
+  // Footer text
+  const localizedFooterText = getLocalizedContent(customContent, 'footer_text', lang);
+  const footerText = customFooterText || localizedFooterText || t(lang, 'digital_product_passport');
 
   return (
     <section className="px-[18px] pb-4">
@@ -30,7 +54,7 @@ export function StoreCTA({ slug, productLink, brandWebsiteUrl, onCtaClick, custo
         {buttonText}
       </a>
       <p className="text-center font-sans-consumer text-[9px] text-cc-text-lt mt-3">
-        {footerText || 'Digital Product Passport'}
+        {footerText}
       </p>
     </section>
   );

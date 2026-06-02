@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Database } from '@/integrations/supabase/types';
+import { t } from '@/lib/consumerI18n';
 
 type Translation = Database['public']['Tables']['product_translations']['Row'];
 
@@ -8,15 +9,16 @@ interface Props {
   translation: Translation;
   allergensSummary: string | null;
   onExpand?: () => void;
+  lang?: string;
 }
 
-export function BottleIngredients({ translation, allergensSummary, onExpand }: Props) {
+export function BottleIngredients({ translation, allergensSummary, onExpand, lang = 'EN' }: Props) {
   const [expanded, setExpanded] = useState(false);
 
   return (
     <section className="px-6 py-8 border-t border-cc-border">
       <h2 className="font-display text-lg font-light tracking-wide text-cc-black mb-4">
-        Ingredients
+        {t(lang, 'ingredients')}
       </h2>
 
       {/* Short list */}
@@ -36,7 +38,7 @@ export function BottleIngredients({ translation, allergensSummary, onExpand }: P
             }}
             className="font-sans-consumer text-xs text-cc-gold mt-3 flex items-center gap-1"
           >
-            {expanded ? 'Hide full list' : 'View full ingredient list'}
+            {expanded ? t(lang, 'hide_full_ingredients') : t(lang, 'view_full_ingredients')}
             <span className="text-[10px]">{expanded ? '▲' : '▼'}</span>
           </button>
           <AnimatePresence>

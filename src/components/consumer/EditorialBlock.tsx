@@ -1,10 +1,12 @@
 import { CrosshatchPattern, CLettermark } from './DecorativeSVG';
+import { getLocalizedContent } from '@/lib/consumerI18n';
 
 interface Props {
   line: string;
   bottleColor: string | null;
   editorialImageUrl?: string | null;
   customContent?: Record<string, any>;
+  lang?: string;
 }
 
 function getContent(line: string) {
@@ -34,17 +36,22 @@ function darkenHex(hex: string): string {
   return `rgb(${r},${g},${b})`;
 }
 
-export function EditorialBlock({ line, bottleColor, editorialImageUrl, customContent }: Props) {
+export function EditorialBlock({ line, bottleColor, editorialImageUrl, customContent, lang = 'EN' }: Props) {
   const defaults = getContent(line);
   const bg = darkenHex(bottleColor || '#2a2a2a');
 
-  // Use custom content if provided, otherwise fall back to defaults
-  const hasCustom = customContent && (customContent.heading || customContent.body);
-  const lineLabel = customContent?.line_label || `${line} Line`;
-  const title = hasCustom && customContent.heading
-    ? <>{customContent.heading.replace(customContent.heading_accent || '', '')} {customContent.heading_accent && <em className="italic text-cc-gold">{customContent.heading_accent}</em>}</>
+  // Localized body — check lang-specific key first, then _en, then legacy `body`
+  const localizedBody = getLocalizedContent(customContent, 'body', lang);
+  const localizedHeading = getLocalizedContent(customContent, 'heading', lang);
+  const localizedHeadingAccent = getLocalizedContent(customContent, 'heading_accent', lang);
+
+  const hasCustom = !!(localizedHeading || localizedBody);
+  const lineLabel = getLocalizedContent(customContent, 'line_label', lang) || `${line} Line`;
+
+  const title = hasCustom && localizedHeading
+    ? <>{localizedHeading.replace(localizedHeadingAccent || '', '')} {localizedHeadingAccent && <em className="italic text-cc-gold">{localizedHeadingAccent}</em>}</>
     : defaults.title;
-  const body = (hasCustom && customContent.body) || defaults.body;
+  const body = localizedBody || defaults.body;
 
   return (
     <section
