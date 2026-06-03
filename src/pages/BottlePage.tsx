@@ -85,15 +85,20 @@ export default function BottlePage() {
   useEffect(() => {
     if (!product?.id || !product?.slug) return;
     if (isPreview) return; // admin live-preview must never count as a scan
-    if (!isQrScan && !hasTrackingConsent()) return;
 
+    const consented = isQrScan || hasTrackingConsent();
+
+    // Always record the visit for aggregate counts (legitimate interest).
+    // Personal identifiers (session_id, user_agent) are only stored with consent.
     const payload = {
       product_slug: product.slug,
       brand_slug:   brandSlug ?? null,
-      session_id:   getSessionId(),
       source:       isQrScan ? 'qr' : 'direct',
-      user_agent:   navigator.userAgent.slice(0, 255),
       language:     lang,
+      ...(consented && {
+        session_id: getSessionId(),
+        user_agent: navigator.userAgent.slice(0, 255),
+      }),
     };
 
     supabase
