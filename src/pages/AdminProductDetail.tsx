@@ -13,6 +13,7 @@ import { EanTab } from '@/components/admin/product/EanTab';
 import { ImagesTab } from '@/components/admin/product/ImagesTab';
 import { PairingsTab } from '@/components/admin/product/PairingsTab';
 import { LivePreviewPanel } from '@/components/admin/product/LivePreviewPanel';
+import { ChangeLogTimeline } from '@/components/admin/ChangeLogTimeline';
 import { useBrandStore } from '@/stores/brandStore';
 
 export default function AdminProductDetail() {
@@ -130,6 +131,7 @@ export default function AdminProductDetail() {
               <TabsTrigger value="images">Images</TabsTrigger>
               <TabsTrigger value="pairings">Pairings</TabsTrigger>
               <TabsTrigger value="layout">Layout</TabsTrigger>
+              <TabsTrigger value="history">History</TabsTrigger>
             </TabsList>
 
             <TabsContent value="general">
@@ -152,6 +154,9 @@ export default function AdminProductDetail() {
             </TabsContent>
             <TabsContent value="layout">
               <LayoutTab productId={product.id} onSave={invalidateProduct} />
+            </TabsContent>
+            <TabsContent value="history">
+              <ChangeLogTimeline productId={product.id} />
             </TabsContent>
           </Tabs>
         </div>

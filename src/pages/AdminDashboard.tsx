@@ -95,6 +95,9 @@ export default function AdminDashboard() {
           {perms.canManageUsers && (
             <Link to="/admin/users"><Button variant="outline" size="sm">Users</Button></Link>
           )}
+          {perms.canManageUsers && (
+            <Link to="/admin/changes"><Button variant="outline" size="sm">Changes</Button></Link>
+          )}
           {perms.canManageProducts && (
             <Button size="sm" className="bg-primary text-primary-foreground" onClick={() => setShowNewProduct(true)}>+ New Product</Button>
           )}

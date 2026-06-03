@@ -30,6 +30,7 @@ const AdminCollaborations      = lazy(() => import('@/pages/AdminCollaborations'
 const AdminCollaborationDetail = lazy(() => import('@/pages/AdminCollaborationDetail'));
 const AdminSiteSettings        = lazy(() => import('@/pages/AdminSiteSettings'));
 const AdminUsers               = lazy(() => import('@/pages/AdminUsers'));
+const AdminChangeLog           = lazy(() => import('@/pages/AdminChangeLog'));
 
 /** Redirect /bottle/:slug → /b/classy/:slug for backward-compat QR codes */
 function LegacyBottleRedirect() {
@@ -202,6 +203,17 @@ function AppInner() {
             <ProtectedRoute>
               <ErrorBoundary>
                 <AdminUsers />
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/changes"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <AdminChangeLog />
               </ErrorBoundary>
             </ProtectedRoute>
           }
