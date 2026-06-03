@@ -1,4 +1,4 @@
-import { useState, useCallback, useId } from 'react';
+import { useState, useCallback, useId, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { type ScanStats, periodRationale } from '@/hooks/useScanStats';
@@ -362,16 +362,29 @@ export function ProductInsightCard({ product, stats }: Props) {
   const aiPeriod = stats?.aiPeriod ?? 'week';
   const d = stats?.[aiPeriod];
 
-  // Fallback insight text
-  const fallbackInsight = stats
-    ? d && d.changePct !== 0
-      ? `${d.changePct > 0 ? 'Up' : 'Down'} ${Math.abs(d.changePct)}% this ${aiPeriod} — keep an eye on scan trends.`
-      : `Steady this ${aiPeriod} — no significant scan movement detected.`
-    : 'No QR scan data recorded yet for this product.';
+  const buildFallback = (s: ScanStats | null) => {
+    const period = s?.aiPeriod ?? 'week';
+    const pd = s?.[period];
+    if (!s || !pd) return 'No QR scan data recorded yet for this product.';
+    if (pd.changePct !== 0)
+      return `${pd.changePct > 0 ? 'Up' : 'Down'} ${Math.abs(pd.changePct)}% this ${period} — keep an eye on scan trends.`;
+    return `Steady this ${period} — no significant scan movement detected.`;
+  };
 
-  const [insightText, setInsightText] = useState(fallbackInsight);
+  const [insightText, setInsightText] = useState(() => buildFallback(stats));
   const [regenLoading, setRegenLoading] = useState(false);
   const [hovered, setHovered] = useState(false);
+  // Track whether the user has manually regenerated so we don't overwrite their custom insight
+  const userRegenerated = useRef(false);
+
+  // Sync the fallback text whenever scan stats first arrive (useState initializer
+  // only runs once — stats is null on the first render while the query is loading)
+  useEffect(() => {
+    if (!userRegenerated.current) {
+      setInsightText(buildFallback(stats));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stats]);
 
   const handleRegen = useCallback(async () => {
     if (regenLoading || !stats) return;
@@ -390,7 +403,10 @@ export function ProductInsightCard({ product, stats }: Props) {
           : {},
       });
       const text = resp.data?.insight;
-      if (text) setInsightText(text);
+      if (text) {
+        userRegenerated.current = true;
+        setInsightText(text);
+      }
     } catch {
       // keep existing text on error
     } finally {
