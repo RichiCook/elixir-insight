@@ -78,10 +78,14 @@ export default function BottlePage() {
   usePageViewTracking(productSlug);
   const { observeSection } = useSectionTracking(productSlug);
 
-  // Record QR / direct scan in scan_events (fire-and-forget, consent-gated)
+  // Record scan in scan_events (fire-and-forget).
+  // QR scans are recorded under legitimate interest — they are the core functional
+  // purpose of the product and do not require marketing consent.
+  // Direct web visits are only recorded when the user has accepted tracking.
   const isQrScan = searchParams.get('source') === 'qr';
   useEffect(() => {
-    if (!product?.id || !hasTrackingConsent()) return;
+    if (!product?.id) return;
+    if (!isQrScan && !hasTrackingConsent()) return;
     supabase.from('scan_events').insert({
       product_id:   product.id,
       product_slug: product.slug,

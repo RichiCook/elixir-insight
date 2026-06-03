@@ -120,7 +120,7 @@ export function useScanStats() {
 
       return result;
     },
-    staleTime: 5 * 60_000, // 5 min
+    staleTime: 30_000, // 30 s — QR scans should surface quickly
     enabled: true,
   });
 }
