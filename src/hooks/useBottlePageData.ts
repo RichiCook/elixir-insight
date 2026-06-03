@@ -17,6 +17,23 @@ export interface BottleProduct {
   completeness: number | null;
   active: boolean;
   collaboration_id: string | null;
+  allergens_summary: string | null;
+  bottle_color: string | null;
+  created_at: string | null;
+  ean_int: string | null;
+  flavour: string | null;
+  food_pairing: string | null;
+  garnish: string | null;
+  glass: string | null;
+  ice: string | null;
+  liquid_color: string | null;
+  spirit: string | null;
+  serving: string | null;
+  uk_units: string | null;
+  label_color: string | null;
+  hero_bg: string | null;
+  product_link: string | null;
+  is_collaboration: boolean | null;
   [key: string]: unknown;
 }
 
