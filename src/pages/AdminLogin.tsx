@@ -68,6 +68,12 @@ export default function AdminLogin() {
         </form>
 
         <p className="text-center text-xs text-muted-foreground">
+          Don't have an account?{' '}
+          <Link to="/admin/signup" className="hover:text-foreground underline">
+            Sign up
+          </Link>
+        </p>
+        <p className="text-center text-xs text-muted-foreground">
           Contact your administrator to get access.
         </p>
       </div>
