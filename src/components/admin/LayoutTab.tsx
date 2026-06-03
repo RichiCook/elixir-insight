@@ -78,15 +78,15 @@ export function LayoutTab({ productId, onSave }: Props) {
       }));
       const { error } = await supabase.from('product_sections').insert(rows);
       if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ['product-sections', productId] });
-      // Refresh preview after a short delay so the iframe reloads fresh data
+      // Do NOT invalidate the query here — that would reset local state from DB
+      // mid-edit. The manual Save button handles invalidation + cache sync.
       (window as any).__refreshPreview?.();
     } catch {
       // silent — user can always hit Save Layout manually
     } finally {
       setAutoSaving(false);
     }
-  }, [productId, queryClient]);
+  }, [productId]);
 
   /** Schedule a debounced auto-save. Use delay=0 for blur-triggered saves. */
   const scheduleAutoSave = useCallback((delay = 500) => {
@@ -105,9 +105,9 @@ export function LayoutTab({ productId, onSave }: Props) {
     setSections(prev => {
       const next = prev.map((s, i) => i === index ? { ...s, is_visible: !s.is_visible } : s);
       sectionsRef.current = next;
-      scheduleAutoSave(300);
       return next;
     });
+    scheduleAutoSave(300);
   };
 
   const updateContent = (index: number, fieldKey: string, value: string) => {
@@ -150,9 +150,9 @@ export function LayoutTab({ productId, onSave }: Props) {
     setSections(prev => {
       const next = prev.filter((_, i) => i !== index).map((s, i) => ({ ...s, sort_order: i }));
       sectionsRef.current = next;
-      scheduleAutoSave(300);
       return next;
     });
+    scheduleAutoSave(300);
   };
 
   const handleAddBlock = (block: { section_key: string; block_type: string; block_config: Record<string, any>; custom_content: Record<string, any> }) => {
@@ -169,9 +169,9 @@ export function LayoutTab({ productId, onSave }: Props) {
         },
       ];
       sectionsRef.current = next;
-      scheduleAutoSave(300);
       return next;
     });
+    scheduleAutoSave(300);
   };
 
   const handleDragStart = (index: number) => setDragIdx(index);
@@ -241,7 +241,7 @@ export function LayoutTab({ productId, onSave }: Props) {
               Saving…
             </span>
           )}
-          <Button onClick={handleSave} disabled={saving || autoSaving} className="bg-primary text-primary-foreground" size="sm">
+          <Button onClick={handleSave} disabled={saving} className="bg-primary text-primary-foreground" size="sm">
             {saving ? 'Saving…' : 'Save Layout'}
           </Button>
         </div>
