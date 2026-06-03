@@ -10,13 +10,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { PRODUCT_LINES, getCompletenessColor, getLineBadge } from '@/constants/app';
+import { PRODUCT_LINES } from '@/constants/app';
 import { BrandSwitcher } from '@/components/admin/BrandSwitcher';
 import { useBrandStore } from '@/stores/brandStore';
+import { useScanStats } from '@/hooks/useScanStats';
+import { ProductInsightCard } from '@/components/admin/ProductInsightCard';
 
 export default function AdminDashboard() {
   const { data: products, isLoading } = useProducts();
   const { data: stats } = useAdminStats();
+  const { data: scanStats } = useScanStats();
   const signOut = useAuthStore((s) => s.signOut);
   const perms = usePermissions();
   const navigate = useNavigate();
@@ -153,60 +156,17 @@ export default function AdminDashboard() {
             <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" style={{ gridAutoRows: '1fr' }}>
             {products?.filter((p) => {
               if (!search) return true;
               const q = search.toLowerCase();
               return p.name.toLowerCase().includes(q) || p.slug.toLowerCase().includes(q) || p.line?.toLowerCase().includes(q);
             }).map((product) => (
-              <Link
+              <ProductInsightCard
                 key={product.id}
-                to={`/admin/product/${product.slug}`}
-                className="group rounded-lg border border-border bg-card p-4 hover:border-primary/50 transition-colors"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <p className="font-display text-base text-card-foreground">{product.name}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className={`text-[9px] uppercase tracking-wider px-2 py-0.5 rounded border ${getLineBadge(product.line)}`}>
-                        {product.line}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground">{product.abv}% ABV</span>
-                    </div>
-                  </div>
-                  <div
-                    className="w-8 h-8 rounded"
-                    style={{ backgroundColor: product.bottle_color || '#333' }}
-                  />
-                </div>
-
-                {product.spirit && (
-                  <p className="text-[10px] text-muted-foreground mb-3 truncate">{product.spirit}</p>
-                )}
-
-                {/* Completeness bar */}
-                <div>
-                  <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
-                    <span>Completeness</span>
-                    <span>{product.completeness}%</span>
-                  </div>
-                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{
-                        width: `${product.completeness}%`,
-                        backgroundColor: getCompletenessColor(product.completeness || 0),
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-3 flex justify-end">
-                  <span className="text-[10px] text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                    Edit →
-                  </span>
-                </div>
-              </Link>
+                product={product}
+                stats={scanStats?.[product.slug] ?? null}
+              />
             ))}
           </div>
         )}
