@@ -158,7 +158,7 @@ export function useBottlePageData(
         p_lang:       lang,
       });
       if (error) throw error;
-      return data as BottlePageData | null;
+      return data as unknown as BottlePageData | null;
     },
     enabled: !!brandSlug && !!productSlug,
     staleTime: 60_000,

@@ -49,7 +49,7 @@ export default function AdminDashboard() {
       line:     newProduct.line,
       abv:      newProduct.abv,
       brand_id: activeBrand.id,
-    }).select('slug').single();
+    } as any).select('slug').single();
     setCreating(false);
     if (error) {
       toast.error(error.message.includes('duplicate') ? 'A product with that slug already exists' : 'Failed to create product');

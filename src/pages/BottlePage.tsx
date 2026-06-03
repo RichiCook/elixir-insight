@@ -90,7 +90,7 @@ export default function BottlePage() {
       source:       isQrScan ? 'qr' : 'direct',
       user_agent:   navigator.userAgent,
       language:     lang,
-    });
+    } as any);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product?.id]);
 
