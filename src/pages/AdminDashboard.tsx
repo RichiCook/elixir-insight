@@ -29,6 +29,8 @@ export default function AdminDashboard() {
   const [newProduct, setNewProduct] = useState({ name: '', slug: '', line: 'Classic', abv: '' });
   const [creating, setCreating] = useState(false);
   const [search, setSearch] = useState('');
+  const [lineFilter, setLineFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'scans' | 'trending' | 'declining' | 'completeness' | 'name'>('scans');
 
   const handleSignOut = async () => {
     await signOut();
@@ -144,30 +146,89 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Product grid */}
-        <Input
-          placeholder="Search products…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-sm"
-        />
+        {/* Filter / sort bar */}
+        <div className="flex flex-wrap items-center gap-3">
+          <Input
+            placeholder="Search products…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="max-w-xs"
+          />
+
+          {/* Line filter pills */}
+          <div className="flex items-center gap-1.5">
+            {(['all', ...PRODUCT_LINES] as const).map((line) => (
+              <button
+                key={line}
+                onClick={() => setLineFilter(line)}
+                className="text-[10px] font-semibold uppercase tracking-wider px-3 py-1.5 rounded-full border transition-colors"
+                style={{
+                  borderColor: lineFilter === line ? 'rgba(202,168,80,0.5)' : 'rgba(255,255,255,0.08)',
+                  background:  lineFilter === line ? 'rgba(202,168,80,0.12)' : 'transparent',
+                  color:       lineFilter === line ? '#caa850' : 'var(--muted-foreground)',
+                }}
+              >
+                {line === 'all' ? 'All' : line}
+              </button>
+            ))}
+          </div>
+
+          {/* Sort select */}
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+            <SelectTrigger className="w-44 h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="scans">Most scans</SelectItem>
+              <SelectItem value="trending">Trending ↑</SelectItem>
+              <SelectItem value="declining">Declining ↓</SelectItem>
+              <SelectItem value="completeness">Completeness</SelectItem>
+              <SelectItem value="name">Name A–Z</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         {isLoading ? (
           <div className="flex justify-center py-20">
             <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" style={{ gridAutoRows: '1fr' }}>
-            {products?.filter((p) => {
-              if (!search) return true;
-              const q = search.toLowerCase();
-              return p.name.toLowerCase().includes(q) || p.slug.toLowerCase().includes(q) || p.line?.toLowerCase().includes(q);
-            }).map((product) => (
-              <ProductInsightCard
-                key={product.id}
-                product={product}
-                stats={scanStats?.[product.slug] ?? null}
-              />
-            ))}
+            {(products ?? [])
+              .filter((p) => {
+                if (lineFilter !== 'all' && p.line !== lineFilter) return false;
+                if (!search) return true;
+                const q = search.toLowerCase();
+                return (
+                  p.name.toLowerCase().includes(q) ||
+                  p.slug.toLowerCase().includes(q) ||
+                  (p.line?.toLowerCase() ?? '').includes(q)
+                );
+              })
+              .sort((a, b) => {
+                const sa = scanStats?.[a.slug];
+                const sb = scanStats?.[b.slug];
+                if (sortBy === 'name') return a.name.localeCompare(b.name);
+                if (sortBy === 'completeness') return (b.completeness ?? 0) - (a.completeness ?? 0);
+                if (sortBy === 'scans') {
+                  const aScans = sa ? sa[sa.aiPeriod].scans : -1;
+                  const bScans = sb ? sb[sb.aiPeriod].scans : -1;
+                  return bScans - aScans;
+                }
+                if (sortBy === 'trending' || sortBy === 'declining') {
+                  const aPct = sa ? sa[sa.aiPeriod].changePct : 0;
+                  const bPct = sb ? sb[sb.aiPeriod].changePct : 0;
+                  return sortBy === 'trending' ? bPct - aPct : aPct - bPct;
+                }
+                return 0;
+              })
+              .map((product) => (
+                <ProductInsightCard
+                  key={product.id}
+                  product={product}
+                  stats={scanStats?.[product.slug] ?? null}
+                />
+              ))}
           </div>
         )}
       </main>
