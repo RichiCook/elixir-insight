@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -45,9 +45,16 @@ export function LayoutTab({ productId, onSave }: Props) {
   const [sections, setSections] = useState<ReturnType<typeof getMergedSections>>([]);
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [autoSaving, setAutoSaving] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [showAddBlock, setShowAddBlock] = useState(false);
   const [imagePicker, setImagePicker] = useState<{ index: number; mode: 'single' | 'carousel' } | null>(null);
+
+  // Keep a ref to the latest sections so the debounced auto-save always writes the freshest state
+  const sectionsRef = useRef(sections);
+  useEffect(() => { sectionsRef.current = sections; }, [sections]);
+
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setSections(getMergedSections(savedSections, defaultSections));
@@ -55,22 +62,72 @@ export function LayoutTab({ productId, onSave }: Props) {
 
   const getDef = (key: string) => SECTION_DEFINITIONS.find(d => d.key === key);
 
+  // ── Silent auto-save → triggers preview refresh ──────────────────────────────
+  const persistSections = useCallback(async (latest: typeof sections) => {
+    try {
+      setAutoSaving(true);
+      await supabase.from('product_sections').delete().eq('product_id', productId);
+      const rows = latest.map((s, i) => ({
+        product_id: productId,
+        section_key: s.section_key,
+        sort_order: i,
+        is_visible: s.is_visible,
+        custom_content: s.custom_content || {},
+        block_type: s.block_type || 'built_in',
+        block_config: s.block_config || {},
+      }));
+      const { error } = await supabase.from('product_sections').insert(rows);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['product-sections', productId] });
+      // Refresh preview after a short delay so the iframe reloads fresh data
+      (window as any).__refreshPreview?.();
+    } catch {
+      // silent — user can always hit Save Layout manually
+    } finally {
+      setAutoSaving(false);
+    }
+  }, [productId, queryClient]);
+
+  /** Schedule a debounced auto-save. Use delay=0 for blur-triggered saves. */
+  const scheduleAutoSave = useCallback((delay = 500) => {
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(() => {
+      persistSections(sectionsRef.current);
+    }, delay);
+  }, [persistSections]);
+
+  // Clear pending timer on unmount
+  useEffect(() => () => {
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+  }, []);
+
   const toggleVisibility = (index: number) => {
-    setSections(prev => prev.map((s, i) =>
-      i === index ? { ...s, is_visible: !s.is_visible } : s
-    ));
+    setSections(prev => {
+      const next = prev.map((s, i) => i === index ? { ...s, is_visible: !s.is_visible } : s);
+      sectionsRef.current = next;
+      scheduleAutoSave(300);
+      return next;
+    });
   };
 
   const updateContent = (index: number, fieldKey: string, value: string) => {
     setSections(prev => prev.map((s, i) =>
       i === index ? { ...s, custom_content: { ...s.custom_content, [fieldKey]: value } } : s
     ));
+    // Text: save on blur (onBlur={() => scheduleAutoSave(0)) — also debounce while typing
+    scheduleAutoSave(1200);
   };
 
   const updateConfig = (index: number, fieldKey: string, value: any) => {
-    setSections(prev => prev.map((s, i) =>
-      i === index ? { ...s, block_config: { ...s.block_config, [fieldKey]: value } } : s
-    ));
+    setSections(prev => {
+      const next = prev.map((s, i) =>
+        i === index ? { ...s, block_config: { ...s.block_config, [fieldKey]: value } } : s
+      );
+      sectionsRef.current = next;
+      return next;
+    });
+    // Debounce — long enough that typing doesn't hammer the DB, short enough for image/video/toggle
+    scheduleAutoSave(1200);
   };
 
   const moveSection = (index: number, dir: -1 | 1) => {
@@ -78,7 +135,10 @@ export function LayoutTab({ productId, onSave }: Props) {
     if (newIndex < 0 || newIndex >= sections.length) return;
     const newSections = [...sections];
     [newSections[index], newSections[newIndex]] = [newSections[newIndex], newSections[index]];
-    setSections(newSections.map((s, i) => ({ ...s, sort_order: i })));
+    const reordered = newSections.map((s, i) => ({ ...s, sort_order: i }));
+    setSections(reordered);
+    sectionsRef.current = reordered;
+    scheduleAutoSave(300);
   };
 
   const removeSection = (index: number) => {
@@ -87,21 +147,31 @@ export function LayoutTab({ productId, onSave }: Props) {
       toast.error('Built-in sections cannot be removed — hide them instead');
       return;
     }
-    setSections(prev => prev.filter((_, i) => i !== index).map((s, i) => ({ ...s, sort_order: i })));
+    setSections(prev => {
+      const next = prev.filter((_, i) => i !== index).map((s, i) => ({ ...s, sort_order: i }));
+      sectionsRef.current = next;
+      scheduleAutoSave(300);
+      return next;
+    });
   };
 
   const handleAddBlock = (block: { section_key: string; block_type: string; block_config: Record<string, any>; custom_content: Record<string, any> }) => {
-    setSections(prev => [
-      ...prev,
-      {
-        section_key: block.section_key,
-        sort_order: prev.length,
-        is_visible: true,
-        custom_content: block.custom_content,
-        block_type: block.block_type,
-        block_config: block.block_config,
-      },
-    ]);
+    setSections(prev => {
+      const next = [
+        ...prev,
+        {
+          section_key: block.section_key,
+          sort_order: prev.length,
+          is_visible: true,
+          custom_content: block.custom_content,
+          block_type: block.block_type,
+          block_config: block.block_config,
+        },
+      ];
+      sectionsRef.current = next;
+      scheduleAutoSave(300);
+      return next;
+    });
   };
 
   const handleDragStart = (index: number) => setDragIdx(index);
@@ -111,12 +181,18 @@ export function LayoutTab({ productId, onSave }: Props) {
     const newSections = [...sections];
     const [dragged] = newSections.splice(dragIdx, 1);
     newSections.splice(index, 0, dragged);
-    setSections(newSections.map((s, i) => ({ ...s, sort_order: i })));
+    const reordered = newSections.map((s, i) => ({ ...s, sort_order: i }));
+    setSections(reordered);
+    sectionsRef.current = reordered;
     setDragIdx(index);
   };
-  const handleDragEnd = () => setDragIdx(null);
+  const handleDragEnd = () => {
+    setDragIdx(null);
+    scheduleAutoSave(300);
+  };
 
   const handleSave = async () => {
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     setSaving(true);
     try {
       await supabase.from('product_sections').delete().eq('product_id', productId);
@@ -137,6 +213,7 @@ export function LayoutTab({ productId, onSave }: Props) {
       toast.success('Layout saved');
       queryClient.invalidateQueries({ queryKey: ['product-sections', productId] });
       onSave?.();
+      (window as any).__refreshPreview?.();
     } catch (err: any) {
       toast.error('Failed to save layout');
     }
@@ -158,7 +235,13 @@ export function LayoutTab({ productId, onSave }: Props) {
           <Button onClick={() => setShowAddBlock(true)} variant="outline" size="sm">
             <Plus className="w-3 h-3 mr-1" /> Add Block
           </Button>
-          <Button onClick={handleSave} disabled={saving} className="bg-primary text-primary-foreground" size="sm">
+          {autoSaving && (
+            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse inline-block" />
+              Saving…
+            </span>
+          )}
+          <Button onClick={handleSave} disabled={saving || autoSaving} className="bg-primary text-primary-foreground" size="sm">
             {saving ? 'Saving…' : 'Save Layout'}
           </Button>
         </div>
@@ -233,9 +316,9 @@ export function LayoutTab({ productId, onSave }: Props) {
                     <div key={field.key}>
                       <Label className="text-[10px] text-muted-foreground mb-1 block">{field.label}</Label>
                       {field.type === 'textarea' ? (
-                        <Textarea value={section.custom_content[field.key] || ''} onChange={(e) => updateContent(index, field.key, e.target.value)} placeholder={field.default || 'Default'} rows={2} className="text-xs" />
+                        <Textarea value={section.custom_content[field.key] || ''} onChange={(e) => updateContent(index, field.key, e.target.value)} onBlur={() => scheduleAutoSave(0)} placeholder={field.default || 'Default'} rows={2} className="text-xs" />
                       ) : (
-                        <Input value={section.custom_content[field.key] || ''} onChange={(e) => updateContent(index, field.key, e.target.value)} placeholder={field.default || 'Default'} className="h-8 text-xs" />
+                        <Input value={section.custom_content[field.key] || ''} onChange={(e) => updateContent(index, field.key, e.target.value)} onBlur={() => scheduleAutoSave(0)} placeholder={field.default || 'Default'} className="h-8 text-xs" />
                       )}
                     </div>
                   ))}
@@ -248,12 +331,12 @@ export function LayoutTab({ productId, onSave }: Props) {
                   <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Block configuration</p>
                   <div>
                     <Label className="text-[10px] text-muted-foreground mb-1 block">Block Label</Label>
-                    <Input value={section.block_config?.label || ''} onChange={(e) => updateConfig(index, 'label', e.target.value)} className="h-8 text-xs" />
+                    <Input value={section.block_config?.label || ''} onChange={(e) => updateConfig(index, 'label', e.target.value)} onBlur={() => scheduleAutoSave(0)} className="h-8 text-xs" />
                   </div>
                   {section.block_type === 'text' && (
                     <>
-                      <div><Label className="text-[10px] text-muted-foreground mb-1 block">Heading</Label><Input value={section.block_config?.heading || ''} onChange={(e) => updateConfig(index, 'heading', e.target.value)} className="h-8 text-xs" /></div>
-                      <div><Label className="text-[10px] text-muted-foreground mb-1 block">Body</Label><Textarea value={section.block_config?.body || ''} onChange={(e) => updateConfig(index, 'body', e.target.value)} rows={3} className="text-xs" /></div>
+                      <div><Label className="text-[10px] text-muted-foreground mb-1 block">Heading</Label><Input value={section.block_config?.heading || ''} onChange={(e) => updateConfig(index, 'heading', e.target.value)} onBlur={() => scheduleAutoSave(0)} className="h-8 text-xs" /></div>
+                      <div><Label className="text-[10px] text-muted-foreground mb-1 block">Body</Label><Textarea value={section.block_config?.body || ''} onChange={(e) => updateConfig(index, 'body', e.target.value)} onBlur={() => scheduleAutoSave(0)} rows={3} className="text-xs" /></div>
                     </>
                   )}
                   {section.block_type === 'image_text' && (
@@ -274,8 +357,8 @@ export function LayoutTab({ productId, onSave }: Props) {
                           </Button>
                         </div>
                       </div>
-                      <div><Label className="text-[10px] text-muted-foreground mb-1 block">Heading</Label><Input value={section.block_config?.heading || ''} onChange={(e) => updateConfig(index, 'heading', e.target.value)} className="h-8 text-xs" /></div>
-                      <div><Label className="text-[10px] text-muted-foreground mb-1 block">Body</Label><Textarea value={section.block_config?.body || ''} onChange={(e) => updateConfig(index, 'body', e.target.value)} rows={3} className="text-xs" /></div>
+                      <div><Label className="text-[10px] text-muted-foreground mb-1 block">Heading</Label><Input value={section.block_config?.heading || ''} onChange={(e) => updateConfig(index, 'heading', e.target.value)} onBlur={() => scheduleAutoSave(0)} className="h-8 text-xs" /></div>
+                      <div><Label className="text-[10px] text-muted-foreground mb-1 block">Body</Label><Textarea value={section.block_config?.body || ''} onChange={(e) => updateConfig(index, 'body', e.target.value)} onBlur={() => scheduleAutoSave(0)} rows={3} className="text-xs" /></div>
                     </>
                   )}
                   {section.block_type === 'image_carousel' && (
@@ -299,15 +382,15 @@ export function LayoutTab({ productId, onSave }: Props) {
                           <Image className="w-3 h-3 mr-1" /> Add Images
                         </Button>
                       </div>
-                      <div><Label className="text-[10px] text-muted-foreground mb-1 block">Heading</Label><Input value={section.block_config?.heading || ''} onChange={(e) => updateConfig(index, 'heading', e.target.value)} className="h-8 text-xs" /></div>
-                      <div><Label className="text-[10px] text-muted-foreground mb-1 block">Auto-play (sec, 0=off)</Label><Input type="number" value={section.block_config?.autoplay || '0'} onChange={(e) => updateConfig(index, 'autoplay', e.target.value)} className="h-8 text-xs" /></div>
+                      <div><Label className="text-[10px] text-muted-foreground mb-1 block">Heading</Label><Input value={section.block_config?.heading || ''} onChange={(e) => updateConfig(index, 'heading', e.target.value)} onBlur={() => scheduleAutoSave(0)} className="h-8 text-xs" /></div>
+                      <div><Label className="text-[10px] text-muted-foreground mb-1 block">Auto-play (sec, 0=off)</Label><Input type="number" value={section.block_config?.autoplay || '0'} onChange={(e) => updateConfig(index, 'autoplay', e.target.value)} onBlur={() => scheduleAutoSave(0)} className="h-8 text-xs" /></div>
                     </>
                   )}
                   {section.block_type === 'cta' && (
                     <>
-                      <div><Label className="text-[10px] text-muted-foreground mb-1 block">Button Text</Label><Input value={section.block_config?.button_text || ''} onChange={(e) => updateConfig(index, 'button_text', e.target.value)} className="h-8 text-xs" /></div>
-                      <div><Label className="text-[10px] text-muted-foreground mb-1 block">Button URL</Label><Input value={section.block_config?.button_url || ''} onChange={(e) => updateConfig(index, 'button_url', e.target.value)} className="h-8 text-xs" /></div>
-                      <div><Label className="text-[10px] text-muted-foreground mb-1 block">Style</Label><Input value={section.block_config?.style || ''} onChange={(e) => updateConfig(index, 'style', e.target.value)} className="h-8 text-xs" placeholder="dark / gold / outline" /></div>
+                      <div><Label className="text-[10px] text-muted-foreground mb-1 block">Button Text</Label><Input value={section.block_config?.button_text || ''} onChange={(e) => updateConfig(index, 'button_text', e.target.value)} onBlur={() => scheduleAutoSave(0)} className="h-8 text-xs" /></div>
+                      <div><Label className="text-[10px] text-muted-foreground mb-1 block">Button URL</Label><Input value={section.block_config?.button_url || ''} onChange={(e) => updateConfig(index, 'button_url', e.target.value)} onBlur={() => scheduleAutoSave(0)} className="h-8 text-xs" /></div>
+                      <div><Label className="text-[10px] text-muted-foreground mb-1 block">Style</Label><Input value={section.block_config?.style || ''} onChange={(e) => updateConfig(index, 'style', e.target.value)} onBlur={() => scheduleAutoSave(0)} className="h-8 text-xs" placeholder="dark / gold / outline" /></div>
                     </>
                   )}
                   {section.block_type === 'video' && (
@@ -317,10 +400,10 @@ export function LayoutTab({ productId, onSave }: Props) {
                     />
                   )}
                   {section.block_type === 'spacer' && (
-                    <div><Label className="text-[10px] text-muted-foreground mb-1 block">Height (px)</Label><Input type="number" value={section.block_config?.height || '32'} onChange={(e) => updateConfig(index, 'height', e.target.value)} className="h-8 text-xs" /></div>
+                    <div><Label className="text-[10px] text-muted-foreground mb-1 block">Height (px)</Label><Input type="number" value={section.block_config?.height || '32'} onChange={(e) => updateConfig(index, 'height', e.target.value)} onBlur={() => scheduleAutoSave(0)} className="h-8 text-xs" /></div>
                   )}
                   {section.block_type === 'custom_html' && (
-                    <div><Label className="text-[10px] text-muted-foreground mb-1 block">HTML</Label><Textarea value={section.block_config?.html || ''} onChange={(e) => updateConfig(index, 'html', e.target.value)} rows={6} className="text-xs font-mono" /></div>
+                    <div><Label className="text-[10px] text-muted-foreground mb-1 block">HTML</Label><Textarea value={section.block_config?.html || ''} onChange={(e) => updateConfig(index, 'html', e.target.value)} onBlur={() => scheduleAutoSave(0)} rows={6} className="text-xs font-mono" /></div>
                   )}
                 </div>
               )}
