@@ -2,6 +2,7 @@ import { useState, useCallback, useId } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { type ScanStats, periodRationale } from '@/hooks/useScanStats';
+import { useBrandStore } from '@/stores/brandStore';
 
 // ── Design tokens (matching the prototype exactly) ────────────────────────
 const T = {
@@ -179,6 +180,47 @@ function SparklineLine({
   );
 }
 
+// ── QR code thumbnail ─────────────────────────────────────────────────────
+// Renders the product's live bottle-page QR code using the qrserver.com API.
+// Gold modules on the card background — no library needed.
+
+function QrCode({ url, size = 56 }: { url: string; size?: number }) {
+  const [errored, setErrored] = useState(false);
+  const apiUrl =
+    'https://api.qrserver.com/v1/create-qr-code/?' +
+    new URLSearchParams({
+      data:    url,
+      size:    `${size * 2}x${size * 2}`, // 2× for retina
+      color:   'CAA850',
+      bgcolor: '1B1711',
+      format:  'svg',
+      margin:  '2',
+    }).toString();
+
+  if (errored) {
+    // Silent fallback: small empty rounded square
+    return (
+      <div style={{
+        width: size, height: size, borderRadius: 6, flexShrink: 0,
+        border: `1px solid rgba(202,168,80,0.18)`,
+      }} />
+    );
+  }
+
+  return (
+    <img
+      src={apiUrl}
+      width={size} height={size}
+      alt="QR code"
+      onError={() => setErrored(true)}
+      style={{
+        borderRadius: 6, flexShrink: 0, display: 'block',
+        imageRendering: 'pixelated',
+      }}
+    />
+  );
+}
+
 function Completeness({ pct }: { pct: number }) {
   return (
     <div>
@@ -313,6 +355,10 @@ interface Props {
 // ── Main card component ────────────────────────────────────────────────────
 
 export function ProductInsightCard({ product, stats }: Props) {
+  const activeBrand = useBrandStore((s) => s.activeBrand);
+  const brandSlug = activeBrand?.slug ?? 'classy';
+  const bottleUrl = `${window.location.origin}/b/${brandSlug}/${product.slug}?source=qr`;
+
   const aiPeriod = stats?.aiPeriod ?? 'week';
   const d = stats?.[aiPeriod];
 
@@ -412,11 +458,7 @@ export function ProductInsightCard({ product, stats }: Props) {
               )}
             </div>
           </div>
-          <div style={{
-            width: 28, height: 28, borderRadius: 6, flexShrink: 0,
-            background: product.bottle_color || '#333',
-            boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.10), 0 1px 4px rgba(0,0,0,0.4)',
-          }} />
+          <QrCode url={bottleUrl} size={56} />
         </div>
 
         {/* ── Metric row ── */}
