@@ -84,6 +84,7 @@ export default function BottlePage() {
   const isQrScan = searchParams.get('source') === 'qr';
   useEffect(() => {
     if (!product?.id || !product?.slug) return;
+    if (isPreview) return; // admin live-preview must never count as a scan
     if (!isQrScan && !hasTrackingConsent()) return;
 
     const payload = {
