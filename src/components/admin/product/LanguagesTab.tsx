@@ -259,7 +259,7 @@ export function LanguagesTab({ productId, productName }: { productId: string; pr
         // Write back as `${key}_${lang.toLowerCase()}` suffixed keys
         const updates: Record<string, string> = {};
         for (const [k, v] of Object.entries(t)) {
-          updates[`${k}_${lang.toLowerCase()}`] = v;
+          updates[`${k}_${lang.toLowerCase()}`] = v as string;
         }
         await supabase
           .from('product_sections')

@@ -140,7 +140,12 @@ export interface BottleActivation {
   priority: number | null;
   start_date: string | null;
   end_date: string | null;
-  [key: string]: unknown;
+  reward_code: string | null;
+  targeting_mode: string;
+  target_product_ids: string[];
+  target_collection_ids: string[];
+  created_at: string;
+  updated_at: string;
 }
 
 export interface BottleNutrition {
