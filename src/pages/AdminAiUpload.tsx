@@ -537,7 +537,16 @@ function PdfTab() {
       const { data: aiResult, error: aiError } = await supabase.functions.invoke('analyze-tech-sheet', {
         body: { text, product_name: selectedProduct?.name, filename: file.name, product_id: productId },
       });
-      if (aiError) throw aiError;
+      if (aiError) {
+        // Extract the actual error message from the function response body when available
+        const body = (aiError as any)?.context;
+        let message = aiError.message;
+        try {
+          const parsed = typeof body === 'string' ? JSON.parse(body) : await body?.json?.();
+          if (parsed?.error) message = parsed.error;
+        } catch { /* ignore parse errors */ }
+        throw new Error(message);
+      }
 
       const extractedData = aiResult.data;
       setExtracted(extractedData);
