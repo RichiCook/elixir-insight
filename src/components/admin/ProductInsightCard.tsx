@@ -488,6 +488,21 @@ export function ProductInsightCard({ product, stats }: Props) {
                 </span>
                 <TrendPill pct={d.changePct} period={aiPeriod} />
               </div>
+              {d.uniqueVisits > 0 && (
+                <div style={{ marginTop: 5, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none"
+                    stroke={T.faint} strokeWidth="1.4" strokeLinecap="round">
+                    <circle cx="6" cy="4" r="2.2" />
+                    <path d="M1.5 10.5c0-2.2 2-4 4.5-4s4.5 1.8 4.5 4" />
+                  </svg>
+                  <span style={{
+                    fontSize: 11, color: T.faint,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}>
+                    {fmtNum(d.uniqueVisits)} unique
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* ── Sparkline ── */}

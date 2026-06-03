@@ -9,7 +9,7 @@ export function setTrackingConsent(accepted: boolean) {
   localStorage.setItem('cc_tracking_consent', accepted ? 'accepted' : 'declined');
 }
 
-function getSessionId(): string {
+export function getSessionId(): string {
   let id = sessionStorage.getItem('cc_session');
   if (!id) {
     id = crypto.randomUUID();

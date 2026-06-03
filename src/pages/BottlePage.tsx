@@ -2,7 +2,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useState, useCallback, useEffect } from 'react';
 import { useBottlePageData } from '@/hooks/useBottlePageData';
-import { usePageViewTracking, useSectionTracking, trackInteraction, hasTrackingConsent } from '@/hooks/useTracking';
+import { usePageViewTracking, useSectionTracking, trackInteraction, hasTrackingConsent, getSessionId } from '@/hooks/useTracking';
 import { supabase } from '@/integrations/supabase/client';
 import { useDefaultLayoutSections, getMergedSections } from '@/hooks/useSectionConfig';
 import { useProductTechnicalData } from '@/hooks/useProduct';
@@ -89,6 +89,7 @@ export default function BottlePage() {
     const payload = {
       product_slug: product.slug,
       brand_slug:   brandSlug ?? null,
+      session_id:   getSessionId(),
       source:       isQrScan ? 'qr' : 'direct',
       user_agent:   navigator.userAgent.slice(0, 255),
       language:     lang,

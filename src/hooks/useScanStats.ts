@@ -4,6 +4,7 @@ import { useBrandStore } from '@/stores/brandStore';
 
 export interface PeriodStats {
   scans: number;
+  uniqueVisits: number;
   changePct: number;
   /** Daily scan counts for sparkline, oldest → newest */
   series: number[];
@@ -51,7 +52,7 @@ function computePct(current: number, previous: number): number {
 }
 
 function computeStats(
-  events: string[], // ISO timestamps
+  events: Array<{ ts: string; session: string | null }>,
   currentDays: number,
   prevDays: number,
 ): PeriodStats {
@@ -60,17 +61,23 @@ function computeStats(
 
   let current = 0;
   let previous = 0;
+  const currentSessions = new Set<string>();
 
-  for (const ts of events) {
+  for (const { ts, session } of events) {
     const age = (now - new Date(ts).getTime()) / msPerDay;
-    if (age < currentDays) current++;
-    else if (age < currentDays + prevDays) previous++;
+    if (age < currentDays) {
+      current++;
+      if (session) currentSessions.add(session);
+    } else if (age < currentDays + prevDays) {
+      previous++;
+    }
   }
 
   return {
     scans: current,
+    uniqueVisits: currentSessions.size,
     changePct: computePct(current, previous),
-    series: buildSeries(events, currentDays),
+    series: buildSeries(events.map((e) => e.ts), currentDays),
   };
 }
 
@@ -89,7 +96,7 @@ export function useScanStats() {
       // Select brand_slug so we can filter client-side; older rows may have
       // brand_slug = null (pre-multi-brand), so we never drop them server-side.
       let q = (supabase.from('scan_events') as any)
-        .select('product_slug, brand_slug, scanned_at')
+        .select('product_slug, brand_slug, session_id, scanned_at')
         .gte('scanned_at', since.toISOString())
         .order('scanned_at', { ascending: false })
         .limit(100_000);
@@ -97,22 +104,22 @@ export function useScanStats() {
       const { data, error } = await q;
       if (error) throw error;
 
-      // Group timestamps by product_slug.
+      // Group events by product_slug.
       // Include rows whose brand_slug matches OR is null/empty (legacy pre-multi-brand rows).
       const brandSlug = activeBrand?.slug ?? null;
-      const bySlug: Record<string, string[]> = {};
-      for (const row of data as { product_slug: string; brand_slug: string | null; scanned_at: string }[]) {
+      const bySlug: Record<string, Array<{ ts: string; session: string | null }>> = {};
+      for (const row of data as { product_slug: string; brand_slug: string | null; session_id: string | null; scanned_at: string }[]) {
         if (!row.product_slug) continue;
         if (brandSlug && row.brand_slug && row.brand_slug !== brandSlug) continue;
         if (!bySlug[row.product_slug]) bySlug[row.product_slug] = [];
-        bySlug[row.product_slug].push(row.scanned_at);
+        bySlug[row.product_slug].push({ ts: row.scanned_at, session: row.session_id });
       }
 
       // Compute stats per slug
       const result: Record<string, ScanStats> = {};
-      for (const [slug, timestamps] of Object.entries(bySlug)) {
-        const week = computeStats(timestamps, 7, 7);
-        const month = computeStats(timestamps, 30, 30);
+      for (const [slug, events] of Object.entries(bySlug)) {
+        const week = computeStats(events, 7, 7);
+        const month = computeStats(events, 30, 30);
         const aiPeriod: 'week' | 'month' =
           Math.abs(week.changePct) >= Math.abs(month.changePct) ? 'week' : 'month';
         result[slug] = { productSlug: slug, week, month, aiPeriod };
