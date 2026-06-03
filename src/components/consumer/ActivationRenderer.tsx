@@ -29,7 +29,7 @@ function safeUrl(url: unknown): string | undefined {
   return typeof url === 'string' && /^https?:\/\//i.test(url) ? url : undefined;
 }
 
-function ActivationCard({ activation, productSlug }: { activation: Activation; productSlug: string }) {
+function ActivationCard({ activation, productSlug, brandName }: { activation: Activation; productSlug: string; brandName?: string }) {
   const { activation_type, content } = activation;
 
   switch (activation_type) {
@@ -42,9 +42,9 @@ function ActivationCard({ activation, productSlug }: { activation: Activation; p
     case 'custom_html':
       return <CustomHtmlActivation content={content} />;
     case 'lead_capture':
-      return <LeadCaptureActivation activation={activation} productSlug={productSlug} />;
+      return <LeadCaptureActivation activation={activation} productSlug={productSlug} brandName={brandName} />;
     case 'lead_capture_rating':
-      return <LeadCaptureRatingActivation activation={activation} productSlug={productSlug} />;
+      return <LeadCaptureRatingActivation activation={activation} productSlug={productSlug} brandName={brandName} />;
     default:
       return null;
   }
