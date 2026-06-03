@@ -78,23 +78,28 @@ export default function BottlePage() {
   usePageViewTracking(productSlug);
   const { observeSection } = useSectionTracking(productSlug);
 
-  // Record scan in scan_events (fire-and-forget).
-  // QR scans are recorded under legitimate interest — they are the core functional
-  // purpose of the product and do not require marketing consent.
-  // Direct web visits are only recorded when the user has accepted tracking.
+  // Record scan in scan_events.
+  // QR scans recorded under legitimate interest (core product function, no consent needed).
+  // Direct web visits only recorded after marketing consent.
   const isQrScan = searchParams.get('source') === 'qr';
   useEffect(() => {
-    if (!product?.id) return;
+    if (!product?.id || !product?.slug) return;
     if (!isQrScan && !hasTrackingConsent()) return;
-    supabase.from('scan_events').insert({
-      product_id:   product.id,
+
+    const payload = {
       product_slug: product.slug,
-      brand_id:     pageData?.brand?.id,
-      brand_slug:   brandSlug,
+      brand_slug:   brandSlug ?? null,
       source:       isQrScan ? 'qr' : 'direct',
-      user_agent:   navigator.userAgent,
+      user_agent:   navigator.userAgent.slice(0, 255),
       language:     lang,
-    } as any);
+    };
+
+    supabase
+      .from('scan_events')
+      .insert(payload as any)
+      .then(({ error }) => {
+        if (error) console.error('[scan_events] insert failed:', error.message, error.details, payload);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product?.id]);
 
