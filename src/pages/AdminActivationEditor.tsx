@@ -14,6 +14,8 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
+import { VideoPickerDialog } from '@/components/admin/VideoPickerDialog';
+import { Play, X } from 'lucide-react';
 
 const STEPS = ['Define', 'Content', 'Targeting', 'Schedule', 'Review'];
 
@@ -92,6 +94,7 @@ export default function AdminActivationEditor() {
   const [productSearch, setProductSearch] = useState('');
   const [showNewBrand, setShowNewBrand] = useState(false);
   const [newBrandName, setNewBrandName] = useState('');
+  const [showVideoPicker, setShowVideoPicker] = useState(false);
 
   useEffect(() => {
     if (existing) {
@@ -496,9 +499,55 @@ function ContentEditor({ type, content, onChange }: { type: ActivationType; cont
     case 'video':
       return (
         <div className="space-y-4">
+          {showVideoPicker && (
+            <VideoPickerDialog
+              onSelect={(url) => { set('video_url', url); setShowVideoPicker(false); }}
+              onClose={() => setShowVideoPicker(false)}
+            />
+          )}
           <div>
-            <Label className="text-xs text-muted-foreground mb-1.5 block">Video URL (YouTube/Vimeo embed)</Label>
-            <Input value={content.video_url || ''} onChange={(e) => set('video_url', e.target.value)} placeholder="https://youtube.com/embed/..." />
+            <Label className="text-xs text-muted-foreground mb-1.5 block">Video</Label>
+            {content.video_url ? (
+              <div className="rounded-lg border border-border overflow-hidden bg-black">
+                {content.video_url.includes('youtube.com') || content.video_url.includes('vimeo.com') ? (
+                  <iframe
+                    src={content.video_url}
+                    className="w-full aspect-video"
+                    allow="autoplay; fullscreen"
+                    allowFullScreen
+                  />
+                ) : (
+                  <video src={content.video_url} controls className="w-full aspect-video" />
+                )}
+                <div className="flex items-center justify-between px-3 py-2 bg-card border-t border-border">
+                  <p className="text-[10px] text-muted-foreground truncate max-w-[280px]">{content.video_url}</p>
+                  <button
+                    onClick={() => set('video_url', '')}
+                    className="text-muted-foreground hover:text-destructive ml-2"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowVideoPicker(true)}
+                className="w-full border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center gap-2 hover:border-primary/60 transition-colors"
+              >
+                <Play className="w-6 h-6 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Choose from library, upload, or paste URL</span>
+              </button>
+            )}
+            {content.video_url && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-1 text-xs text-muted-foreground"
+                onClick={() => setShowVideoPicker(true)}
+              >
+                Change video
+              </Button>
+            )}
           </div>
           <div>
             <Label className="text-xs text-muted-foreground mb-1.5 block">Caption</Label>
