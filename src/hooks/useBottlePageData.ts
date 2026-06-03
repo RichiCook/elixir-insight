@@ -73,6 +73,8 @@ export interface BottleServeMoment {
   occasion: string | null;
   sort_order: number;
   translations: Record<string, Record<string, string>> | null;
+  background_color: string | null;
+  emoji: string | null;
   [key: string]: unknown;
 }
 
@@ -83,6 +85,8 @@ export interface BottleSection {
   sort_order: number;
   is_visible: boolean;
   custom_content: Record<string, unknown>;
+  block_type: string | null;
+  block_config: Record<string, unknown> | null;
 }
 
 export interface BottleImageAttribute {
@@ -118,6 +122,8 @@ export interface BottlePairing {
   description: string | null;
   sort_order: number;
   translations: Record<string, Record<string, string>> | null;
+  emoji: string | null;
+  is_featured: boolean;
 }
 
 export interface BottleActivation {
@@ -126,6 +132,14 @@ export interface BottleActivation {
   type: string;
   status: string;
   config: Record<string, unknown>;
+  name: string;
+  brand_id: string;
+  activation_type: string;
+  content: Record<string, unknown>;
+  placement: string | null;
+  priority: number | null;
+  start_date: string | null;
+  end_date: string | null;
   [key: string]: unknown;
 }
 
@@ -136,6 +150,9 @@ export interface BottleNutrition {
 export interface BottleCollaboration {
   id: string;
   name: string;
+  brand_name: string;
+  brand_logo_url: string | null;
+  brand_color: string | null;
   [key: string]: unknown;
 }
 
