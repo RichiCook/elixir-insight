@@ -168,7 +168,7 @@ function CustomHtmlActivation({ content }: { content: Record<string, any> }) {
 }
 
 // -- Lead Capture --
-function LeadCaptureActivation({ activation, productSlug }: { activation: Activation; productSlug: string }) {
+function LeadCaptureActivation({ activation, productSlug, brandName = 'Classy Cocktails' }: { activation: Activation; productSlug: string; brandName?: string }) {
   const { content } = activation;
   const submitLead = useSubmitActivationLead();
   const [submitted, setSubmitted] = useState(false);
@@ -276,7 +276,7 @@ function LeadCaptureActivation({ activation, productSlug }: { activation: Activa
 }
 
 // -- Lead Capture with Rating --
-function LeadCaptureRatingActivation({ activation, productSlug }: { activation: Activation; productSlug: string }) {
+function LeadCaptureRatingActivation({ activation, productSlug, brandName = 'Classy Cocktails' }: { activation: Activation; productSlug: string; brandName?: string }) {
   const { content } = activation;
   const submitLead = useSubmitActivationLead();
   const [step, setStep] = useState<'rating' | 'form' | 'done'>('rating');
