@@ -34,6 +34,8 @@ export interface BottleProduct {
   hero_bg: string | null;
   product_link: string | null;
   is_collaboration: boolean | null;
+  occasion: string | null;
+  updated_at: string | null;
   [key: string]: unknown;
 }
 
@@ -46,6 +48,11 @@ export interface BottleTranslation {
   tasting_notes: string | null;
   serve_suggestion: string | null;
   brand_story: string | null;
+  allergens_local: string | null;
+  claim: string | null;
+  ingredient_list_full: string | null;
+  ingredient_list_short: string | null;
+  sensory_description: string | null;
   [key: string]: unknown;
 }
 
