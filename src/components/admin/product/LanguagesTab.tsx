@@ -263,7 +263,7 @@ export function LanguagesTab({ productId, productName }: { productId: string; pr
         }
         await supabase
           .from('product_sections')
-          .update({ custom_content: { ...cc, ...updates } })
+          .update({ custom_content: { ...cc, ...updates } as any)
           .eq('id', sec.id);
       }
 
