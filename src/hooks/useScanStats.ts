@@ -86,23 +86,24 @@ export function useScanStats() {
       const since = new Date();
       since.setDate(since.getDate() - 60);
 
+      // Select brand_slug so we can filter client-side; older rows may have
+      // brand_slug = null (pre-multi-brand), so we never drop them server-side.
       let q = (supabase.from('scan_events') as any)
-        .select('product_slug, scanned_at')
+        .select('product_slug, brand_slug, scanned_at')
         .gte('scanned_at', since.toISOString())
         .order('scanned_at', { ascending: false })
         .limit(100_000);
 
-      if (activeBrand?.slug) {
-        q = q.eq('brand_slug', activeBrand.slug);
-      }
-
       const { data, error } = await q;
       if (error) throw error;
 
-      // Group timestamps by product_slug
+      // Group timestamps by product_slug.
+      // Include rows whose brand_slug matches OR is null/empty (legacy pre-multi-brand rows).
+      const brandSlug = activeBrand?.slug ?? null;
       const bySlug: Record<string, string[]> = {};
-      for (const row of data as { product_slug: string; scanned_at: string }[]) {
+      for (const row of data as { product_slug: string; brand_slug: string | null; scanned_at: string }[]) {
         if (!row.product_slug) continue;
+        if (brandSlug && row.brand_slug && row.brand_slug !== brandSlug) continue;
         if (!bySlug[row.product_slug]) bySlug[row.product_slug] = [];
         bySlug[row.product_slug].push(row.scanned_at);
       }
