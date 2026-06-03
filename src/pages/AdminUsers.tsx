@@ -44,25 +44,24 @@ export default function AdminUsers() {
     if (!newEmail) { toast.error('Email is required'); return; }
     setAdding(true);
 
-    const { data: userId, error: lookupErr } = await supabase.rpc('get_user_id_by_email' as any, { _email: newEmail });
-    if (lookupErr || !userId) {
-      toast.error('User not found. They must sign up first.');
-      setAdding(false);
-      return;
-    }
-
-    const { error } = await supabase.from('user_roles').insert({
-      user_id: userId as string,
-      role: newRole,
+    const { data, error } = await supabase.functions.invoke('invite-user', {
+      body: { email: newEmail, role: newRole },
     });
 
     setAdding(false);
+
     if (error) {
-      if (error.message.includes('duplicate')) toast.error('User already has this role');
-      else toast.error(error.message);
+      // Extract message from FunctionsHttpError body if available
+      let message = error.message;
+      try {
+        const parsed = await (error as any)?.context?.json?.();
+        if (parsed?.error) message = parsed.error;
+      } catch { /* ignore */ }
+      toast.error(message);
       return;
     }
-    toast.success(`${newRole} role assigned to ${newEmail}`);
+
+    toast.success(data?.message ?? `${newRole} role assigned to ${newEmail}`);
     setNewEmail('');
     queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
   };
@@ -120,8 +119,8 @@ export default function AdminUsers() {
                 ))}
               </SelectContent>
             </Select>
-            <Button onClick={handleAddRole} disabled={adding} className="bg-primary text-primary-foreground">
-              {adding ? 'Adding…' : 'Assign'}
+            <Button onClick={handleAddRole} disabled={adding} className="bg-primary text-primary-foreground whitespace-nowrap">
+              {adding ? 'Sending…' : 'Invite & Assign'}
             </Button>
           </div>
         </div>

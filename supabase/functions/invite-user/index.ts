@@ -1,0 +1,97 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const supabaseAdmin = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+
+  // Verify caller is authenticated
+  const { data: { user }, error: userErr } = await supabaseAdmin.auth.getUser(
+    authHeader.replace("Bearer ", "")
+  );
+  if (userErr || !user) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // Verify caller has admin role
+  const { data: roleRows } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id)
+    .eq("role", "admin");
+  if (!roleRows || roleRows.length === 0) {
+    return new Response(JSON.stringify({ error: "Forbidden: admin only" }), {
+      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const { email, role } = await req.json();
+  if (!email || !role) {
+    return new Response(JSON.stringify({ error: "email and role are required" }), {
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // Check if the user already exists
+  const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+  const existing = existingUsers?.users?.find((u) => u.email === email);
+
+  let targetUserId: string;
+
+  if (existing) {
+    targetUserId = existing.id;
+  } else {
+    // Invite new user — sends magic-link email automatically
+    const { data: invited, error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(email);
+    if (inviteErr || !invited?.user) {
+      return new Response(JSON.stringify({ error: inviteErr?.message ?? "Failed to invite user" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    targetUserId = invited.user.id;
+  }
+
+  // Assign the role
+  const { error: roleErr } = await supabaseAdmin
+    .from("user_roles")
+    .insert({ user_id: targetUserId, role })
+    .select();
+
+  if (roleErr) {
+    // Duplicate role is fine — user already has it
+    if (!roleErr.message.includes("duplicate") && !roleErr.code?.includes("23505")) {
+      return new Response(JSON.stringify({ error: roleErr.message }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
+
+  return new Response(
+    JSON.stringify({
+      success: true,
+      invited: !existing,
+      message: existing
+        ? `Role assigned to existing user ${email}`
+        : `Invite sent to ${email} and role assigned`,
+    }),
+    { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+});
