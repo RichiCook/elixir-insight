@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { GripVertical, ChevronDown, ChevronRight, Eye, EyeOff, Plus, Trash2, Image, X } from 'lucide-react';
+import { GripVertical, ChevronDown, ChevronRight, Eye, EyeOff, Plus, Trash2, Image, X, Play } from 'lucide-react';
+import { VideoPickerDialog } from '@/components/admin/VideoPickerDialog';
 import {
   useProductSections,
   useDefaultLayoutSections,
@@ -310,7 +311,10 @@ export function LayoutTab({ productId, onSave }: Props) {
                     </>
                   )}
                   {section.block_type === 'video' && (
-                    <div><Label className="text-[10px] text-muted-foreground mb-1 block">Video URL</Label><Input value={section.block_config?.video_url || ''} onChange={(e) => updateConfig(index, 'video_url', e.target.value)} className="h-8 text-xs" /></div>
+                    <VideoBlockEditor
+                      videoUrl={section.block_config?.video_url || ''}
+                      onChange={(url) => updateConfig(index, 'video_url', url)}
+                    />
                   )}
                   {section.block_type === 'spacer' && (
                     <div><Label className="text-[10px] text-muted-foreground mb-1 block">Height (px)</Label><Input type="number" value={section.block_config?.height || '32'} onChange={(e) => updateConfig(index, 'height', e.target.value)} className="h-8 text-xs" /></div>
@@ -351,6 +355,72 @@ export function LayoutTab({ productId, onSave }: Props) {
           }}
           onClose={() => setImagePicker(null)}
         />
+      )}
+    </div>
+  );
+}
+
+// ── Video block editor with library / upload / URL picker ──────────────────────
+
+function VideoBlockEditor({
+  videoUrl,
+  onChange,
+}: {
+  videoUrl: string;
+  onChange: (url: string) => void;
+}) {
+  const [showPicker, setShowPicker] = useState(false);
+
+  return (
+    <div className="space-y-2">
+      <Label className="text-[10px] text-muted-foreground mb-1 block">Video</Label>
+
+      {showPicker && (
+        <VideoPickerDialog
+          onSelect={(url) => { onChange(url); setShowPicker(false); }}
+          onClose={() => setShowPicker(false)}
+        />
+      )}
+
+      {videoUrl ? (
+        <div className="rounded-lg border border-border overflow-hidden bg-black">
+          {videoUrl.includes('youtube.com') || videoUrl.includes('vimeo.com') ? (
+            <iframe
+              src={videoUrl}
+              className="w-full aspect-video"
+              allow="autoplay; fullscreen"
+              allowFullScreen
+            />
+          ) : (
+            <video src={videoUrl} controls className="w-full aspect-video" />
+          )}
+          <div className="flex items-center justify-between px-3 py-2 bg-card border-t border-border">
+            <p className="text-[10px] text-muted-foreground truncate max-w-[240px]">{videoUrl}</p>
+            <button
+              onClick={() => onChange('')}
+              className="text-muted-foreground hover:text-destructive ml-2"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => setShowPicker(true)}
+          className="w-full border-2 border-dashed border-border rounded-lg p-5 flex flex-col items-center gap-2 hover:border-primary/60 transition-colors"
+        >
+          <Play className="w-5 h-5 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">Choose from library, upload, or paste URL</span>
+        </button>
+      )}
+
+      {videoUrl && (
+        <button
+          onClick={() => setShowPicker(true)}
+          className="text-xs text-muted-foreground hover:text-foreground"
+        >
+          Change video
+        </button>
       )}
     </div>
   );
