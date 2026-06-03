@@ -164,28 +164,40 @@ export type Database = {
       }
       brands: {
         Row: {
+          active: boolean | null
           created_at: string | null
+          description: string | null
           id: string
           logo_url: string | null
           name: string
+          primary_color: string | null
           slug: string
           updated_at: string | null
+          website_url: string | null
         }
         Insert: {
+          active?: boolean | null
           created_at?: string | null
+          description?: string | null
           id?: string
           logo_url?: string | null
           name: string
+          primary_color?: string | null
           slug: string
           updated_at?: string | null
+          website_url?: string | null
         }
         Update: {
+          active?: boolean | null
           created_at?: string | null
+          description?: string | null
           id?: string
           logo_url?: string | null
           name?: string
+          primary_color?: string | null
           slug?: string
           updated_at?: string | null
+          website_url?: string | null
         }
         Relationships: []
       }
@@ -442,6 +454,7 @@ export type Database = {
           product_id: string | null
           sort_order: number | null
           subtitle: string | null
+          translations: Json | null
         }
         Insert: {
           emoji?: string | null
@@ -451,6 +464,7 @@ export type Database = {
           product_id?: string | null
           sort_order?: number | null
           subtitle?: string | null
+          translations?: Json | null
         }
         Update: {
           emoji?: string | null
@@ -460,6 +474,7 @@ export type Database = {
           product_id?: string | null
           sort_order?: number | null
           subtitle?: string | null
+          translations?: Json | null
         }
         Relationships: [
           {
@@ -628,6 +643,7 @@ export type Database = {
           product_id: string | null
           sort_order: number | null
           title: string
+          translations: Json | null
         }
         Insert: {
           background_color?: string | null
@@ -638,6 +654,7 @@ export type Database = {
           product_id?: string | null
           sort_order?: number | null
           title: string
+          translations?: Json | null
         }
         Update: {
           background_color?: string | null
@@ -648,6 +665,7 @@ export type Database = {
           product_id?: string | null
           sort_order?: number | null
           title?: string
+          translations?: Json | null
         }
         Relationships: [
           {
@@ -1118,6 +1136,7 @@ export type Database = {
           id: string
           language: string | null
           market: string | null
+          product_id: string | null
           product_slug: string
           scanned_at: string | null
           session_id: string | null
@@ -1127,6 +1146,7 @@ export type Database = {
           id?: string
           language?: string | null
           market?: string | null
+          product_id?: string | null
           product_slug: string
           scanned_at?: string | null
           session_id?: string | null
@@ -1136,6 +1156,7 @@ export type Database = {
           id?: string
           language?: string | null
           market?: string | null
+          product_id?: string | null
           product_slug?: string
           scanned_at?: string | null
           session_id?: string | null
@@ -1298,6 +1319,10 @@ export type Database = {
       }
     }
     Functions: {
+      get_bottle_page_data: {
+        Args: { p_brand_slug: string; p_lang: string; p_slug: string }
+        Returns: Json
+      }
       get_product_nutrition: { Args: { p_product_id: string }; Returns: Json }
       get_user_id_by_email: { Args: { _email: string }; Returns: string }
       has_any_role: {
