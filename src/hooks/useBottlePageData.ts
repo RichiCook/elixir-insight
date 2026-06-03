@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import type { ActivationType, ActivationStatus, TargetingMode } from '@/hooks/useActivations';
 
 // ---------------------------------------------------------------------------
 // Type definitions matching the get_bottle_page_data RPC response shape
