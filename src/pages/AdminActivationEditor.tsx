@@ -94,7 +94,6 @@ export default function AdminActivationEditor() {
   const [productSearch, setProductSearch] = useState('');
   const [showNewBrand, setShowNewBrand] = useState(false);
   const [newBrandName, setNewBrandName] = useState('');
-  const [showVideoPicker, setShowVideoPicker] = useState(false);
 
   useEffect(() => {
     if (existing) {
@@ -464,6 +463,7 @@ export default function AdminActivationEditor() {
 // -- Content Editor per type --
 function ContentEditor({ type, content, onChange }: { type: ActivationType; content: Record<string, any>; onChange: (c: Record<string, any>) => void }) {
   const set = (key: string, value: any) => onChange({ ...content, [key]: value });
+  const [showVideoPicker, setShowVideoPicker] = useState(false);
 
   switch (type) {
     case 'text_image':
