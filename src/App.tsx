@@ -11,6 +11,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 // Eager — used on consumer QR-scan path or auth path (must load immediately)
 import BottlePage from '@/pages/BottlePage';
 import AdminLogin from '@/pages/AdminLogin';
+import AdminSignup from '@/pages/AdminSignup';
 import AdminForgotPassword from '@/pages/AdminForgotPassword';
 import AdminResetPassword from '@/pages/AdminResetPassword';
 import PrivacyPolicy from '@/pages/PrivacyPolicy';
