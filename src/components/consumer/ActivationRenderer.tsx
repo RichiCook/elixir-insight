@@ -19,7 +19,7 @@ export function ActivationSlot({ activations, placement, productSlug, brandName 
   return (
     <div className="space-y-0">
       {filtered.map((a) => (
-        <ActivationCard key={a.id} activation={a} productSlug={productSlug} />
+        <ActivationCard key={a.id} activation={a} productSlug={productSlug} brandName={brandName} />
       ))}
     </div>
   );
