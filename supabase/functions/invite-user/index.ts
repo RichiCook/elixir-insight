@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": Deno.env.get("SITE_URL") ?? "https://classy.aitems.dev",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
@@ -31,24 +31,31 @@ serve(async (req) => {
     });
   }
 
-  // Verify caller has admin role
-  const { data: roleRows } = await supabaseAdmin
+  // Verify caller has admin role; also retrieve their brand_id for scoping
+  const { data: callerRoleRows } = await supabaseAdmin
     .from("user_roles")
-    .select("role")
+    .select("role, brand_id")
     .eq("user_id", user.id)
     .eq("role", "admin");
-  if (!roleRows || roleRows.length === 0) {
+  if (!callerRoleRows || callerRoleRows.length === 0) {
     return new Response(JSON.stringify({ error: "Forbidden: admin only" }), {
       status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+  // A super-admin has brand_id = null; a brand-scoped admin has a specific brand_id
+  const callerBrandId: string | null = callerRoleRows[0].brand_id ?? null;
 
-  const { email, role } = await req.json();
+  const { email, role, brand_id: requestedBrandId } = await req.json();
   if (!email || !role) {
     return new Response(JSON.stringify({ error: "email and role are required" }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
+  // Brand-scoped admins can only invite within their own brand.
+  // Super-admins (callerBrandId = null) may specify any brand_id or null.
+  const assignedBrandId: string | null =
+    callerBrandId !== null ? callerBrandId : (requestedBrandId ?? null);
 
   // Check if the user already exists
   const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
@@ -69,10 +76,10 @@ serve(async (req) => {
     targetUserId = invited.user.id;
   }
 
-  // Assign the role
+  // Assign the role, scoped to the correct brand
   const { error: roleErr } = await supabaseAdmin
     .from("user_roles")
-    .insert({ user_id: targetUserId, role })
+    .insert({ user_id: targetUserId, role, brand_id: assignedBrandId })
     .select();
 
   if (roleErr) {

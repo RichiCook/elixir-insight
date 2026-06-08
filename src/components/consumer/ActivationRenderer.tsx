@@ -160,7 +160,7 @@ function CustomHtmlActivation({ content }: { content: Record<string, any> }) {
         srcDoc={`<!DOCTYPE html><html><head><style>body{margin:0;font-family:system-ui;color:#333}</style></head><body>${content.html}</body></html>`}
         className="w-full rounded-xl border-0"
         style={{ minHeight: 200 }}
-        sandbox="allow-forms allow-popups"
+        sandbox="allow-scripts"
         title="Custom content"
       />
     </section>
@@ -288,6 +288,7 @@ function LeadCaptureRatingActivation({ activation, productSlug, brandName = 'Cla
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!consented) return; // M-5: guard against programmatic bypass of required checkbox
     const sessionId = sessionStorage.getItem('cc_session') || '';
     submitLead.mutate({
       activation_id: activation.id,

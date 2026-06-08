@@ -11,7 +11,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 // Eager — used on consumer QR-scan path or auth path (must load immediately)
 import BottlePage from '@/pages/BottlePage';
 import AdminLogin from '@/pages/AdminLogin';
-import AdminSignup from '@/pages/AdminSignup';
+// AdminSignup removed — self-registration disabled; use invite-user edge function
 import AdminForgotPassword from '@/pages/AdminForgotPassword';
 import AdminResetPassword from '@/pages/AdminResetPassword';
 import PrivacyPolicy from '@/pages/PrivacyPolicy';
@@ -83,7 +83,7 @@ function AppInner() {
 
         {/* Admin */}
         <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin/signup" element={<AdminSignup />} />
+        <Route path="/admin/signup" element={<Navigate to="/admin/login" replace />} />
         <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
         <Route path="/admin/reset-password" element={<AdminResetPassword />} />
         <Route

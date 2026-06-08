@@ -23,8 +23,12 @@ export default function AdminSignup() {
       setError('Passwords do not match');
       return;
     }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+    if (password.length < 12) {
+      setError('Password must be at least 12 characters');
+      return;
+    }
+    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+      setError('Password must contain uppercase, lowercase, and a number');
       return;
     }
 
@@ -65,7 +69,7 @@ export default function AdminSignup() {
           <div>
             <Input
               type="password"
-              placeholder="Password (min 6 characters)"
+              placeholder="Password (12+ chars, upper, lower, number)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required

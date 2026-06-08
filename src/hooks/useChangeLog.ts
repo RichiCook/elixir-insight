@@ -64,9 +64,11 @@ export function useDismissChange() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (entryId: string) => {
+      // Soft-delete: set archived_at instead of hard-deleting so audit evidence is preserved.
+      // The SELECT RLS policy filters out archived rows so they disappear from the UI.
       const { error } = await supabase
         .from('change_log')
-        .delete()
+        .update({ archived_at: new Date().toISOString() })
         .eq('id', entryId);
       if (error) throw error;
     },
