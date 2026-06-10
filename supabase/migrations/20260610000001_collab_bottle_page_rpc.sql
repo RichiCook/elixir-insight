@@ -4,6 +4,10 @@
 -- collaboration_cocktails join table.  The JSON envelope is identical to
 -- the regular brand path so BottlePage.tsx and useBottlePageData.ts need
 -- no changes.
+--
+-- Also fixes the earlier (broken) security_hardening version which referenced
+-- p.spirit_type, p.primary_color, p.secondary_color, p.active — none of which
+-- exist on the products table.  The correct product columns come from types.ts.
 
 CREATE OR REPLACE FUNCTION public.get_bottle_page_data(
   p_brand_slug text,
@@ -40,30 +44,26 @@ BEGIN
         'name',             p.name,
         'line',             p.line,
         'abv',              p.abv,
-        'spirit_type',      p.spirit_type,
-        'primary_color',    p.primary_color,
-        'secondary_color',  p.secondary_color,
-        'completeness',     p.completeness,
-        'active',           p.active,
         'collaboration_id', p.collaboration_id,
+        'is_collaboration', p.is_collaboration,
         'allergens_summary',p.allergens_summary,
         'bottle_color',     p.bottle_color,
+        'completeness',     p.completeness,
         'created_at',       p.created_at,
         'ean_int',          p.ean_int,
         'flavour',          p.flavour,
         'food_pairing',     p.food_pairing,
         'garnish',          p.garnish,
         'glass',            p.glass,
-        'ice',              p.ice,
-        'liquid_color',     p.liquid_color,
-        'spirit',           p.spirit,
-        'serving',          p.serving,
-        'uk_units',         p.uk_units,
-        'label_color',      p.label_color,
         'hero_bg',          p.hero_bg,
-        'product_link',     p.product_link,
-        'is_collaboration', p.is_collaboration,
+        'ice',              p.ice,
+        'label_color',      p.label_color,
+        'liquid_color',     p.liquid_color,
         'occasion',         p.occasion,
+        'product_link',     p.product_link,
+        'serving',          p.serving,
+        'spirit',           p.spirit,
+        'uk_units',         p.uk_units,
         'updated_at',       p.updated_at
       ),
 
@@ -204,30 +204,26 @@ BEGIN
       'name',             p.name,
       'line',             p.line,
       'abv',              p.abv,
-      'spirit_type',      p.spirit_type,
-      'primary_color',    p.primary_color,
-      'secondary_color',  p.secondary_color,
-      'completeness',     p.completeness,
-      'active',           p.active,
       'collaboration_id', p.collaboration_id,
+      'is_collaboration', p.is_collaboration,
       'allergens_summary',p.allergens_summary,
       'bottle_color',     p.bottle_color,
+      'completeness',     p.completeness,
       'created_at',       p.created_at,
       'ean_int',          p.ean_int,
       'flavour',          p.flavour,
       'food_pairing',     p.food_pairing,
       'garnish',          p.garnish,
       'glass',            p.glass,
-      'ice',              p.ice,
-      'liquid_color',     p.liquid_color,
-      'spirit',           p.spirit,
-      'serving',          p.serving,
-      'uk_units',         p.uk_units,
-      'label_color',      p.label_color,
       'hero_bg',          p.hero_bg,
-      'product_link',     p.product_link,
-      'is_collaboration', p.is_collaboration,
+      'ice',              p.ice,
+      'label_color',      p.label_color,
+      'liquid_color',     p.liquid_color,
       'occasion',         p.occasion,
+      'product_link',     p.product_link,
+      'serving',          p.serving,
+      'spirit',           p.spirit,
+      'uk_units',         p.uk_units,
       'updated_at',       p.updated_at
     ),
 
@@ -330,7 +326,7 @@ BEGIN
     'nutrition', (SELECT get_product_nutrition(v_product_id)),
 
     -- Always expose the collaboration object for collab-path pages
-    -- Use collaborations_public view to exclude contact_name / contact_email
+    -- (uses collaborations_public view to exclude contact_name / contact_email)
     'collaboration', (SELECT row_to_json(cp.*) FROM collaborations_public cp WHERE cp.id = v_collab_id),
 
     'available_languages', COALESCE((
