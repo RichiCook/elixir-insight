@@ -350,13 +350,17 @@ export interface ProductInsightCardProduct {
 interface Props {
   product: ProductInsightCardProduct;
   stats: ScanStats | null;
+  /** Override the brand slug used in the QR code URL (for collaboration brand pages) */
+  brandSlugOverride?: string;
+  /** Optional badge label shown in the card header (e.g. "CORE" or "SIGNATURE") */
+  badge?: string;
 }
 
 // ── Main card component ────────────────────────────────────────────────────
 
-export function ProductInsightCard({ product, stats }: Props) {
+export function ProductInsightCard({ product, stats, brandSlugOverride, badge }: Props) {
   const activeBrand = useBrandStore((s) => s.activeBrand);
-  const brandSlug = activeBrand?.slug ?? 'classy';
+  const brandSlug = brandSlugOverride ?? activeBrand?.slug ?? 'classy';
   const bottleUrl = `${window.location.origin}/b/${brandSlug}/${product.slug}?source=qr`;
 
   const aiPeriod = stats?.aiPeriod ?? 'week';
@@ -458,7 +462,7 @@ export function ProductInsightCard({ product, stats }: Props) {
             }}>
               {product.name}
             </h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 7 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 7, flexWrap: 'wrap' }}>
               <span style={{
                 fontSize: 9.5, fontWeight: 700, letterSpacing: '0.09em',
                 color: T.gold, background: T.goldSoft,
@@ -470,6 +474,18 @@ export function ProductInsightCard({ product, stats }: Props) {
               {product.abv && (
                 <span style={{ fontSize: 12, color: T.muted, fontVariantNumeric: 'tabular-nums' }}>
                   {product.abv}% ABV
+                </span>
+              )}
+              {badge && (
+                <span style={{
+                  fontSize: 9, fontWeight: 700, letterSpacing: '0.1em',
+                  padding: '2px 6px', borderRadius: 4,
+                  textTransform: 'uppercase', lineHeight: 1.5, whiteSpace: 'nowrap',
+                  ...(badge === 'SIGNATURE'
+                    ? { color: '#fb923c', background: 'rgba(251,146,60,0.12)', border: '1px solid rgba(251,146,60,0.25)' }
+                    : { color: '#60a5fa', background: 'rgba(96,165,250,0.12)', border: '1px solid rgba(96,165,250,0.25)' }),
+                }}>
+                  {badge}
                 </span>
               )}
             </div>

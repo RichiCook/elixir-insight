@@ -12,14 +12,16 @@ import {
 import { useProducts } from '@/hooks/useProduct';
 import { useApiForm } from '@/hooks/useApiForm';
 import { useBrandStore } from '@/stores/brandStore';
+import { useScanStats } from '@/hooks/useScanStats';
+import { ProductInsightCard } from '@/components/admin/ProductInsightCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ImagePickerDialog } from '@/components/admin/ImagePickerDialog';
 import { toast } from 'sonner';
-import { getCompletenessColor, PRODUCT_LINES } from '@/constants/app';
-import { ImageIcon, Trash2, ExternalLink, Search } from 'lucide-react';
+import { PRODUCT_LINES } from '@/constants/app';
+import { ImageIcon, Trash2, Search } from 'lucide-react';
 
 // ── Core Cocktail Picker ──────────────────────────────────────────────────────
 
@@ -155,6 +157,7 @@ export default function AdminCustomDetail() {
   const { data: brand, isLoading } = useCustomBrand(brandSlug || '');
   const { data: cocktails } = useCollaborationCocktails(brand?.id);
   const { data: allProducts } = useProducts();
+  const { data: scanStats } = useScanStats();
   const removeCocktail = useRemoveCocktail();
   const addSignature = useAddSignatureCocktail();
   const qc = useQueryClient();
@@ -554,55 +557,22 @@ export default function AdminCustomDetail() {
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" style={{ gridAutoRows: '1fr' }}>
                 {coreCocktails.map((entry) => (
-                  <div
-                    key={entry.id}
-                    className="rounded-lg border border-border bg-card p-4"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <p className="font-display text-base text-card-foreground">
-                          {entry.product.name}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
-                          {entry.product.line} · {entry.product.abv}% ABV
-                        </p>
-                      </div>
-                      <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                        Core
-                      </span>
-                    </div>
-                    <div className="mb-3">
-                      <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
-                        <span>Completeness</span>
-                        <span>{entry.product.completeness}%</span>
-                      </div>
-                      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full"
-                          style={{
-                            width: `${entry.product.completeness}%`,
-                            backgroundColor: getCompletenessColor(entry.product.completeness || 0),
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Link
-                        to={`/admin/product/${entry.product.slug}`}
-                        className="flex items-center gap-1 text-[10px] text-primary hover:underline"
-                      >
-                        <ExternalLink className="w-3 h-3" /> Edit product
-                      </Link>
-                      <button
-                        onClick={() => setConfirmRemove(entry.id)}
-                        className="ml-auto text-muted-foreground hover:text-destructive transition-colors"
-                        title="Unlink from this brand"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                  <div key={entry.id} className="relative">
+                    <ProductInsightCard
+                      product={{ ...entry.product, completeness: entry.product.completeness ?? 0 }}
+                      stats={scanStats?.[entry.product.slug] ?? null}
+                      brandSlugOverride={brand?.brand_slug}
+                      badge="CORE"
+                    />
+                    <button
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setConfirmRemove(entry.id); }}
+                      className="absolute top-3 right-[68px] z-10 p-1.5 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                      title="Unlink from this brand"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -628,55 +598,22 @@ export default function AdminCustomDetail() {
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" style={{ gridAutoRows: '1fr' }}>
                 {signatureCocktails.map((entry) => (
-                  <div
-                    key={entry.id}
-                    className="rounded-lg border border-border bg-card p-4"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <p className="font-display text-base text-card-foreground">
-                          {entry.product.name}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
-                          {entry.product.line} · {entry.product.abv}% ABV
-                        </p>
-                      </div>
-                      <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                        Signature
-                      </span>
-                    </div>
-                    <div className="mb-3">
-                      <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
-                        <span>Completeness</span>
-                        <span>{entry.product.completeness}%</span>
-                      </div>
-                      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full"
-                          style={{
-                            width: `${entry.product.completeness}%`,
-                            backgroundColor: getCompletenessColor(entry.product.completeness || 0),
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Link
-                        to={`/admin/product/${entry.product.slug}`}
-                        className="flex items-center gap-1 text-[10px] text-primary hover:underline"
-                      >
-                        <ExternalLink className="w-3 h-3" /> Edit product
-                      </Link>
-                      <button
-                        onClick={() => setConfirmRemove(entry.id)}
-                        className="ml-auto text-muted-foreground hover:text-destructive transition-colors"
-                        title="Archive this signature cocktail"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                  <div key={entry.id} className="relative">
+                    <ProductInsightCard
+                      product={{ ...entry.product, completeness: entry.product.completeness ?? 0 }}
+                      stats={scanStats?.[entry.product.slug] ?? null}
+                      brandSlugOverride={brand?.brand_slug}
+                      badge="SIGNATURE"
+                    />
+                    <button
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setConfirmRemove(entry.id); }}
+                      className="absolute top-3 right-[68px] z-10 p-1.5 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                      title="Archive this signature cocktail"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 ))}
               </div>
