@@ -1,13 +1,24 @@
 -- Extend get_bottle_page_data to support collaboration brand slugs.
--- When p_brand_slug is not found in the brands table, the function now
--- checks the collaborations table and resolves the product via the
--- collaboration_cocktails join table.  The JSON envelope is identical to
--- the regular brand path so BottlePage.tsx and useBottlePageData.ts need
--- no changes.
+-- When p_brand_slug is not found in the brands table, the function checks
+-- the collaborations table and resolves the product via collaboration_cocktails.
+-- The JSON shape is identical to the regular brand path.
 --
--- Also fixes the earlier (broken) security_hardening version which referenced
--- p.spirit_type, p.primary_color, p.secondary_color, p.active — none of which
--- exist on the products table.  The correct product columns come from types.ts.
+-- All column references verified against types.ts (2026-06-10):
+--   products      : abv, allergens_summary, bottle_color, collaboration_id,
+--                   completeness, created_at, ean_int, flavour, food_pairing,
+--                   garnish, glass, hero_bg, ice, id, is_collaboration,
+--                   label_color, line, liquid_color, name, occasion,
+--                   product_link, serving, slug, spirit, uk_units, updated_at
+--                   (+ brand_id added by multi_brand migration)
+--   activations   : id, name, activation_type, status, content, placement,
+--                   priority, start_date, end_date, targeting_mode,
+--                   target_product_ids, target_collection_ids, brand_id,
+--                   created_at, updated_at
+--                   (no: title, type, config)
+--   brand_images  : id, filename, public_url, status
+--   collaborations_public: id, brand_id, brand_name, brand_slug,
+--                          brand_logo_url, brand_color, event_name,
+--                          event_date, status, created_at, updated_at
 
 CREATE OR REPLACE FUNCTION public.get_bottle_page_data(
   p_brand_slug text,
@@ -37,7 +48,6 @@ BEGIN
     IF v_product_id IS NULL THEN RETURN NULL; END IF;
 
     SELECT jsonb_build_object(
-
       'product', jsonb_build_object(
         'id',               p.id,
         'slug',             p.slug,
@@ -66,7 +76,6 @@ BEGIN
         'uk_units',         p.uk_units,
         'updated_at',       p.updated_at
       ),
-
       'brand', jsonb_build_object(
         'id',            br.id,
         'name',          br.name,
@@ -76,24 +85,19 @@ BEGIN
         'description',   br.description,
         'website_url',   br.website_url
       ),
-
       'translation', row_to_json(pt.*),
-
       'composition', COALESCE((
         SELECT jsonb_agg(c ORDER BY c.sort_order)
         FROM product_composition c WHERE c.product_id = v_product_id
       ), '[]'),
-
       'serve_moments', COALESCE((
         SELECT jsonb_agg(s ORDER BY s.sort_order)
         FROM product_serve_moments s WHERE s.product_id = v_product_id
       ), '[]'),
-
       'sections', COALESCE((
         SELECT jsonb_agg(sec ORDER BY sec.sort_order)
         FROM product_sections sec WHERE sec.product_id = v_product_id
       ), '[]'),
-
       'images', COALESCE((
         SELECT jsonb_agg(
           jsonb_build_object(
@@ -114,8 +118,7 @@ BEGIN
                   'is_approved', ia.is_approved,
                   'alt_text_en', ia.alt_text_en,
                   'alt_text_it', ia.alt_text_it
-                ))
-                 FROM image_attributes ia WHERE ia.image_id = bi.id),
+                )) FROM image_attributes ia WHERE ia.image_id = bi.id),
                 '[]'
               )
             )
@@ -126,7 +129,6 @@ BEGIN
         JOIN brand_images bi ON bi.id = pi.image_id
         WHERE pi.product_id = v_product_id
       ), '[]'),
-
       'activations', COALESCE((
         SELECT jsonb_agg(jsonb_build_object(
           'id',                    a.id,
@@ -152,23 +154,17 @@ BEGIN
           AND (a.start_date IS NULL OR a.start_date <= now())
           AND (a.end_date   IS NULL OR a.end_date   >  now())
       ), '[]'),
-
       'pairings', COALESCE((
         SELECT jsonb_agg(pa ORDER BY pa.sort_order)
         FROM product_ai_pairings pa WHERE pa.product_id = v_product_id
       ), '[]'),
-
       'nutrition', (SELECT get_product_nutrition(v_product_id)),
-
-      'collaboration', (SELECT row_to_json(col.*)
-                        FROM collaborations_public col
-                        WHERE col.id = p.collaboration_id),
-
+      'collaboration', (SELECT row_to_json(cp.*)
+                        FROM collaborations_public cp WHERE cp.id = p.collaboration_id),
       'available_languages', COALESCE((
         SELECT jsonb_agg(DISTINCT pt2.language)
         FROM product_translations pt2 WHERE pt2.product_id = v_product_id
       ), '["EN"]')
-
     )
     INTO result
     FROM public.products p
@@ -185,7 +181,6 @@ BEGIN
     FROM public.collaborations WHERE brand_slug = p_brand_slug;
   IF v_collab_id IS NULL THEN RETURN NULL; END IF;
 
-  -- Resolve the product via the collaboration_cocktails join
   SELECT cc.product_id INTO v_product_id
     FROM public.collaboration_cocktails cc
     JOIN public.products p ON p.id = cc.product_id
@@ -194,7 +189,6 @@ BEGIN
   IF v_product_id IS NULL THEN RETURN NULL; END IF;
 
   SELECT jsonb_build_object(
-
     'product', jsonb_build_object(
       'id',               p.id,
       'slug',             p.slug,
@@ -223,8 +217,6 @@ BEGIN
       'uk_units',         p.uk_units,
       'updated_at',       p.updated_at
     ),
-
-    -- Brand presented as the collaboration identity
     'brand', jsonb_build_object(
       'id',            col.id,
       'name',          col.brand_name,
@@ -234,24 +226,19 @@ BEGIN
       'description',   NULL::text,
       'website_url',   NULL::text
     ),
-
     'translation', row_to_json(pt.*),
-
     'composition', COALESCE((
       SELECT jsonb_agg(c ORDER BY c.sort_order)
       FROM product_composition c WHERE c.product_id = v_product_id
     ), '[]'),
-
     'serve_moments', COALESCE((
       SELECT jsonb_agg(s ORDER BY s.sort_order)
       FROM product_serve_moments s WHERE s.product_id = v_product_id
     ), '[]'),
-
     'sections', COALESCE((
       SELECT jsonb_agg(sec ORDER BY sec.sort_order)
       FROM product_sections sec WHERE sec.product_id = v_product_id
     ), '[]'),
-
     'images', COALESCE((
       SELECT jsonb_agg(
         jsonb_build_object(
@@ -272,8 +259,7 @@ BEGIN
                 'is_approved', ia.is_approved,
                 'alt_text_en', ia.alt_text_en,
                 'alt_text_it', ia.alt_text_it
-              ))
-               FROM image_attributes ia WHERE ia.image_id = bi.id),
+              )) FROM image_attributes ia WHERE ia.image_id = bi.id),
               '[]'
             )
           )
@@ -284,8 +270,6 @@ BEGIN
       JOIN brand_images bi ON bi.id = pi.image_id
       WHERE pi.product_id = v_product_id
     ), '[]'),
-
-    -- Activations: filter by the collaboration's parent brand_id (e.g. Classy)
     'activations', COALESCE((
       SELECT jsonb_agg(jsonb_build_object(
         'id',                    a.id,
@@ -311,23 +295,16 @@ BEGIN
         AND (a.start_date IS NULL OR a.start_date <= now())
         AND (a.end_date   IS NULL OR a.end_date   >  now())
     ), '[]'),
-
     'pairings', COALESCE((
       SELECT jsonb_agg(pa ORDER BY pa.sort_order)
       FROM product_ai_pairings pa WHERE pa.product_id = v_product_id
     ), '[]'),
-
     'nutrition', (SELECT get_product_nutrition(v_product_id)),
-
-    -- Always expose the collaboration object for collab-path pages
-    -- (uses collaborations_public view to exclude contact_name / contact_email)
     'collaboration', (SELECT row_to_json(cp.*) FROM collaborations_public cp WHERE cp.id = v_collab_id),
-
     'available_languages', COALESCE((
       SELECT jsonb_agg(DISTINCT pt2.language)
       FROM product_translations pt2 WHERE pt2.product_id = v_product_id
     ), '["EN"]')
-
   )
   INTO result
   FROM public.products p
