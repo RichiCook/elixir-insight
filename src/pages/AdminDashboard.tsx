@@ -114,8 +114,8 @@ export default function AdminDashboard() {
         {/* Mode pills */}
         <div className="flex gap-1">
           <Button size="sm" className="bg-primary/15 text-primary border border-primary/30">Brand</Button>
-          <Link to="/admin/collaborations">
-            <Button variant="ghost" size="sm" className="text-muted-foreground">Collabs</Button>
+          <Link to="/admin/custom">
+            <Button variant="ghost" size="sm" className="text-muted-foreground">Custom</Button>
           </Link>
         </div>
         {/* Stats row */}

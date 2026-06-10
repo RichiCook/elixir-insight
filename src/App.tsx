@@ -28,6 +28,8 @@ const AdminActivationEditor    = lazy(() => import('@/pages/AdminActivationEdito
 const AdminDefaultLayout       = lazy(() => import('@/pages/AdminDefaultLayout'));
 const AdminCollaborations      = lazy(() => import('@/pages/AdminCollaborations'));
 const AdminCollaborationDetail = lazy(() => import('@/pages/AdminCollaborationDetail'));
+const AdminCustom              = lazy(() => import('@/pages/AdminCustom'));
+const AdminCustomDetail        = lazy(() => import('@/pages/AdminCustomDetail'));
 const AdminSiteSettings        = lazy(() => import('@/pages/AdminSiteSettings'));
 const AdminUsers               = lazy(() => import('@/pages/AdminUsers'));
 const AdminChangeLog           = lazy(() => import('@/pages/AdminChangeLog'));
@@ -36,6 +38,12 @@ const AdminChangeLog           = lazy(() => import('@/pages/AdminChangeLog'));
 function LegacyBottleRedirect() {
   const { slug } = useParams<{ slug: string }>();
   return <Navigate to={`/b/classy/${slug}`} replace />;
+}
+
+/** Redirect /admin/collaborations/:brandSlug → /admin/custom/:brandSlug */
+function LegacyCollabRedirect() {
+  const { brandSlug } = useParams<{ brandSlug: string }>();
+  return <Navigate to={`/admin/custom/${brandSlug}`} replace />;
 }
 
 function AdminLoadingSpinner() {
@@ -167,25 +175,32 @@ function AppInner() {
           }
         />
 
+        {/* New Custom routes */}
         <Route
-          path="/admin/collaborations"
+          path="/admin/custom"
           element={
             <ProtectedRoute>
               <ErrorBoundary>
-                <AdminCollaborations />
+                <AdminCustom />
               </ErrorBoundary>
             </ProtectedRoute>
           }
         />
         <Route
-          path="/admin/collaborations/:brandSlug"
+          path="/admin/custom/:brandSlug"
           element={
             <ProtectedRoute>
               <ErrorBoundary>
-                <AdminCollaborationDetail />
+                <AdminCustomDetail />
               </ErrorBoundary>
             </ProtectedRoute>
           }
+        />
+        {/* Legacy redirects — keep old URLs working */}
+        <Route path="/admin/collaborations" element={<Navigate to="/admin/custom" replace />} />
+        <Route
+          path="/admin/collaborations/:brandSlug"
+          element={<LegacyCollabRedirect />}
         />
         <Route
           path="/admin/site-settings"
