@@ -32,7 +32,6 @@ export interface CollaborationCocktail {
     line: string | null;
     abv: string | null;
     completeness: number | null;
-    active: boolean | null;
     is_collaboration: boolean | null;
   };
 }
@@ -78,7 +77,7 @@ export function useCollaborationCocktails(collaborationId: string | undefined) {
         .select(`
           *,
           product:products (
-            id, name, slug, line, abv, completeness, active, is_collaboration
+            id, name, slug, line, abv, completeness, is_collaboration
           )
         `)
         .eq('collaboration_id', collaborationId!)
