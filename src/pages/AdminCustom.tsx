@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Plus } from 'lucide-react';
+import { ColorInput } from '@/components/admin/ColorInput';
 
 export default function AdminCustom() {
   const { data: brands, isLoading } = useCustomBrands();
@@ -214,19 +215,10 @@ export default function AdminCustom() {
             </div>
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Brand Color</Label>
-              <div className="flex gap-2 items-center">
-                <input
-                  type="color"
-                  value={form.brand_color}
-                  onChange={(e) => setForm((f) => ({ ...f, brand_color: e.target.value }))}
-                  className="w-10 h-10 rounded border border-border cursor-pointer"
-                />
-                <Input
-                  value={form.brand_color}
-                  onChange={(e) => setForm((f) => ({ ...f, brand_color: e.target.value }))}
-                  className="flex-1"
-                />
-              </div>
+              <ColorInput
+                value={form.brand_color}
+                onChange={(hex) => setForm((f) => ({ ...f, brand_color: hex }))}
+              />
             </div>
             <div className="flex gap-3 pt-2">
               <Button variant="ghost" onClick={() => setShowNew(false)} className="flex-1">

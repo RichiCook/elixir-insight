@@ -22,6 +22,7 @@ import { ImagePickerDialog } from '@/components/admin/ImagePickerDialog';
 import { toast } from 'sonner';
 import { PRODUCT_LINES } from '@/constants/app';
 import { ImageIcon, Trash2, Search } from 'lucide-react';
+import { ColorInput } from '@/components/admin/ColorInput';
 
 // ── Core Cocktail Picker ──────────────────────────────────────────────────────
 
@@ -436,19 +437,10 @@ export default function AdminCustomDetail() {
             </div>
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Brand Color</Label>
-              <div className="flex gap-2 items-center">
-                <input
-                  type="color"
-                  value={form.brand_color || '#000000'}
-                  onChange={(e) => set('brand_color', e.target.value)}
-                  className="w-10 h-10 rounded border border-border cursor-pointer"
-                />
-                <Input
-                  value={form.brand_color || ''}
-                  onChange={(e) => set('brand_color', e.target.value)}
-                  className="flex-1"
-                />
-              </div>
+              <ColorInput
+                value={form.brand_color || '#000000'}
+                onChange={(hex) => set('brand_color', hex)}
+              />
             </div>
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Status</Label>
