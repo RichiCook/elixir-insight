@@ -24,15 +24,31 @@ import { PRODUCT_LINES } from '@/constants/app';
 import { ImageIcon, Trash2, Search } from 'lucide-react';
 import { ColorInput } from '@/components/admin/ColorInput';
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Returns #000 or #fff — whichever contrasts better against the given hex bg. */
+function textColorForBg(hex: string): string {
+  try {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.55 ? '#000' : '#fff';
+  } catch {
+    return '#fff';
+  }
+}
+
 // ── Core Cocktail Picker ──────────────────────────────────────────────────────
 
 function CorePicker({
   collaborationId,
   existingProductIds,
+  brandColor = '#caa850',
   onClose,
 }: {
   collaborationId: string;
   existingProductIds: Set<string>;
+  brandColor?: string;
   onClose: () => void;
 }) {
   const { data: allProducts } = useProducts();
@@ -107,15 +123,18 @@ function CorePicker({
                   key={p.id}
                   onClick={() => toggle(p.id)}
                   className={`w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors ${
-                    checked
-                      ? 'bg-primary/15 border border-primary/30'
-                      : 'hover:bg-muted border border-transparent'
+                    checked ? 'border' : 'hover:bg-muted border border-transparent'
                   }`}
+                  style={checked ? {
+                    backgroundColor: brandColor + '26',
+                    borderColor: brandColor + '80',
+                  } : {}}
                 >
                   <div
                     className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${
-                      checked ? 'bg-primary border-primary' : 'border-border'
+                      checked ? '' : 'border-border'
                     }`}
+                    style={checked ? { backgroundColor: brandColor, borderColor: brandColor } : {}}
                   >
                     {checked && (
                       <svg className="w-2.5 h-2.5 text-primary-foreground" fill="none" viewBox="0 0 10 8">
@@ -139,7 +158,8 @@ function CorePicker({
           <Button
             onClick={handleAdd}
             disabled={selected.size === 0 || addCore.isPending}
-            className="flex-1 bg-primary text-primary-foreground"
+            className="flex-1"
+            style={{ backgroundColor: brandColor, color: textColorForBg(brandColor) }}
           >
             {addCore.isPending
               ? 'Adding…'
@@ -208,6 +228,10 @@ export default function AdminCustomDetail() {
   const coreCocktails = cocktails?.filter((c) => c.cocktail_type === 'core') ?? [];
   const signatureCocktails = cocktails?.filter((c) => c.cocktail_type === 'signature') ?? [];
   const existingProductIds = new Set((cocktails ?? []).map((c) => c.product_id));
+
+  // Live brand color — follows the form while editing, falls back to saved brand color
+  const brandColor = (form.brand_color || brand?.brand_color || '#caa850') as string;
+  const brandTextColor = textColorForBg(brandColor);
 
   const handleBaseProductChange = (productId: string) => {
     if (productId === '_none') {
@@ -480,7 +504,7 @@ export default function AdminCustomDetail() {
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="bg-primary text-primary-foreground"
+            style={{ backgroundColor: brandColor, color: brandTextColor }}
           >
             {saving ? 'Saving…' : 'Save Settings'}
           </Button>
@@ -492,21 +516,27 @@ export default function AdminCustomDetail() {
             <div className="flex gap-1">
               <button
                 onClick={() => setTab('core')}
-                className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                  tab === 'core'
-                    ? 'bg-primary/15 text-primary border border-primary/30'
-                    : 'text-muted-foreground hover:text-foreground'
+                className={`px-3 py-1.5 rounded text-xs font-medium transition-colors border ${
+                  tab !== 'core' ? 'border-transparent text-muted-foreground hover:text-foreground' : ''
                 }`}
+                style={tab === 'core' ? {
+                  backgroundColor: brandColor + '26',
+                  color: brandColor,
+                  borderColor: brandColor + '80',
+                } : {}}
               >
                 Core ({coreCocktails.length})
               </button>
               <button
                 onClick={() => setTab('signature')}
-                className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-                  tab === 'signature'
-                    ? 'bg-primary/15 text-primary border border-primary/30'
-                    : 'text-muted-foreground hover:text-foreground'
+                className={`px-3 py-1.5 rounded text-xs font-medium transition-colors border ${
+                  tab !== 'signature' ? 'border-transparent text-muted-foreground hover:text-foreground' : ''
                 }`}
+                style={tab === 'signature' ? {
+                  backgroundColor: brandColor + '26',
+                  color: brandColor,
+                  borderColor: brandColor + '80',
+                } : {}}
               >
                 Signature ({signatureCocktails.length})
               </button>
@@ -514,16 +544,16 @@ export default function AdminCustomDetail() {
             {tab === 'core' ? (
               <Button
                 size="sm"
-                className="bg-primary text-primary-foreground"
                 onClick={() => setShowCorePicker(true)}
+                style={{ backgroundColor: brandColor, color: brandTextColor }}
               >
                 + Add Core Cocktail
               </Button>
             ) : (
               <Button
                 size="sm"
-                className="bg-primary text-primary-foreground"
                 onClick={() => setShowNewSignature(true)}
+                style={{ backgroundColor: brandColor, color: brandTextColor }}
               >
                 + New Signature Cocktail
               </Button>
@@ -543,7 +573,7 @@ export default function AdminCustomDetail() {
                 <Button
                   size="sm"
                   onClick={() => setShowCorePicker(true)}
-                  className="bg-primary text-primary-foreground"
+                  style={{ backgroundColor: brandColor, color: brandTextColor }}
                 >
                   Add Core Cocktails
                 </Button>
@@ -584,7 +614,7 @@ export default function AdminCustomDetail() {
                 <Button
                   size="sm"
                   onClick={() => setShowNewSignature(true)}
-                  className="bg-primary text-primary-foreground"
+                  style={{ backgroundColor: brandColor, color: brandTextColor }}
                 >
                   Create First Signature Cocktail
                 </Button>
@@ -619,6 +649,7 @@ export default function AdminCustomDetail() {
         <CorePicker
           collaborationId={brand.id}
           existingProductIds={existingProductIds}
+          brandColor={brandColor}
           onClose={() => setShowCorePicker(false)}
         />
       )}
@@ -721,7 +752,8 @@ export default function AdminCustomDetail() {
               <Button
                 onClick={handleCreateSignature}
                 disabled={creating}
-                className="flex-1 bg-primary text-primary-foreground"
+                className="flex-1"
+                style={{ backgroundColor: brandColor, color: brandTextColor }}
               >
                 {creating ? 'Creating…' : 'Create Signature Cocktail'}
               </Button>
