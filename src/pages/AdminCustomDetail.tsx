@@ -8,6 +8,7 @@ import {
   useAddCoreCocktails,
   useAddSignatureCocktail,
   useRemoveCocktail,
+  useCustomizeCoreCocktail,
 } from '@/hooks/useCustom';
 import { useProducts } from '@/hooks/useProduct';
 import { useApiForm } from '@/hooks/useApiForm';
@@ -21,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ImagePickerDialog } from '@/components/admin/ImagePickerDialog';
 import { toast } from 'sonner';
 import { PRODUCT_LINES } from '@/constants/app';
-import { ImageIcon, Trash2, Search } from 'lucide-react';
+import { ImageIcon, Trash2, Search, Wand2 } from 'lucide-react';
 import { ColorInput } from '@/components/admin/ColorInput';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -181,6 +182,7 @@ export default function AdminCustomDetail() {
   const { data: scanStats } = useScanStats();
   const removeCocktail = useRemoveCocktail();
   const addSignature = useAddSignatureCocktail();
+  const customizeCore = useCustomizeCoreCocktail();
   const qc = useQueryClient();
   const navigate = useNavigate();
   const activeBrand = useBrandStore((s) => s.activeBrand);
@@ -190,6 +192,7 @@ export default function AdminCustomDetail() {
   const [showNewSignature, setShowNewSignature] = useState(false);
   const [showLogoPicker, setShowLogoPicker] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+  const [confirmCustomize, setConfirmCustomize] = useState<string | null>(null);
 
   // New signature form
   const [newSig, setNewSig] = useState({
@@ -350,6 +353,25 @@ export default function AdminCustomDetail() {
       toast.error('Failed to remove');
     }
     setConfirmRemove(null);
+  };
+
+  const handleCustomize = async (entryId: string) => {
+    const entry = coreCocktails.find((c) => c.id === entryId);
+    if (!entry || !brand) return;
+    try {
+      const res = await customizeCore.mutateAsync({
+        entryId,
+        collaborationId: brand.id,
+        productId: entry.product_id,
+        collabSlug: brand.brand_slug,
+      });
+      toast.success('Customized — now editable independently for this brand');
+      setConfirmCustomize(null);
+      navigate(`/admin/product/${res.newSlug}`);
+    } catch (err: any) {
+      toast.error(err?.message?.includes('duplicate') ? 'Already customized' : 'Failed to customize');
+      setConfirmCustomize(null);
+    }
   };
 
   if (isLoading) {
@@ -588,6 +610,23 @@ export default function AdminCustomDetail() {
                       brandSlugOverride={brand?.brand_slug}
                       badge="CORE"
                     />
+                    {entry.product.is_collaboration ? (
+                      <span
+                        className="absolute top-3 left-3 z-10 inline-flex items-center gap-1 px-2 py-1 rounded text-[9px] font-semibold uppercase tracking-wider"
+                        style={{ backgroundColor: brandColor + '26', color: brandColor }}
+                        title="This cocktail has its own independent page for this brand"
+                      >
+                        <Wand2 className="w-3 h-3" /> Independent
+                      </span>
+                    ) : (
+                      <button
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setConfirmCustomize(entry.id); }}
+                        className="absolute top-3 left-3 z-10 inline-flex items-center gap-1 px-2 py-1 rounded text-[9px] font-semibold uppercase tracking-wider border border-border bg-background/80 backdrop-blur text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors"
+                        title="Create an independent copy of this page for this brand (edit images, assets & layout without affecting the original)"
+                      >
+                        <Wand2 className="w-3 h-3" /> Customize
+                      </button>
+                    )}
                     <button
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); setConfirmRemove(entry.id); }}
                       className="absolute top-3 right-[68px] z-10 p-1.5 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
@@ -800,6 +839,46 @@ export default function AdminCustomDetail() {
                       className="flex-1"
                     >
                       {removeCocktail.isPending ? 'Removing…' : isSignature ? 'Archive' : 'Unlink'}
+                    </Button>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Customize core cocktail confirmation */}
+      {confirmCustomize && (
+        <div
+          className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-6"
+          onClick={() => setConfirmCustomize(null)}
+        >
+          <div
+            className="bg-card rounded-lg border border-border p-6 w-full max-w-sm space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {(() => {
+              const entry = coreCocktails.find((c) => c.id === confirmCustomize);
+              return (
+                <>
+                  <h2 className="font-display text-lg text-foreground">Customize for {brand.brand_name}?</h2>
+                  <p className="text-sm text-muted-foreground">
+                    This creates an independent copy of <strong>{entry?.product.name}</strong> just for {brand.brand_name}.
+                    You'll be able to change its images, assets and layout without affecting the original core product.
+                    The shareable link stays the same.
+                  </p>
+                  <div className="flex gap-3">
+                    <Button variant="ghost" onClick={() => setConfirmCustomize(null)} className="flex-1">
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={() => handleCustomize(confirmCustomize)}
+                      disabled={customizeCore.isPending}
+                      className="flex-1"
+                      style={{ backgroundColor: brandColor, color: brandTextColor }}
+                    >
+                      {customizeCore.isPending ? 'Customizing…' : 'Customize'}
                     </Button>
                   </div>
                 </>

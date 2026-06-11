@@ -131,6 +131,8 @@ interface CollaborationPublic {
   status: string;
   created_at: string | null;
   updated_at: string | null;
+  /** Public URL alias for THIS product within the collab (set when a core is forked). */
+  public_slug: string | null;
 }
 
 export function useCollaboration(productId: string | undefined) {
@@ -149,7 +151,14 @@ export function useCollaboration(productId: string | undefined) {
         .eq('id', product.collaboration_id)
         .single();
       if (error) return null;
-      return data as unknown as CollaborationPublic;
+      // Public-slug alias for this specific product within the collab (forked core).
+      const { data: link } = await supabase
+        .from('collaboration_cocktails')
+        .select('public_slug')
+        .eq('collaboration_id', product.collaboration_id)
+        .eq('product_id', productId!)
+        .maybeSingle();
+      return { ...(data as any), public_slug: link?.public_slug ?? null } as CollaborationPublic;
     },
     enabled: !!productId,
   });

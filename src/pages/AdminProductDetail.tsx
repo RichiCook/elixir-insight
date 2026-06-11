@@ -14,6 +14,7 @@ import { ImagesTab } from '@/components/admin/product/ImagesTab';
 import { PairingsTab } from '@/components/admin/product/PairingsTab';
 import { LivePreviewPanel } from '@/components/admin/product/LivePreviewPanel';
 import { ChangeLogTimeline } from '@/components/admin/ChangeLogTimeline';
+import { CopyLink } from '@/components/admin/CopyLink';
 import { useBrandStore } from '@/stores/brandStore';
 
 export default function AdminProductDetail() {
@@ -52,6 +53,13 @@ export default function AdminProductDetail() {
       </div>
     );
   }
+
+  // Public bottle-page URL. For a collab-owned product use the collab brand slug
+  // and its stable public-slug alias; otherwise the active brand + product slug.
+  const previewBrandSlug = collab?.brand_slug ?? activeBrand?.slug ?? 'classy';
+  const previewSlug = collab?.public_slug ?? product.slug;
+  const publicPath = `/b/${previewBrandSlug}/${previewSlug}`;
+  const publicUrl = `${window.location.origin}${publicPath}`;
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -98,13 +106,17 @@ export default function AdminProductDetail() {
             </div>
           </div>
           {!isWideScreen && (
-            <a href={`/b/${activeBrand?.slug ?? 'classy'}/${product.slug}`} target="_blank" rel="noopener noreferrer">
+            <a href={publicPath} target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm">Preview ↗</Button>
             </a>
           )}
         </header>
 
         <div className="p-6 max-w-4xl">
+          <div className="mb-4">
+            <CopyLink url={publicUrl} label={collab ? `${collab.brand_name} link` : 'Public link'} />
+          </div>
+
           {collab && (
             <div className="mb-4 rounded-lg p-3 flex items-center gap-3" style={{ backgroundColor: (collab.brand_color || '#333') + '15', borderLeft: `4px solid ${collab.brand_color || '#333'}` }}>
               {collab.brand_logo_url ? (
@@ -162,7 +174,7 @@ export default function AdminProductDetail() {
         </div>
       </main>
 
-      {isWideScreen && <LivePreviewPanel slug={product.slug} brandSlug={activeBrand?.slug ?? 'classy'} />}
+      {isWideScreen && <LivePreviewPanel slug={previewSlug} brandSlug={previewBrandSlug} />}
     </div>
   );
 }
