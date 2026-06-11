@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useProduct, useProducts, useCollaboration } from '@/hooks/useProduct';
-import { useCustomBrands } from '@/hooks/useCustom';
+import { useCustomBrands, useCocktailVariants, type SyncSectionKey } from '@/hooks/useCustom';
+import { SyncToVariantsDialog } from '@/components/admin/SyncToVariantsDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { getCompletenessColor, getLineBadge } from '@/constants/app';
@@ -29,14 +30,28 @@ export default function AdminProductDetail() {
     [customBrands]
   );
   const { data: collab } = useCollaboration(product?.id);
+  const { data: variants } = useCocktailVariants(product as any);
   const queryClient = useQueryClient();
   const activeBrand = useBrandStore((s) => s.activeBrand);
   const [isWideScreen, setIsWideScreen] = useState(window.innerWidth >= 1280);
+  const [touched, setTouched] = useState<Set<SyncSectionKey>>(new Set());
+  const [showSync, setShowSync] = useState(false);
 
   useEffect(() => {
     const handler = () => setIsWideScreen(window.innerWidth >= 1280);
     window.addEventListener('resize', handler);
     return () => window.removeEventListener('resize', handler);
+  }, []);
+
+  // Reset the per-session "edited sections" tracker when switching products.
+  useEffect(() => { setTouched(new Set()); }, [product?.id]);
+
+  const markTouched = useCallback((keys: SyncSectionKey[]) => {
+    setTouched((s) => {
+      const next = new Set(s);
+      keys.forEach((k) => next.add(k));
+      return next;
+    });
   }, []);
 
   const invalidateProduct = useCallback(() => {
@@ -138,6 +153,24 @@ export default function AdminProductDetail() {
             <CopyLink url={publicUrl} label={collab ? `${collab.brand_name} link` : 'Public link'} />
           </div>
 
+          {variants && variants.length > 0 && (
+            <div className="mb-4 flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
+              <span>
+                This cocktail is also used by {variants.length} other brand{variants.length === 1 ? '' : 's'}.
+              </span>
+              <button
+                onClick={() => setShowSync(true)}
+                className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-foreground hover:border-primary/50 transition-colors"
+                title="Copy changes from this version to the other brands using this cocktail"
+              >
+                Apply changes to other brands
+                {touched.size > 0 && (
+                  <span className="text-[10px] text-primary">({touched.size} edited)</span>
+                )}
+              </button>
+            </div>
+          )}
+
           {collab && (
             <div className="mb-4 rounded-lg p-3 flex items-center gap-3" style={{ backgroundColor: (collab.brand_color || '#333') + '15', borderLeft: `4px solid ${collab.brand_color || '#333'}` }}>
               {collab.brand_logo_url ? (
@@ -168,22 +201,22 @@ export default function AdminProductDetail() {
             </TabsList>
 
             <TabsContent value="general">
-              <GeneralTab product={product} onSave={invalidateProduct} />
+              <GeneralTab product={product} onSave={() => { markTouched(['general']); invalidateProduct(); }} />
             </TabsContent>
             <TabsContent value="languages">
-              <LanguagesTab productId={product.id} productName={product.name} />
+              <LanguagesTab productId={product.id} productName={product.name} onSaved={() => markTouched(['translations'])} />
             </TabsContent>
             <TabsContent value="technical">
-              <TechnicalTab productId={product.id} />
+              <TechnicalTab productId={product.id} onSaved={() => markTouched(['technical'])} />
             </TabsContent>
             <TabsContent value="ean">
-              <EanTab productId={product.id} />
+              <EanTab productId={product.id} onSaved={() => markTouched(['ean'])} />
             </TabsContent>
             <TabsContent value="images">
               <ImagesTab productId={product.id} />
             </TabsContent>
             <TabsContent value="pairings">
-              <PairingsTab productId={product.id} />
+              <PairingsTab productId={product.id} onSaved={() => markTouched(['pairings'])} />
             </TabsContent>
             <TabsContent value="layout">
               <LayoutTab productId={product.id} onSave={invalidateProduct} />
@@ -196,6 +229,15 @@ export default function AdminProductDetail() {
       </main>
 
       {isWideScreen && <LivePreviewPanel slug={previewSlug} brandSlug={previewBrandSlug} />}
+
+      {showSync && variants && variants.length > 0 && (
+        <SyncToVariantsDialog
+          sourceProduct={{ id: product.id, name: product.name }}
+          variants={variants}
+          defaultSections={touched}
+          onClose={() => setShowSync(false)}
+        />
+      )}
     </div>
   );
 }

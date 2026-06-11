@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 
 const MARKETS = ['INT', 'IT', 'DE', 'FR', 'UK'] as const;
 
-export function EanTab({ productId }: { productId: string }) {
+export function EanTab({ productId, onSaved }: { productId: string; onSaved?: () => void }) {
   const { data: eanCodes } = useProductEanCodes(productId);
   const queryClient = useQueryClient();
   const [rows, setRows] = useState<{ market: string; ean_cocktail: string; ean_carton: string; id?: string }[]>([]);
@@ -49,6 +49,7 @@ export function EanTab({ productId }: { productId: string }) {
     setSaving(false);
     toast.success('EAN codes saved');
     queryClient.invalidateQueries({ queryKey: ['product-ean-codes', productId] });
+    onSaved?.();
   };
 
   return (

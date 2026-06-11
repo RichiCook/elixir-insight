@@ -11,7 +11,7 @@ import { Plus, Trash2 } from 'lucide-react';
 
 const EMOJI_OPTIONS = ['🧀', '🥩', '🍫', '🫒', '🍕', '🥗', '🍝', '🐟', '🦐', '🥖', '🍰', '🍷', '🍸', '🥂', '☕', '🍋', '🌶️', '🥑', '🍓', '✦'];
 
-export function PairingsTab({ productId }: { productId: string }) {
+export function PairingsTab({ productId, onSaved }: { productId: string; onSaved?: () => void }) {
   const { data: pairings, isLoading } = useProductAiPairings(productId);
   const queryClient = useQueryClient();
   const [items, setItems] = useState<any[]>([]);
@@ -73,6 +73,7 @@ export function PairingsTab({ productId }: { productId: string }) {
     setSaving(false);
     toast.success('Pairings saved');
     queryClient.invalidateQueries({ queryKey: ['product-ai-pairings', productId] });
+    onSaved?.();
   };
 
   if (isLoading) return <div className="py-10 text-center text-muted-foreground text-xs">Loading…</div>;

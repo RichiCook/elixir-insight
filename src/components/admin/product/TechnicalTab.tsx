@@ -61,7 +61,7 @@ function RawDataSection({ raw }: { raw: Record<string, any> }) {
   );
 }
 
-export function TechnicalTab({ productId }: { productId: string }) {
+export function TechnicalTab({ productId, onSaved }: { productId: string; onSaved?: () => void }) {
   const { data: techData } = useProductTechnicalData(productId);
   const queryClient = useQueryClient();
   const [flushing, setFlushing] = useState(false);
@@ -79,6 +79,7 @@ export function TechnicalTab({ productId }: { productId: string }) {
       if (error) { toast.error('Failed to save'); return; }
       toast.success('Technical data saved');
       queryClient.invalidateQueries({ queryKey: ['product-technical-data', productId] });
+      onSaved?.();
     }
   );
 

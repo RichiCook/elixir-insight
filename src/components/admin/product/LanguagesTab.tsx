@@ -48,7 +48,7 @@ const EMPTY_FORM = {
 // Section keys whose custom_content has translatable text fields
 const TRANSLATABLE_SECTION_KEYS = ['editorial', 'brand_heritage', 'store_cta', 'footer'];
 
-export function LanguagesTab({ productId, productName }: { productId: string; productName: string }) {
+export function LanguagesTab({ productId, productName, onSaved }: { productId: string; productName: string; onSaved?: () => void }) {
   const queryClient = useQueryClient();
   const [languages, setLanguages] = useState<string[]>(['EN']);
   const [activeLang, setActiveLang] = useState('EN');
@@ -105,6 +105,7 @@ export function LanguagesTab({ productId, productName }: { productId: string; pr
     if (error) { toast.error('Failed to save translation'); return; }
     toast.success(`${activeLang} translation saved`);
     queryClient.invalidateQueries({ queryKey: ['product-translations', productId, activeLang] });
+    onSaved?.();
   };
 
   const handleAddLanguage = () => {
