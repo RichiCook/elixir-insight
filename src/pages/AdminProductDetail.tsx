@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useProduct, useProducts, useCollaboration } from '@/hooks/useProduct';
+import { useCustomBrands } from '@/hooks/useCustom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { getCompletenessColor, getLineBadge } from '@/constants/app';
@@ -22,6 +23,11 @@ export default function AdminProductDetail() {
   const navigate = useNavigate();
   const { data: product, isLoading } = useProduct(slug || '');
   const { data: products } = useProducts();
+  const { data: customBrands } = useCustomBrands();
+  const collabById = useMemo(
+    () => Object.fromEntries((customBrands ?? []).map((b) => [b.id, b] as const)),
+    [customBrands]
+  );
   const { data: collab } = useCollaboration(product?.id);
   const queryClient = useQueryClient();
   const activeBrand = useBrandStore((s) => s.activeBrand);
@@ -69,24 +75,39 @@ export default function AdminProductDetail() {
           <Link to="/admin" className="text-xs text-muted-foreground hover:text-foreground">← Dashboard</Link>
         </div>
         <nav className="py-1">
-          {products?.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => navigate(`/admin/product/${p.slug}`)}
-              className={`w-full text-left px-3 py-2.5 text-sm transition-colors flex items-center gap-2 ${
-                p.slug === slug ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
-              }`}
-            >
-              <span
-                className="w-2 h-2 rounded-full shrink-0"
-                style={{ backgroundColor: getCompletenessColor(p.completeness || 0) }}
-              />
-              <span className="truncate flex-1">{p.name}</span>
-              <span className={`text-[8px] uppercase px-1 py-0.5 rounded ${getLineBadge(p.line)}`}>
-                {p.line === 'No Regrets' ? 'NR' : p.line === 'Sparkling' ? 'SP' : 'CL'}
-              </span>
-            </button>
-          ))}
+          {products?.map((p) => {
+            const collabBrand = (p as any).collaboration_id
+              ? collabById[(p as any).collaboration_id]
+              : undefined;
+            return (
+              <button
+                key={p.id}
+                onClick={() => navigate(`/admin/product/${p.slug}`)}
+                className={`w-full text-left px-3 py-2.5 text-sm transition-colors flex items-center gap-2 ${
+                  p.slug === slug ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                }`}
+              >
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ backgroundColor: getCompletenessColor(p.completeness || 0) }}
+                />
+                <span className="flex-1 min-w-0 flex flex-col">
+                  <span className="truncate leading-tight">{p.name}</span>
+                  {collabBrand && (
+                    <span
+                      className="truncate text-[9px] leading-tight opacity-60"
+                      title={`Collaboration: ${collabBrand.brand_name}`}
+                    >
+                      {collabBrand.brand_name}
+                    </span>
+                  )}
+                </span>
+                <span className={`text-[8px] uppercase px-1 py-0.5 rounded shrink-0 ${getLineBadge(p.line)}`}>
+                  {p.line === 'No Regrets' ? 'NR' : p.line === 'Sparkling' ? 'SP' : 'CL'}
+                </span>
+              </button>
+            );
+          })}
         </nav>
       </aside>
 
