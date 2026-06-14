@@ -56,6 +56,7 @@ export default function AdminProductDetail() {
 
   const invalidateProduct = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['product', slug] });
+    queryClient.invalidateQueries({ queryKey: ['products'] }); // keep header + sidebar names in sync
     (window as any).__refreshPreview?.();
   }, [queryClient, slug]);
 

@@ -10,7 +10,9 @@ import { Badge } from './Badge';
 
 export function GeneralTab({ product, onSave }: { product: any; onSave: () => void }) {
   const { form, set, saving, handleSave } = useApiForm<Record<string, any>>(product, async (data) => {
+    if (!data.name || !String(data.name).trim()) { toast.error('Name is required'); return; }
     const { error } = await supabase.from('products').update({
+      name: String(data.name).trim(),
       line: data.line,
       spirit: data.spirit,
       abv: data.abv,
@@ -49,6 +51,14 @@ export function GeneralTab({ product, onSave }: { product: any; onSave: () => vo
 
   return (
     <div className="space-y-6">
+      <div>
+        <div className="flex items-center gap-2 mb-1.5">
+          <Label className="text-xs text-muted-foreground">Name</Label>
+          <Badge type="WEBSITE" />
+        </div>
+        <Input value={form.name || ''} onChange={(e) => set('name', e.target.value)} placeholder="Cocktail name" />
+      </div>
+
       <div>
         <div className="flex items-center gap-2 mb-1.5">
           <Label className="text-xs text-muted-foreground">Line</Label>
