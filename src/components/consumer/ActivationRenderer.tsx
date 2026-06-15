@@ -129,9 +129,6 @@ function VideoActivation({ content }: { content: Record<string, any> }) {
               sandbox="allow-scripts allow-same-origin allow-presentation"
             />
           </div>
-          {content.caption && (
-            <p className="font-sans-consumer text-xs text-white/60 px-4 py-3">{content.caption}</p>
-          )}
         </div>
       ) : (
         // Uploaded file — let the player take the clip's own orientation so there
@@ -178,9 +175,6 @@ function VideoActivation({ content }: { content: Record<string, any> }) {
               </button>
             )}
           </div>
-          {content.caption && (
-            <p className="font-sans-consumer text-xs text-white/60 px-4 py-3 text-center">{content.caption}</p>
-          )}
         </div>
       )}
     </motion.section>
