@@ -89,14 +89,16 @@ function TextImageActivation({ content }: { content: Record<string, any> }) {
 
 // -- Video --
 function VideoActivation({ content }: { content: Record<string, any> }) {
-  const url = content.video_url || '';
+  const url = typeof content.video_url === 'string' ? content.video_url.trim() : '';
+  if (!/^https?:\/\//i.test(url)) return null;
+
+  // YouTube / Vimeo → iframe embed. Anything else (e.g. an uploaded .mp4 in the
+  // brand-videos bucket) → native <video> player.
   let embedUrl: string | null = null;
   const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]+)/);
   if (ytMatch) embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}${content.autoplay ? '?autoplay=1&mute=1' : ''}`;
   const vmMatch = url.match(/vimeo\.com\/(\d+)/);
   if (vmMatch) embedUrl = `https://player.vimeo.com/video/${vmMatch[1]}${content.autoplay ? '?autoplay=1&muted=1' : ''}`;
-
-  if (!embedUrl) return null;
 
   return (
     <motion.section
@@ -107,14 +109,28 @@ function VideoActivation({ content }: { content: Record<string, any> }) {
     >
       <div className="rounded-xl overflow-hidden bg-black">
         <div className="relative" style={{ paddingBottom: '56.25%' }}>
-          <iframe
-            src={embedUrl}
-            className="absolute inset-0 w-full h-full"
-            allow="autoplay; fullscreen"
-            allowFullScreen
-            title={content.caption || 'Video'}
-            sandbox="allow-scripts allow-same-origin allow-presentation"
-          />
+          {embedUrl ? (
+            <iframe
+              src={embedUrl}
+              className="absolute inset-0 w-full h-full"
+              allow="autoplay; fullscreen"
+              allowFullScreen
+              title={content.caption || 'Video'}
+              sandbox="allow-scripts allow-same-origin allow-presentation"
+            />
+          ) : (
+            <video
+              src={url}
+              className="absolute inset-0 w-full h-full object-contain"
+              controls
+              playsInline
+              preload="metadata"
+              poster={typeof content.poster_url === 'string' ? content.poster_url : undefined}
+              autoPlay={!!content.autoplay}
+              muted={!!content.autoplay}
+              loop={!!content.loop}
+            />
+          )}
         </div>
         {content.caption && (
           <p className="font-sans-consumer text-xs text-white/60 px-4 py-3">{content.caption}</p>
