@@ -542,9 +542,9 @@ export default function AdminCustomDetail() {
                   tab !== 'core' ? 'border-transparent text-muted-foreground hover:text-foreground' : ''
                 }`}
                 style={tab === 'core' ? {
-                  backgroundColor: brandColor + '26',
-                  color: brandColor,
-                  borderColor: brandColor + '80',
+                  backgroundColor: brandColor,
+                  color: brandTextColor,
+                  borderColor: brandColor,
                 } : {}}
               >
                 Core ({coreCocktails.length})
@@ -555,9 +555,9 @@ export default function AdminCustomDetail() {
                   tab !== 'signature' ? 'border-transparent text-muted-foreground hover:text-foreground' : ''
                 }`}
                 style={tab === 'signature' ? {
-                  backgroundColor: brandColor + '26',
-                  color: brandColor,
-                  borderColor: brandColor + '80',
+                  backgroundColor: brandColor,
+                  color: brandTextColor,
+                  borderColor: brandColor,
                 } : {}}
               >
                 Signature ({signatureCocktails.length})
