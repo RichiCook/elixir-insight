@@ -1,4 +1,4 @@
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useState, useCallback, useEffect } from 'react';
 import { useBottlePageData } from '@/hooks/useBottlePageData';
@@ -27,6 +27,7 @@ import { CustomBlock } from '@/components/consumer/CustomBlock';
 import { AgeGate } from '@/components/consumer/AgeGate';
 import { ActivationSlot } from '@/components/consumer/ActivationRenderer';
 import { useApplySiteSettings } from '@/hooks/useSiteSettings';
+import { useSlugRedirect } from '@/hooks/useSlugRedirect';
 
 // Map section keys to activation placement names
 const ACTIVATION_AFTER: Record<string, string> = {
@@ -62,6 +63,11 @@ export default function BottlePage() {
   const savedSections = pageData?.sections ?? [];
   const collab        = pageData?.collaboration ?? null;
   const availableLangs = pageData?.available_languages ?? ['EN'];
+
+  // If the slug 404s, it may be a retired slug from a rename — resolve it so old
+  // QR codes / links redirect to the product's current slug.
+  const productMissing = !isLoading && !product;
+  const { data: redirectSlug, isLoading: resolvingRedirect } = useSlugRedirect(productSlug, productMissing);
 
   // Technical/nutritional data still fetched separately (admin-only columns
   // are gated by a dedicated RPC — get_product_nutrition — already called
@@ -163,6 +169,19 @@ export default function BottlePage() {
   }
 
   if (!product) {
+    // Still checking whether this is a retired slug.
+    if (resolvingRedirect) {
+      return (
+        <div className="consumer-theme min-h-screen bg-cc-cream flex items-center justify-center">
+          <div className="w-6 h-6 border-2 border-cc-gold border-t-transparent rounded-full animate-spin" />
+        </div>
+      );
+    }
+    // Retired slug → redirect to the current one, preserving query params (e.g. ?source=qr).
+    if (redirectSlug && redirectSlug !== productSlug) {
+      const qs = searchParams.toString();
+      return <Navigate to={`/b/${brandSlug}/${redirectSlug}${qs ? `?${qs}` : ''}`} replace />;
+    }
     return (
       <div className="consumer-theme min-h-screen bg-cc-white flex items-center justify-center">
         <p className="font-sans-consumer text-cc-text-md">Product not found</p>

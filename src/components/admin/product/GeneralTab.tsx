@@ -6,13 +6,40 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { PRODUCT_LINES } from '@/constants/app';
 import { useApiForm } from '@/hooks/useApiForm';
+import { slugify } from '@/lib/utils';
 import { Badge } from './Badge';
 
-export function GeneralTab({ product, onSave }: { product: any; onSave: () => void }) {
+/** Find a unique slug for this product, suffixing -2, -3… if the desired one is taken. */
+async function resolveUniqueSlug(desired: string, productId: string): Promise<string> {
+  let candidate = desired;
+  for (let n = 2; ; n++) {
+    const { data: clash } = await supabase
+      .from('products')
+      .select('id')
+      .eq('slug', candidate)
+      .neq('id', productId)
+      .maybeSingle();
+    if (!clash) return candidate;
+    candidate = `${desired}-${n}`;
+  }
+}
+
+export function GeneralTab({ product, onSave }: { product: any; onSave: (newSlug?: string) => void }) {
   const { form, set, saving, handleSave } = useApiForm<Record<string, any>>(product, async (data) => {
     if (!data.name || !String(data.name).trim()) { toast.error('Name is required'); return; }
+    const name = String(data.name).trim();
+
+    // Keep the URL slug in sync with the name. Only changes when the name does,
+    // and falls back to the existing slug if the name has no slug-able characters.
+    let nextSlug = product.slug as string;
+    const desired = slugify(name);
+    if (desired && desired !== product.slug) {
+      nextSlug = await resolveUniqueSlug(desired, product.id);
+    }
+
     const { error } = await supabase.from('products').update({
-      name: String(data.name).trim(),
+      name,
+      slug: nextSlug,
       line: data.line,
       spirit: data.spirit,
       abv: data.abv,
@@ -30,8 +57,20 @@ export function GeneralTab({ product, onSave }: { product: any; onSave: () => vo
       product_link: data.product_link || null,
     }).eq('id', product.id);
     if (error) { toast.error('Failed to save'); return; }
-    toast.success('Product updated');
-    onSave();
+
+    if (nextSlug !== product.slug) {
+      // Record the retired slug so old QR codes / links redirect to the new one.
+      // (cast: product_slug_history isn't in the generated Supabase types yet.)
+      const db = supabase as any;
+      await db.from('product_slug_history').delete().eq('old_slug', nextSlug); // new slug is live again
+      await db.from('product_slug_history').upsert(
+        { product_id: product.id, old_slug: product.slug },
+        { onConflict: 'old_slug' },
+      );
+    }
+
+    toast.success(nextSlug !== product.slug ? `Product updated · URL is now /${nextSlug}` : 'Product updated');
+    onSave(nextSlug !== product.slug ? nextSlug : undefined);
   });
 
   const fields: { key: string; label: string; badges: ('STICKER' | 'WEBSITE' | 'BOTTLE')[] }[] = [
