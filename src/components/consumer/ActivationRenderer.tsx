@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type Activation, useSubmitActivationLead } from '@/hooks/useActivations';
 
@@ -90,9 +90,16 @@ function TextImageActivation({ content }: { content: Record<string, any> }) {
 // -- Video --
 function VideoActivation({ content }: { content: Record<string, any> }) {
   const [portrait, setPortrait] = useState(false);
+  const [started, setStarted] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const url = typeof content.video_url === 'string' ? content.video_url.trim() : '';
   if (!/^https?:\/\//i.test(url)) return null;
+
+  const playLabel =
+    typeof content.play_label === 'string' && content.play_label.trim()
+      ? content.play_label
+      : 'Ascolta la storia del drink';
 
   // YouTube / Vimeo → iframe embed. Anything else (e.g. an uploaded .mp4 in the
   // brand-videos bucket) → native <video> player.
@@ -130,21 +137,47 @@ function VideoActivation({ content }: { content: Record<string, any> }) {
         // Uploaded file — let the player take the clip's own orientation so there
         // are no letterbox bands: landscape fills the width, portrait hugs the video.
         <div className={`rounded-xl overflow-hidden bg-black mx-auto max-w-full ${portrait ? 'w-fit' : 'w-full'}`}>
-          <video
-            src={url}
-            onLoadedMetadata={(e) => {
-              const v = e.currentTarget;
-              if (v.videoWidth && v.videoHeight) setPortrait(v.videoHeight > v.videoWidth);
-            }}
-            className={`block mx-auto max-w-full ${portrait ? 'h-auto max-h-[80vh] w-auto' : 'w-full h-auto'}`}
-            controls
-            playsInline
-            preload="metadata"
-            poster={typeof content.poster_url === 'string' ? content.poster_url : undefined}
-            autoPlay={!!content.autoplay}
-            muted={!!content.autoplay}
-            loop={!!content.loop}
-          />
+          <div className="relative">
+            <video
+              ref={videoRef}
+              src={url}
+              onLoadedMetadata={(e) => {
+                const v = e.currentTarget;
+                if (v.videoWidth && v.videoHeight) setPortrait(v.videoHeight > v.videoWidth);
+              }}
+              onPlay={() => setStarted(true)}
+              className={`block mx-auto max-w-full ${portrait ? 'h-auto max-h-[80vh] w-auto' : 'w-full h-auto'}`}
+              controls={started}
+              playsInline
+              preload="metadata"
+              poster={typeof content.poster_url === 'string' ? content.poster_url : undefined}
+              autoPlay={!!content.autoplay}
+              muted={!!content.autoplay}
+              loop={!!content.loop}
+            />
+            {!started && (
+              <button
+                type="button"
+                aria-label={playLabel}
+                onClick={() => {
+                  const v = videoRef.current;
+                  if (v) { v.muted = false; void v.play(); }
+                }}
+                className="group absolute inset-0 flex items-center justify-center"
+              >
+                {/* subtle darkening so the button reads on any frame */}
+                <span className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-black/20" />
+                <span className="relative flex items-center gap-3 rounded-full border border-white/40 bg-white/10 px-6 py-3.5 text-white shadow-[0_8px_30px_rgba(0,0,0,0.35)] backdrop-blur-md transition duration-300 group-hover:scale-[1.03] group-hover:bg-white/20">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20 ring-1 ring-white/30 backdrop-blur-sm">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 translate-x-[1px] fill-white">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </span>
+                  <span className="font-sans-consumer text-[13px] font-medium tracking-[0.06em]">{playLabel}</span>
+                </span>
+              </button>
+            )}
+          </div>
           {content.caption && (
             <p className="font-sans-consumer text-xs text-white/60 px-4 py-3 text-center">{content.caption}</p>
           )}
