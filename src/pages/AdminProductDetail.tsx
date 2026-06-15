@@ -202,7 +202,12 @@ export default function AdminProductDetail() {
             </TabsList>
 
             <TabsContent value="general">
-              <GeneralTab product={product} onSave={() => { markTouched(['general']); invalidateProduct(); }} />
+              <GeneralTab product={product} onSave={(newSlug) => {
+                markTouched(['general']);
+                invalidateProduct();
+                // A renamed product gets a new slug; follow it so the editor URL stays valid.
+                if (newSlug && newSlug !== slug) navigate(`/admin/product/${newSlug}`, { replace: true });
+              }} />
             </TabsContent>
             <TabsContent value="languages">
               <LanguagesTab productId={product.id} productName={product.name} onSaved={() => markTouched(['translations'])} />
