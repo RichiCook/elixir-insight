@@ -28,6 +28,7 @@ import { AgeGate } from '@/components/consumer/AgeGate';
 import { ActivationSlot } from '@/components/consumer/ActivationRenderer';
 import { useApplySiteSettings } from '@/hooks/useSiteSettings';
 import { useSlugRedirect } from '@/hooks/useSlugRedirect';
+import { useCocktailType } from '@/hooks/useCocktailType';
 
 // Map section keys to activation placement names
 const ACTIVATION_AFTER: Record<string, string> = {
@@ -68,6 +69,10 @@ export default function BottlePage() {
   // QR codes / links redirect to the product's current slug.
   const productMissing = !isLoading && !product;
   const { data: redirectSlug, isLoading: resolvingRedirect } = useSlugRedirect(productSlug, productMissing);
+
+  // Signature collab cocktails get a "Explore Classy Cocktails" CTA instead of a per-product store link.
+  const { data: cocktailType } = useCocktailType(collab?.id, product?.id, !!collab && !!product);
+  const isSignatureCocktail = cocktailType === 'signature';
 
   // Technical/nutritional data still fetched separately (admin-only columns
   // are gated by a dedicated RPC — get_product_nutrition — already called
@@ -264,6 +269,7 @@ export default function BottlePage() {
             onCtaClick={handleCtaClick}
             customContent={content}
             lang={lang}
+            isSignature={isSignatureCocktail}
           />
         );
       case 'editorial':

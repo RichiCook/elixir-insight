@@ -10,7 +10,11 @@ interface Props {
   customFooterText?: string;
   customContent?: Record<string, any>;
   lang?: string;
+  /** Signature collab cocktails point to the Classy catalogue instead of a per-product store page. */
+  isSignature?: boolean;
 }
+
+const EXPLORE_CLASSY_URL = 'https://classycocktails.com/en/collections/all-products';
 
 export function StoreCTA({
   slug,
@@ -22,15 +26,19 @@ export function StoreCTA({
   customFooterText,
   customContent,
   lang = 'EN',
+  isSignature = false,
 }: Props) {
   const isSafeUrl = (url: string) => /^https?:\/\//i.test(url);
-  const defaultUrl = productLink || (brandWebsiteUrl
-    ? `${brandWebsiteUrl.replace(/\/$/, '')}/products/${slug}`
-    : `https://classycocktails.com/products/${slug}`);
+  const defaultUrl = isSignature
+    ? EXPLORE_CLASSY_URL
+    : productLink || (brandWebsiteUrl
+      ? `${brandWebsiteUrl.replace(/\/$/, '')}/products/${slug}`
+      : `https://classycocktails.com/products/${slug}`);
 
   // Button text: explicit prop > localized custom_content > i18n default
   const localizedButtonText = getLocalizedContent(customContent, 'button_text', lang);
-  const buttonText = customButtonText || localizedButtonText || t(lang, 'view_on_store');
+  const defaultButtonText = isSignature ? t(lang, 'explore_classy') : t(lang, 'view_on_store');
+  const buttonText = customButtonText || localizedButtonText || defaultButtonText;
 
   // Button URL: explicit prop > localized custom_content > default
   const localizedButtonUrl = getLocalizedContent(customContent, 'button_url', lang);

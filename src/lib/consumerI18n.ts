@@ -25,6 +25,7 @@ type StringKey =
   | 'any_moment'
   | 'made_for_aperitivo'
   | 'view_on_store'
+  | 'explore_classy'
   | 'digital_product_passport'
   | 'digital_nutritional_passport'
   | 'drink_responsibly'
@@ -54,6 +55,7 @@ const STRINGS: Record<string, Partial<Record<StringKey, string>>> = {
     any_moment: 'Any Moment, No Regrets',
     made_for_aperitivo: 'Made for the Aperitivo',
     view_on_store: 'View on our Store ↗',
+    explore_classy: 'Explore Classy Cocktails ↗',
     digital_product_passport: 'Digital Product Passport',
     digital_nutritional_passport: 'Digital Nutritional Passport',
     drink_responsibly: 'Drink responsibly. Not for sale to persons under 18.',
@@ -84,6 +86,7 @@ const STRINGS: Record<string, Partial<Record<StringKey, string>>> = {
     any_moment: 'Ogni Momento, Senza Rimpianti',
     made_for_aperitivo: "Fatto per l'Aperitivo",
     view_on_store: 'Vedi nel nostro Shop ↗',
+    explore_classy: 'Esplora Classy Cocktails ↗',
     digital_product_passport: 'Passaporto Digitale del Prodotto',
     digital_nutritional_passport: 'Passaporto Nutrizionale Digitale',
     drink_responsibly: 'Bevi responsabilmente. Vietato ai minori di 18 anni.',
@@ -114,6 +117,7 @@ const STRINGS: Record<string, Partial<Record<StringKey, string>>> = {
     any_moment: 'Jeder Moment, Keine Reue',
     made_for_aperitivo: 'Gemacht für den Aperitivo',
     view_on_store: 'Im Shop ansehen ↗',
+    explore_classy: 'Classy Cocktails entdecken ↗',
     digital_product_passport: 'Digitaler Produktpass',
     digital_nutritional_passport: 'Digitaler Ernährungspass',
     drink_responsibly: 'Trinke verantwortungsvoll. Nicht für Personen unter 18 Jahren.',
@@ -144,6 +148,7 @@ const STRINGS: Record<string, Partial<Record<StringKey, string>>> = {
     any_moment: 'Chaque Instant, Sans Regrets',
     made_for_aperitivo: "Fait pour l'Apéritif",
     view_on_store: 'Voir dans notre boutique ↗',
+    explore_classy: 'Découvrir Classy Cocktails ↗',
     digital_product_passport: 'Passeport Numérique du Produit',
     digital_nutritional_passport: 'Passeport Nutritionnel Numérique',
     drink_responsibly: 'Consommez avec modération. Interdit aux moins de 18 ans.',
@@ -174,6 +179,7 @@ const STRINGS: Record<string, Partial<Record<StringKey, string>>> = {
     any_moment: 'Cada Momento, Sin Arrepentimientos',
     made_for_aperitivo: 'Hecho para el Aperitivo',
     view_on_store: 'Ver en nuestra tienda ↗',
+    explore_classy: 'Explorar Classy Cocktails ↗',
     digital_product_passport: 'Pasaporte Digital del Producto',
     digital_nutritional_passport: 'Pasaporte Nutricional Digital',
     drink_responsibly: 'Consume con responsabilidad. Prohibido para menores de 18 años.',
