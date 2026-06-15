@@ -89,6 +89,8 @@ function TextImageActivation({ content }: { content: Record<string, any> }) {
 
 // -- Video --
 function VideoActivation({ content }: { content: Record<string, any> }) {
+  const [portrait, setPortrait] = useState(false);
+
   const url = typeof content.video_url === 'string' ? content.video_url.trim() : '';
   if (!/^https?:\/\//i.test(url)) return null;
 
@@ -107,9 +109,10 @@ function VideoActivation({ content }: { content: Record<string, any> }) {
       viewport={{ once: true }}
       className="px-5 py-6"
     >
-      <div className="rounded-xl overflow-hidden bg-black">
-        <div className="relative" style={{ paddingBottom: '56.25%' }}>
-          {embedUrl ? (
+      {embedUrl ? (
+        // YouTube / Vimeo embed — iframes have no intrinsic size, so use a 16:9 box.
+        <div className="rounded-xl overflow-hidden bg-black">
+          <div className="relative" style={{ paddingBottom: '56.25%' }}>
             <iframe
               src={embedUrl}
               className="absolute inset-0 w-full h-full"
@@ -118,24 +121,35 @@ function VideoActivation({ content }: { content: Record<string, any> }) {
               title={content.caption || 'Video'}
               sandbox="allow-scripts allow-same-origin allow-presentation"
             />
-          ) : (
-            <video
-              src={url}
-              className="absolute inset-0 w-full h-full object-contain"
-              controls
-              playsInline
-              preload="metadata"
-              poster={typeof content.poster_url === 'string' ? content.poster_url : undefined}
-              autoPlay={!!content.autoplay}
-              muted={!!content.autoplay}
-              loop={!!content.loop}
-            />
+          </div>
+          {content.caption && (
+            <p className="font-sans-consumer text-xs text-white/60 px-4 py-3">{content.caption}</p>
           )}
         </div>
-        {content.caption && (
-          <p className="font-sans-consumer text-xs text-white/60 px-4 py-3">{content.caption}</p>
-        )}
-      </div>
+      ) : (
+        // Uploaded file — let the player take the clip's own orientation so there
+        // are no letterbox bands: landscape fills the width, portrait hugs the video.
+        <div className={`rounded-xl overflow-hidden bg-black mx-auto max-w-full ${portrait ? 'w-fit' : 'w-full'}`}>
+          <video
+            src={url}
+            onLoadedMetadata={(e) => {
+              const v = e.currentTarget;
+              if (v.videoWidth && v.videoHeight) setPortrait(v.videoHeight > v.videoWidth);
+            }}
+            className={`block mx-auto max-w-full ${portrait ? 'h-auto max-h-[80vh] w-auto' : 'w-full h-auto'}`}
+            controls
+            playsInline
+            preload="metadata"
+            poster={typeof content.poster_url === 'string' ? content.poster_url : undefined}
+            autoPlay={!!content.autoplay}
+            muted={!!content.autoplay}
+            loop={!!content.loop}
+          />
+          {content.caption && (
+            <p className="font-sans-consumer text-xs text-white/60 px-4 py-3 text-center">{content.caption}</p>
+          )}
+        </div>
+      )}
     </motion.section>
   );
 }
