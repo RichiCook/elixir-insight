@@ -345,6 +345,26 @@ export default function AdminActivationEditor() {
         {/* STEP 3: Scheduling */}
         {step === 3 && (
           <div className="space-y-5">
+            <div className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
+              <div>
+                <Label className="text-sm text-foreground">Schedule this activation</Label>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Optional. When off, the activation is always active while published.
+                </p>
+              </div>
+              <Switch
+                checked={!!(draft.start_date || draft.end_date)}
+                onCheckedChange={(on) => {
+                  if (on) {
+                    update({ start_date: new Date().toISOString(), end_date: null });
+                  } else {
+                    update({ start_date: null, end_date: null });
+                  }
+                }}
+              />
+            </div>
+
+            {(draft.start_date || draft.end_date) && (
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-xs text-muted-foreground mb-1.5 block">Start Date</Label>
@@ -361,6 +381,7 @@ export default function AdminActivationEditor() {
                 />
               </div>
             </div>
+            )}
 
             <div>
               <Label className="text-xs text-muted-foreground mb-1.5 block">Priority (higher = shown first)</Label>
@@ -403,7 +424,9 @@ export default function AdminActivationEditor() {
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Schedule</p>
                   <p className="text-foreground">
-                    {draft.start_date ? format(new Date(draft.start_date), 'PP') : 'No start'} → {draft.end_date ? format(new Date(draft.end_date), 'PP') : 'Ongoing'}
+                    {!draft.start_date && !draft.end_date
+                      ? 'Always active'
+                      : `${draft.start_date ? format(new Date(draft.start_date), 'PP') : 'No start'} → ${draft.end_date ? format(new Date(draft.end_date), 'PP') : 'Ongoing'}`}
                   </p>
                 </div>
               </div>
