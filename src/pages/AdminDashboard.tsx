@@ -82,6 +82,9 @@ export default function AdminDashboard() {
           {perms.canManageLayout && (
             <Link to="/admin/default-layout"><Button variant="outline" size="sm">Default Layout</Button></Link>
           )}
+          {perms.canManageLayout && (
+            <Link to="/admin/line-content"><Button variant="outline" size="sm">Line Content</Button></Link>
+          )}
           {perms.canManageImages && (
             <Link to="/admin/images"><Button variant="outline" size="sm">Image Library</Button></Link>
           )}

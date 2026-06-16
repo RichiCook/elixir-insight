@@ -2,6 +2,7 @@ import { useParams, useSearchParams, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useState, useCallback, useEffect } from 'react';
 import { useBottlePageData } from '@/hooks/useBottlePageData';
+import { useLineEditorials, pickLineEditorial } from '@/hooks/useLineContent';
 import { usePageViewTracking, useSectionTracking, trackInteraction, hasTrackingConsent, getSessionId } from '@/hooks/useTracking';
 import { supabase } from '@/integrations/supabase/client';
 import { useDefaultLayoutSections, getMergedSections } from '@/hooks/useSectionConfig';
@@ -81,6 +82,7 @@ export default function BottlePage() {
   const { data: technicalData } = useProductTechnicalData(product?.id);
 
   const { data: defaultSections } = useDefaultLayoutSections();
+  const { data: lineEditorials } = useLineEditorials();
 
   // Apply global site settings (favicon + tab title)
   useApplySiteSettings();
@@ -280,6 +282,7 @@ export default function BottlePage() {
               bottleColor={product.bottle_color}
               editorialImageUrl={editorialImageUrl}
               customContent={content}
+              lineContent={pickLineEditorial(lineEditorials, product.line, lang)}
               lang={lang}
             />
           </div>

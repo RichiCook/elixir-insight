@@ -1,31 +1,46 @@
 import { CrosshatchPattern, CLettermark } from './DecorativeSVG';
 import { getLocalizedContent } from '@/lib/consumerI18n';
+import type { LineEditorial } from '@/hooks/useLineContent';
 
 interface Props {
   line: string;
   bottleColor: string | null;
   editorialImageUrl?: string | null;
   customContent?: Record<string, any>;
+  /** Editable per-line copy from the admin "Line Content" page (DB). */
+  lineContent?: LineEditorial | null;
   lang?: string;
 }
 
-function getContent(line: string) {
+// Final fallback if neither a per-product override nor a DB line row exists.
+function getDefault(line: string): { heading: string; accent: string; body: string } {
   if (line === 'No Regrets') {
     return {
-      title: <>Genuinely <em className="italic text-cc-gold">Healthy</em></>,
+      heading: 'Genuinely Healthy', accent: 'Healthy',
       body: 'Every ingredient chosen for what it gives you. Reishi mushroom, aronia, ginger. No alcohol. No regrets.',
     };
   }
   if (line === 'Sparkling') {
     return {
-      title: <>Reinventing the <em className="italic text-cc-gold">Spritz</em></>,
+      heading: 'Reinventing the Spritz', accent: 'Spritz',
       body: 'Not your average aperitivo. Natural botanicals, sparkling wine, and a citrus twist — light, lively, genuinely special.',
     };
   }
   return {
-    title: <>The Art of the <em className="italic text-cc-gold">Aperitivo</em></>,
+    heading: 'The Art of the Aperitivo', accent: 'Aperitivo',
     body: 'A moment of pause, of pleasure, of character. Classy Cocktails brings the Italian aperitivo ritual into every glass — crafted, ready, and unforgettable.',
   };
+}
+
+// Render a heading with its accent word in gold italic. The accent is the
+// tail of the heading (e.g. "Reinventing the" + gold "Spritz").
+function renderTitle(heading: string, accent: string) {
+  if (accent && heading.includes(accent)) {
+    return (
+      <>{heading.slice(0, heading.lastIndexOf(accent))}<em className="italic text-cc-gold">{accent}</em></>
+    );
+  }
+  return <>{heading}{accent && <> <em className="italic text-cc-gold">{accent}</em></>}</>;
 }
 
 function darkenHex(hex: string): string {
@@ -36,22 +51,22 @@ function darkenHex(hex: string): string {
   return `rgb(${r},${g},${b})`;
 }
 
-export function EditorialBlock({ line, bottleColor, editorialImageUrl, customContent, lang = 'EN' }: Props) {
-  const defaults = getContent(line);
+export function EditorialBlock({ line, bottleColor, editorialImageUrl, customContent, lineContent, lang = 'EN' }: Props) {
+  const fallback = getDefault(line);
   const bg = darkenHex(bottleColor || '#2a2a2a');
 
-  // Localized body — check lang-specific key first, then _en, then legacy `body`
-  const localizedBody = getLocalizedContent(customContent, 'body', lang);
-  const localizedHeading = getLocalizedContent(customContent, 'heading', lang);
-  const localizedHeadingAccent = getLocalizedContent(customContent, 'heading_accent', lang);
+  // Resolve each field most-specific-first:
+  //   per-product override (customContent) → per-line DB row (lineContent) → hardcoded fallback
+  const heading =
+    getLocalizedContent(customContent, 'heading', lang) || lineContent?.heading || fallback.heading;
+  const accent =
+    getLocalizedContent(customContent, 'heading_accent', lang) || lineContent?.heading_accent || fallback.accent;
+  const body =
+    getLocalizedContent(customContent, 'body', lang) || lineContent?.body || fallback.body;
+  const lineLabel =
+    getLocalizedContent(customContent, 'line_label', lang) || lineContent?.line_label || `${line} Line`;
 
-  const hasCustom = !!(localizedHeading || localizedBody);
-  const lineLabel = getLocalizedContent(customContent, 'line_label', lang) || `${line} Line`;
-
-  const title = hasCustom && localizedHeading
-    ? <>{localizedHeading.replace(localizedHeadingAccent || '', '')} {localizedHeadingAccent && <em className="italic text-cc-gold">{localizedHeadingAccent}</em>}</>
-    : defaults.title;
-  const body = localizedBody || defaults.body;
+  const title = renderTitle(heading, accent || '');
 
   return (
     <section

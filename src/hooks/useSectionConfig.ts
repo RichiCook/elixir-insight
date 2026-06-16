@@ -40,7 +40,7 @@ export const SECTION_DEFINITIONS = [
     { key: 'button_url', label: 'Button URL', type: 'input' as const, default: '' },
     { key: 'footer_text', label: 'Footer Text', type: 'input' as const, default: 'Digital Product Passport' },
   ]},
-  { key: 'editorial', label: 'Editorial Block', editableFields: [
+  { key: 'editorial', label: 'Line Story', editableFields: [
     { key: 'line_label', label: 'Line Label (e.g. "Classic Line")', type: 'input' as const, default: '' },
     { key: 'heading', label: 'Heading', type: 'input' as const, default: '' },
     { key: 'heading_accent', label: 'Heading Accent Word (gold italic)', type: 'input' as const, default: '' },
