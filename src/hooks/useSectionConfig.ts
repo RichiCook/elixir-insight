@@ -51,8 +51,8 @@ export const SECTION_DEFINITIONS = [
     { key: 'badge_text', label: 'Badge Text', type: 'input' as const, default: 'Since 2020 · Made in Italy' },
     { key: 'heading', label: 'Heading', type: 'input' as const, default: '' },
     { key: 'heading_accent', label: 'Heading Accent (gold italic)', type: 'input' as const, default: '' },
-    { key: 'body_en', label: 'Body (EN)', type: 'textarea' as const, default: '' },
-    { key: 'body_it', label: 'Body (IT)', type: 'textarea' as const, default: '' },
+    { key: 'body_en', label: 'Body (EN)', type: 'html' as const, default: '' },
+    { key: 'body_it', label: 'Body (IT)', type: 'html' as const, default: '' },
   ]},
   { key: 'footer', label: 'Footer', editableFields: [
     { key: 'website_text', label: 'Website Text', type: 'input' as const, default: 'classycocktails.com' },

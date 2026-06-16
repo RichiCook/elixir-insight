@@ -1,3 +1,4 @@
+import DOMPurify from 'dompurify';
 import { CrosshatchPattern, CLettermark } from './DecorativeSVG';
 import { getLocalizedContent } from '@/lib/consumerI18n';
 
@@ -13,15 +14,19 @@ const DEFAULT_TEXT: Record<string, string> = {
   IT: "Ogni bottiglia di Classy Cocktails nasce da un'ossessione: portare i grandi cocktail del mondo — realizzati dai migliori bartender — sulla tua tavola, pronti da versare. Ideati da <gold>Patrick Pistolesi</gold>, uno dei bartender più celebrati d'Italia, ogni ricetta è calibrata alla perfezione, poi chiusa in una bottiglia.",
 };
 
-function renderText(raw: string) {
-  const parts = raw.split(/<gold>(.*?)<\/gold>/);
-  return parts.map((part, i) =>
-    i % 2 === 1 ? (
-      <span key={i} className="text-cc-gold">{part}</span>
-    ) : (
-      <span key={i}>{part}</span>
-    )
+// The body is admin-authored HTML. We support a friendly <gold>…</gold>
+// shortcut (kept for backward-compat with the built-in defaults), then
+// sanitize with DOMPurify before rendering — admins can use links, bold,
+// italic, etc., but scripts / event handlers are stripped.
+function renderBodyHtml(raw: string): string {
+  const withGold = raw.replace(
+    /<gold>([\s\S]*?)<\/gold>/g,
+    '<span class="text-cc-gold">$1</span>'
   );
+  return DOMPurify.sanitize(withGold, {
+    ALLOWED_TAGS: ['a', 'strong', 'b', 'em', 'i', 'u', 'span', 'br', 'p'],
+    ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'style'],
+  });
 }
 
 export function BrandHeritage({ lang, customContent }: Props) {
@@ -60,9 +65,10 @@ export function BrandHeritage({ lang, customContent }: Props) {
 
       {/* Part B — white text block */}
       <section className="bg-cc-white px-[18px] py-6">
-        <p className="font-sans-consumer text-[13px] font-light text-cc-text-md leading-[1.75]">
-          {renderText(text)}
-        </p>
+        <div
+          className="font-sans-consumer text-[13px] font-light text-cc-text-md leading-[1.75] [&_a]:text-cc-gold [&_a]:underline"
+          dangerouslySetInnerHTML={{ __html: renderBodyHtml(text) }}
+        />
       </section>
     </>
   );

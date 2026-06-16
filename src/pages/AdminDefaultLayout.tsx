@@ -240,8 +240,15 @@ export default function AdminDefaultLayout() {
                     {def.editableFields.map((field) => (
                       <div key={field.key}>
                         <Label className="text-[10px] text-muted-foreground mb-1 block">{field.label}</Label>
-                        {field.type === 'textarea' ? (
-                          <Textarea value={section.custom_content[field.key] || ''} onChange={(e) => updateContent(index, field.key, e.target.value)} placeholder={field.default || 'Default'} rows={2} className="text-xs" />
+                        {field.type === 'textarea' || field.type === 'html' ? (
+                          <>
+                            <Textarea value={section.custom_content[field.key] || ''} onChange={(e) => updateContent(index, field.key, e.target.value)} placeholder={field.default || 'Default'} rows={field.type === 'html' ? 5 : 2} className={`text-xs ${field.type === 'html' ? 'font-mono' : ''}`} />
+                            {field.type === 'html' && (
+                              <p className="text-[9px] text-muted-foreground mt-1">
+                                HTML supported — e.g. <code>{'<a href="…">link</a>'}</code>, <code>{'<strong>bold</strong>'}</code>, or <code>{'<gold>gold text</gold>'}</code>
+                              </p>
+                            )}
+                          </>
                         ) : (
                           <Input value={section.custom_content[field.key] || ''} onChange={(e) => updateContent(index, field.key, e.target.value)} placeholder={field.default || 'Default'} className="h-8 text-xs" />
                         )}
