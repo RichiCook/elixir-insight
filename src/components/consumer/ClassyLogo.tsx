@@ -1,24 +1,31 @@
-export function ClassyLogo({ size = 24 }: { size?: number }) {
+/**
+ * Brand mark — nested double-arc "U" (the Classy Cocktails / Aitemz logo).
+ * Drawn as two concentric arc bands so it stays crisp at any size.
+ */
+export function ClassyLogo({ size = 24, color = '#1a1a1a' }: { size?: number; color?: string }) {
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 24 24"
+      viewBox="0 0 48 48"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
     >
-      {/* Outer circle */}
-      <circle cx="12" cy="12" r="11" stroke="#2a2a2a" strokeWidth="1.2" />
-      {/* C-shape path (open circle letter) */}
+      {/* Outer band */}
       <path
-        d="M16.5 7.5A7 7 0 1 0 16.5 16.5"
-        stroke="#2a2a2a"
-        strokeWidth="1.2"
-        strokeLinecap="round"
+        d="M33.03 12.02 A 15 15 0 1 1 14.97 12.02"
+        stroke={color}
+        strokeWidth="7"
         fill="none"
       />
-      {/* Gold drop at open end of C */}
-      <circle cx="16.5" cy="16.5" r="1.3" fill="#b8975a" />
+      {/* Inner band */}
+      <path
+        d="M28.21 18.41 A 7 7 0 1 1 19.79 18.41"
+        stroke={color}
+        strokeWidth="3.5"
+        fill="none"
+      />
     </svg>
   );
 }
