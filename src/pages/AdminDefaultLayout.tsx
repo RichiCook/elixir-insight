@@ -17,6 +17,10 @@ import {
 } from '@/hooks/useSectionConfig';
 import { AddBlockDialog } from '@/components/admin/AddBlockDialog';
 import { ImagePickerDialog } from '@/components/admin/ImagePickerDialog';
+import { useBrandStore } from '@/stores/brandStore';
+
+// Single-brand fallback (Classy). default_layout_sections.brand_id is NOT NULL.
+const CLASSY_BRAND_ID = '00000000-0000-0000-0000-000000000001';
 
 function getBlockLabel(section: SectionConfig) {
   if (section.block_type === 'built_in') {
@@ -34,6 +38,7 @@ function getBlockIcon(section: SectionConfig) {
 
 export default function AdminDefaultLayout() {
   const { data: savedSections, isLoading } = useDefaultLayoutSections();
+  const activeBrand = useBrandStore((s) => s.activeBrand);
   const queryClient = useQueryClient();
   const [sections, setSections] = useState<SectionConfig[]>([]);
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
@@ -116,10 +121,14 @@ export default function AdminDefaultLayout() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const del = await supabase.from('default_layout_sections').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      // default_layout_sections is brand-scoped (brand_id NOT NULL). Only ever
+      // touch THIS brand's rows so we don't wipe other brands' default layouts.
+      const brandId = activeBrand?.id ?? CLASSY_BRAND_ID;
+      const del = await supabase.from('default_layout_sections').delete().eq('brand_id', brandId);
       if (del.error) throw del.error;
 
       const rows = sections.map((s, i) => ({
+        brand_id: brandId,
         section_key: s.section_key,
         sort_order: i,
         is_visible: s.is_visible,
@@ -128,7 +137,7 @@ export default function AdminDefaultLayout() {
         block_config: s.block_config || {},
       }));
 
-      const { error } = await supabase.from('default_layout_sections').insert(rows);
+      const { error } = await supabase.from('default_layout_sections').insert(rows as any);
       if (error) throw error;
 
       toast.success('Default layout saved');
