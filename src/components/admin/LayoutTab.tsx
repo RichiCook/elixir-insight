@@ -48,7 +48,7 @@ export function LayoutTab({ productId, onSave }: Props) {
   const [autoSaving, setAutoSaving] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [showAddBlock, setShowAddBlock] = useState(false);
-  const [imagePicker, setImagePicker] = useState<{ index: number; mode: 'single' | 'carousel' } | null>(null);
+  const [imagePicker, setImagePicker] = useState<{ index: number; mode: 'single' | 'carousel' | 'content'; fieldKey?: string } | null>(null);
 
   // Keep a ref to the latest sections so the debounced auto-save always writes the freshest state
   const sectionsRef = useRef(sections);
@@ -315,7 +315,19 @@ export function LayoutTab({ productId, onSave }: Props) {
                   {def.editableFields.map((field) => (
                     <div key={field.key}>
                       <Label className="text-[10px] text-muted-foreground mb-1 block">{field.label}</Label>
-                      {field.type === 'textarea' || field.type === 'html' ? (
+                      {field.type === 'image' ? (
+                        <div className="flex items-center gap-2">
+                          {section.custom_content[field.key] && (
+                            <div className="relative w-16 h-16 rounded border border-border overflow-hidden shrink-0">
+                              <img src={section.custom_content[field.key]} alt="" className="w-full h-full object-cover" />
+                              <button onClick={() => { updateContent(index, field.key, ''); scheduleAutoSave(0); }} className="absolute top-0 right-0 bg-black/60 p-0.5 rounded-bl"><X className="w-3 h-3 text-white" /></button>
+                            </div>
+                          )}
+                          <Button variant="outline" size="sm" onClick={() => setImagePicker({ index, mode: 'content', fieldKey: field.key })} className="text-xs h-8">
+                            <Image className="w-3 h-3 mr-1" /> {section.custom_content[field.key] ? 'Change' : 'Choose'} Image
+                          </Button>
+                        </div>
+                      ) : field.type === 'textarea' || field.type === 'html' ? (
                         <>
                           <Textarea value={section.custom_content[field.key] || ''} onChange={(e) => updateContent(index, field.key, e.target.value)} onBlur={() => scheduleAutoSave(0)} placeholder={field.default || 'Default'} rows={field.type === 'html' ? 5 : 2} className={`text-xs ${field.type === 'html' ? 'font-mono' : ''}`} />
                           {field.type === 'html' && (
@@ -425,6 +437,16 @@ export function LayoutTab({ productId, onSave }: Props) {
 
       {showAddBlock && <AddBlockDialog onAdd={handleAddBlock} onClose={() => setShowAddBlock(false)} />}
 
+      {imagePicker?.mode === 'content' && (
+        <ImagePickerDialog
+          onSelect={(url) => {
+            updateContent(imagePicker.index, imagePicker.fieldKey!, url);
+            scheduleAutoSave(0);
+            setImagePicker(null);
+          }}
+          onClose={() => setImagePicker(null)}
+        />
+      )}
       {imagePicker?.mode === 'single' && (
         <ImagePickerDialog
           onSelect={(url) => {

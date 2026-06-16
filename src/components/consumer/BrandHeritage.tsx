@@ -39,6 +39,7 @@ export function BrandHeritage({ lang, customContent }: Props) {
   const headingMain = getLocalizedContent(customContent, 'heading', lang) || 'A Story of ';
   const headingAccent = getLocalizedContent(customContent, 'heading_accent', lang) || 'Craft';
   const hasCustomHeading = !!(customContent && (customContent.heading || customContent[`heading_${lang.toLowerCase()}`] || customContent.heading_en));
+  const bgImage = customContent?.background_image as string | undefined;
 
   return (
     <>
@@ -47,8 +48,14 @@ export function BrandHeritage({ lang, customContent }: Props) {
         className="relative w-full overflow-hidden"
         style={{ aspectRatio: '4 / 3', backgroundColor: '#0f0f0f' }}
       >
-        <CrosshatchPattern id="heritage-cross" />
-        <CLettermark />
+        {bgImage ? (
+          <img src={bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        ) : (
+          <>
+            <CrosshatchPattern id="heritage-cross" />
+            <CLettermark />
+          </>
+        )}
         <div
           className="absolute inset-0"
           style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.75))' }}

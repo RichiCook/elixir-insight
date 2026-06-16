@@ -48,6 +48,7 @@ export const SECTION_DEFINITIONS = [
   ]},
   { key: 'gallery', label: 'Photo Gallery', editableFields: [] },
   { key: 'brand_heritage', label: 'Brand Heritage', editableFields: [
+    { key: 'background_image', label: 'Background Image', type: 'image' as const, default: '' },
     { key: 'badge_text', label: 'Badge Text', type: 'input' as const, default: 'Since 2020 · Made in Italy' },
     { key: 'heading', label: 'Heading', type: 'input' as const, default: '' },
     { key: 'heading_accent', label: 'Heading Accent (gold italic)', type: 'input' as const, default: '' },
