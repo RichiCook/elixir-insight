@@ -5,6 +5,8 @@ import { getLocalizedContent } from '@/lib/consumerI18n';
 interface Props {
   lang: string;
   customContent?: Record<string, any>;
+  /** Product picture used as a placeholder background when no heritage image is set. */
+  fallbackImageUrl?: string | null;
 }
 
 // Default fallback text keyed by language — used when no custom content is set.
@@ -41,7 +43,7 @@ function renderBodyHtml(raw: string): string {
   });
 }
 
-export function BrandHeritage({ lang, customContent }: Props) {
+export function BrandHeritage({ lang, customContent, fallbackImageUrl }: Props) {
   // Localized body — checks `body_it`, `body_en`, `body` in that order (for IT),
   // then falls back to the built-in DEFAULT_TEXT for the active language.
   const localizedBody = getLocalizedContent(customContent, 'body', lang);
@@ -51,7 +53,7 @@ export function BrandHeritage({ lang, customContent }: Props) {
   const headingMain = getLocalizedContent(customContent, 'heading', lang) || 'A Story of ';
   const headingAccent = getLocalizedContent(customContent, 'heading_accent', lang) || 'Craft';
   const hasCustomHeading = !!(customContent && (customContent.heading || customContent[`heading_${lang.toLowerCase()}`] || customContent.heading_en));
-  const bgImage = customContent?.background_image as string | undefined;
+  const bgImage = (customContent?.background_image as string) || fallbackImageUrl || undefined;
 
   return (
     <>

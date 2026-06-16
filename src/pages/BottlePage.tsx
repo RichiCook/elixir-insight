@@ -152,6 +152,12 @@ export default function BottlePage() {
 
   const heroImageUrl = heroImages[0]?.brand_images?.public_url || null;
   const editorialImageUrl = editorialImages[0]?.brand_images?.public_url || null;
+  // Fallback "product picture" for image-backed blocks that have no image of
+  // their own — prefer the hero shot, else any available product image.
+  const productImageUrl =
+    heroImageUrl ||
+    (productImages as any[]).find((pi) => pi?.brand_images?.public_url)?.brand_images?.public_url ||
+    null;
 
   const serveMomentImageMap: Record<number, string> = {};
   serveMomentImagesRaw.forEach((pi: any, idx: number) => {
@@ -280,7 +286,7 @@ export default function BottlePage() {
             <EditorialBlock
               line={product.line}
               bottleColor={product.bottle_color}
-              editorialImageUrl={editorialImageUrl}
+              editorialImageUrl={editorialImageUrl || productImageUrl}
               customContent={content}
               lineContent={pickLineEditorial(lineEditorials, product.line, lang)}
               lang={lang}
@@ -315,7 +321,7 @@ export default function BottlePage() {
       case 'brand_heritage':
         return (
           <div ref={heritageRef}>
-            <BrandHeritage lang={lang} customContent={content} />
+            <BrandHeritage lang={lang} customContent={content} fallbackImageUrl={productImageUrl} />
           </div>
         );
       case 'footer':
