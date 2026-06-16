@@ -116,7 +116,8 @@ export default function AdminDefaultLayout() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await supabase.from('default_layout_sections').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      const del = await supabase.from('default_layout_sections').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      if (del.error) throw del.error;
 
       const rows = sections.map((s, i) => ({
         section_key: s.section_key,
@@ -133,9 +134,12 @@ export default function AdminDefaultLayout() {
       toast.success('Default layout saved');
       queryClient.invalidateQueries({ queryKey: ['default-layout-sections'] });
     } catch (err: any) {
-      toast.error('Failed to save layout');
+      const detail = [err?.code, err?.message, err?.details, err?.hint].filter(Boolean).join(' · ');
+      toast.error(`Failed to save layout: ${detail || 'unknown error'}`);
+      console.error('[DefaultLayout save] failed:', err);
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   if (isLoading) return (
