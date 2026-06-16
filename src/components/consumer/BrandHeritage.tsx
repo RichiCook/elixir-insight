@@ -23,7 +23,19 @@ function renderBodyHtml(raw: string): string {
     /<gold>([\s\S]*?)<\/gold>/g,
     '<span class="text-cc-gold">$1</span>'
   );
-  return DOMPurify.sanitize(withGold, {
+  // If the author already used block-level HTML (<p>, <br>…), trust it as-is.
+  // Otherwise treat newline-separated lines as paragraphs so they get spacing
+  // (HTML collapses raw newlines, so plain text would otherwise be one block).
+  const looksLikeHtml = /<(p|br|div|ul|ol)[\s>/]/i.test(withGold);
+  const html = looksLikeHtml
+    ? withGold
+    : withGold
+        .split(/\n+/)
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => `<p>${line}</p>`)
+        .join('');
+  return DOMPurify.sanitize(html, {
     ALLOWED_TAGS: ['a', 'strong', 'b', 'em', 'i', 'u', 'span', 'br', 'p'],
     ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'style'],
   });
@@ -65,7 +77,7 @@ export function BrandHeritage({ lang, customContent }: Props) {
             {badgeText}
           </p>
           <h2 className="font-display text-[30px] font-light text-white leading-[1.15]">
-            {headingMain}{headingAccent && <em className="italic text-cc-gold">{headingAccent}</em>}{!hasCustomHeading && ' & Character'}
+            {headingMain.replace(/\s+$/, '')}{headingAccent && <>{' '}<em className="italic text-cc-gold">{headingAccent}</em></>}{!hasCustomHeading && ' & Character'}
           </h2>
         </div>
       </section>
@@ -73,7 +85,7 @@ export function BrandHeritage({ lang, customContent }: Props) {
       {/* Part B — white text block */}
       <section className="bg-cc-white px-[18px] py-6">
         <div
-          className="font-sans-consumer text-[13px] font-light text-cc-text-md leading-[1.75] [&_a]:text-cc-gold [&_a]:underline"
+          className="font-sans-consumer text-[13px] font-light text-cc-text-md leading-[1.75] [&_a]:text-cc-gold [&_a]:underline [&_p:not(:last-child)]:mb-4"
           dangerouslySetInnerHTML={{ __html: renderBodyHtml(text) }}
         />
       </section>
