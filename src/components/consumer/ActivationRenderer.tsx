@@ -89,7 +89,6 @@ function TextImageActivation({ content }: { content: Record<string, any> }) {
 
 // -- Video --
 function VideoActivation({ content }: { content: Record<string, any> }) {
-  const [portrait, setPortrait] = useState(false);
   const [started, setStarted] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -133,17 +132,13 @@ function VideoActivation({ content }: { content: Record<string, any> }) {
       ) : (
         // Uploaded file — let the player take the clip's own orientation so there
         // are no letterbox bands: landscape fills the width, portrait hugs the video.
-        <div className={`overflow-hidden bg-black mx-auto max-w-full ${portrait ? 'w-fit' : 'w-full'}`}>
+        <div className="w-full overflow-hidden bg-black">
           <div className="relative">
             <video
               ref={videoRef}
               src={url}
-              onLoadedMetadata={(e) => {
-                const v = e.currentTarget;
-                if (v.videoWidth && v.videoHeight) setPortrait(v.videoHeight > v.videoWidth);
-              }}
               onPlay={() => setStarted(true)}
-              className={`block mx-auto max-w-full ${portrait ? 'h-auto max-h-[80vh] w-auto' : 'w-full h-auto'}`}
+              className="block w-full h-auto"
               controls={started}
               playsInline
               preload="metadata"
