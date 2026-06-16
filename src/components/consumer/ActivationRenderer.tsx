@@ -114,11 +114,11 @@ function VideoActivation({ content }: { content: Record<string, any> }) {
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className="px-5 py-6"
+      className="py-6"
     >
       {embedUrl ? (
         // YouTube / Vimeo embed — iframes have no intrinsic size, so use a 16:9 box.
-        <div className="rounded-xl overflow-hidden bg-black">
+        <div className="overflow-hidden bg-black">
           <div className="relative" style={{ paddingBottom: '56.25%' }}>
             <iframe
               src={embedUrl}
@@ -133,7 +133,7 @@ function VideoActivation({ content }: { content: Record<string, any> }) {
       ) : (
         // Uploaded file — let the player take the clip's own orientation so there
         // are no letterbox bands: landscape fills the width, portrait hugs the video.
-        <div className={`rounded-xl overflow-hidden bg-black mx-auto max-w-full ${portrait ? 'w-fit' : 'w-full'}`}>
+        <div className={`overflow-hidden bg-black mx-auto max-w-full ${portrait ? 'w-fit' : 'w-full'}`}>
           <div className="relative">
             <video
               ref={videoRef}
