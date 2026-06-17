@@ -1,1 +1,10 @@
 project_id = "ieetamojfomrtyzgmpnw"
+
+# Security: self-registration is disabled — accounts are created only via the
+# invite-user edge function (L-01). Password policy hardened server-side (L-03).
+# NOTE: for the hosted project these are enforced by the Supabase Dashboard
+# (Authentication → Providers/Policies); this block keeps local dev + IaC aligned.
+[auth]
+enable_signup = false
+minimum_password_length = 12
+password_requirements = "lower_upper_letters_digits_symbols"
