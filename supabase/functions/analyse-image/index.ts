@@ -200,13 +200,13 @@ serve(async (req) => {
     await supabase.from("brand_images").update({ status: "complete" }).eq("id", image_id);
 
     // Auto-link products: match product_slugs to products and create product_images entries
-    const productSlugs: string[] = attrs.product_slugs || [];
+    const resultSlugs: string[] = attrs.product_slugs || [];
     const bestSections: string[] = attrs.best_for_sections || [];
-    if (productSlugs.length > 0 && bestSections.length > 0) {
+    if (resultSlugs.length > 0 && bestSections.length > 0) {
       const { data: matchedProducts } = await supabase
         .from("products")
         .select("id, slug")
-        .in("slug", productSlugs);
+        .in("slug", resultSlugs);
 
       if (matchedProducts && matchedProducts.length > 0) {
         const links = [];
