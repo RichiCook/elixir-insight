@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import DOMPurify from 'dompurify';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type Activation, useSubmitActivationLead } from '@/hooks/useActivations';
 
@@ -206,16 +207,12 @@ function BannerCtaActivation({ content }: { content: Record<string, any> }) {
 // -- Custom HTML --
 function CustomHtmlActivation({ content }: { content: Record<string, any> }) {
   if (!content.html) return null;
+  // Admin-authored HTML — sanitize before rendering (no script-capable iframe).
   return (
-    <section className="px-5 py-4">
-      <iframe
-        srcDoc={`<!DOCTYPE html><html><head><style>body{margin:0;font-family:system-ui;color:#333}</style></head><body>${content.html}</body></html>`}
-        className="w-full rounded-xl border-0"
-        style={{ minHeight: 200 }}
-        sandbox="allow-scripts"
-        title="Custom content"
-      />
-    </section>
+    <section
+      className="px-5 py-4"
+      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content.html) }}
+    />
   );
 }
 

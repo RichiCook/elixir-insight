@@ -25,7 +25,8 @@ export function AgeGate({ brandName = 'Classy Cocktails', brandWebsiteUrl = 'htt
   };
 
   const handleNo = () => {
-    window.location.href = brandWebsiteUrl;
+    // Only follow http(s) URLs — never javascript:/data: or other schemes.
+    window.location.href = /^https?:\/\//i.test(brandWebsiteUrl) ? brandWebsiteUrl : 'https://classycocktails.com';
   };
 
   return (

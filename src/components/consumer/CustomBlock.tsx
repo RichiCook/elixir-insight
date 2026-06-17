@@ -59,7 +59,7 @@ export function CustomBlock({ blockType, blockConfig, customContent }: Props) {
       return (
         <section className="px-[18px] py-4">
           <a
-            href={merged.button_url || '#'}
+            href={/^https?:\/\//i.test(merged.button_url || '') ? merged.button_url : '#'}
             target="_blank"
             rel="noopener noreferrer"
             className={`block w-full text-center font-sans-consumer text-[13px] font-medium tracking-[0.08em] rounded py-[17px] ${bgClass}`}
