@@ -205,6 +205,18 @@ export default function BottlePage() {
   const showAgeGate = parseFloat(product.abv ?? '0') > 0 && !isPreview;
   const sections = getMergedSections(savedSections, defaultSections);
 
+  // Built-in blocks inherit the Default Layout's content for any field a product
+  // hasn't overridden. Products with their own saved layout (e.g. Cosmopolitan)
+  // otherwise keep empty content and miss default-layout edits like the heritage
+  // image/heading/body. Editor stays unaffected (this is render-only).
+  const defaultContentByKey = new Map(
+    (defaultSections ?? []).map((d: any) => [d.section_key, (d.custom_content || {}) as Record<string, any>]),
+  );
+  const effectiveContent = (sec: { section_key: string; block_type: string; custom_content: Record<string, any> }) =>
+    sec.block_type === 'built_in'
+      ? { ...(defaultContentByKey.get(sec.section_key) || {}), ...(sec.custom_content || {}) }
+      : sec.custom_content;
+
   // Render a section by key, using custom_content overrides
   const renderSection = (key: string, content: Record<string, any>, blockType?: string, blockConfig?: Record<string, any>) => {
     // Custom blocks
@@ -381,7 +393,7 @@ export default function BottlePage() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.5 }}>
           {sections.map((sec) => {
             if (!sec.is_visible) return null;
-            const rendered = renderSection(sec.section_key, sec.custom_content, sec.block_type, sec.block_config);
+            const rendered = renderSection(sec.section_key, effectiveContent(sec), sec.block_type, sec.block_config);
             if (!rendered) return null;
 
             const activationPlacement = ACTIVATION_AFTER[sec.section_key];
