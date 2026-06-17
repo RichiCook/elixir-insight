@@ -268,6 +268,66 @@ export function LanguagesTab({ productId, productName, onSaved }: { productId: s
           .eq('id', sec.id);
       }
 
+      // 5 — GLOBAL Default Layout blocks (shared across products).
+      // Fill-only-empty: only translate a field whose target-lang value is
+      // still blank, so this runs once per language and never overwrites
+      // copy you wrote or already translated.
+      setTranslateAllProgress('Translating layout blocks…');
+      const lkey = lang.toLowerCase();
+      const blockTextKeys = ['heading', 'body', 'badge_text', 'heading_accent', 'button_text', 'footer_text', 'passport_label', 'website_text'];
+      const { data: dls } = await supabase
+        .from('default_layout_sections')
+        .select('id, section_key, custom_content')
+        .in('section_key', TRANSLATABLE_SECTION_KEYS);
+      for (const sec of dls ?? []) {
+        const cc = (sec.custom_content as Record<string, any>) || {};
+        const source: Record<string, string> = {};
+        for (const key of blockTextKeys) {
+          const en = cc[`${key}_en`] || cc[key];
+          const target = cc[`${key}_${lkey}`];
+          if (typeof en === 'string' && en.trim() && !(typeof target === 'string' && target.trim())) {
+            source[key] = en;
+          }
+        }
+        if (Object.keys(source).length === 0) continue;
+        const t = await callTranslate(source, lang);
+        const updates: Record<string, string> = {};
+        for (const [k, v] of Object.entries(t)) updates[`${k}_${lkey}`] = v as string;
+        await supabase
+          .from('default_layout_sections')
+          .update({ custom_content: { ...cc, ...updates } as any })
+          .eq('id', sec.id);
+      }
+
+      // 6 — GLOBAL Line Stories (line_editorials). Same fill-only-empty rule.
+      setTranslateAllProgress('Translating line stories…');
+      const { data: lineRows } = await supabase.from('line_editorials' as any).select('*');
+      const allRows = (lineRows ?? []) as any[];
+      const lines = [...new Set(allRows.map((r) => r.line))];
+      for (const lineName of lines) {
+        const enRow = allRows.find((r) => r.line === lineName && (r.language || '').toUpperCase() === 'EN');
+        if (!enRow) continue;
+        const targetRow = allRows.find((r) => r.line === lineName && (r.language || '').toUpperCase() === lang.toUpperCase());
+        const fields = ['line_label', 'heading', 'heading_accent', 'body'];
+        const source: Record<string, string> = {};
+        for (const f of fields) {
+          const en = enRow[f];
+          const target = targetRow?.[f];
+          if (typeof en === 'string' && en.trim() && !(typeof target === 'string' && target.trim())) {
+            source[f] = en;
+          }
+        }
+        if (Object.keys(source).length === 0) continue;
+        const t = await callTranslate(source, lang);
+        const base = targetRow
+          ? { line_label: targetRow.line_label, heading: targetRow.heading, heading_accent: targetRow.heading_accent, body: targetRow.body }
+          : {};
+        await supabase.from('line_editorials' as any).upsert(
+          { line: lineName, language: lang, ...base, ...t, updated_at: new Date().toISOString() },
+          { onConflict: 'line,language' },
+        );
+      }
+
       toast.success(`All content translated to ${lang} ✓`);
     } catch (e: any) {
       toast.error(e?.message || 'Translation failed');
