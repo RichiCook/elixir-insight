@@ -52,6 +52,16 @@ serve(async (req) => {
     });
   }
 
+  // L-08 — allowlist the assignable role. Brand-scoped admins may only assign
+  // non-admin roles; only a super-admin (brand_id = null) can mint admins.
+  const ASSIGNABLE = new Set(["editor", "marketing", "supply", "moderator", "user"]);
+  const allowedRoles = callerBrandId === null ? new Set([...ASSIGNABLE, "admin"]) : ASSIGNABLE;
+  if (!allowedRoles.has(role)) {
+    return new Response(JSON.stringify({ error: "Forbidden: you can't assign that role" }), {
+      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   // Brand-scoped admins can only invite within their own brand.
   // Super-admins (callerBrandId = null) may specify any brand_id or null.
   const assignedBrandId: string | null =

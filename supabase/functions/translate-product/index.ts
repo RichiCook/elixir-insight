@@ -1,5 +1,12 @@
-import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
+
+// L-12: single-origin CORS (the supabase-js cors helper emits Access-Control-
+// Allow-Origin: *). Match the other edge functions.
+const corsHeaders = {
+  "Access-Control-Allow-Origin": Deno.env.get("SITE_URL") ?? "https://classy.aitems.dev",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
 
 const LANG_NAMES: Record<string, string> = {
   EN: "English", IT: "Italian", DE: "German", FR: "French", ES: "Spanish",
