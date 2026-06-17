@@ -4,6 +4,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { useCustomBrands, useCustomBrandCocktailCounts } from '@/hooks/useCustom';
+import { useBrands } from '@/hooks/useBrands';
+import { useBrandStore } from '@/stores/brandStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +16,8 @@ import { ColorInput } from '@/components/admin/ColorInput';
 export default function AdminCustom() {
   const { data: brands, isLoading } = useCustomBrands();
   const { data: counts } = useCustomBrandCocktailCounts();
+  const { data: platformBrands } = useBrands();
+  const activeBrand = useBrandStore((s) => s.activeBrand);
   const signOut = useAuthStore((s) => s.signOut);
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -32,13 +36,21 @@ export default function AdminCustom() {
       toast.error('Brand name and slug are required');
       return;
     }
+    // collaborations.brand_id is NOT NULL and RLS-gated to a brand the admin can
+    // access — set it to the active (platform) brand.
+    const brandId = activeBrand?.id ?? platformBrands?.[0]?.id;
+    if (!brandId) {
+      toast.error('No brand context — reload and try again');
+      return;
+    }
     setCreating(true);
     const { error } = await supabase.from('collaborations').insert({
+      brand_id: brandId,
       brand_name: form.brand_name,
       brand_slug: form.brand_slug.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
       brand_color: form.brand_color,
       event_name: form.event_name || null,
-    });
+    } as any);
     setCreating(false);
     if (error) {
       toast.error(error.message.includes('duplicate') ? 'Slug already exists' : 'Failed to create');
