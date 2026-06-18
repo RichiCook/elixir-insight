@@ -22,17 +22,16 @@ export function CraftedWith({ spirit }: Props) {
             : undefined;
           const card = (
             <div className="flex flex-col items-center justify-center gap-1.5 h-full">
-              {partner?.logo_url ? (
+              {partner?.logo_url && (
                 <img
                   src={partner.logo_url}
                   alt={name}
-                  className="h-10 w-auto max-w-full object-contain"
+                  className="h-9 w-auto max-w-full object-contain"
                 />
-              ) : (
-                <p className="font-display text-lg font-medium text-cc-text leading-tight">
-                  {name}
-                </p>
               )}
+              <p className={`font-display font-medium text-cc-text leading-tight ${partner?.logo_url ? 'text-sm' : 'text-lg'}`}>
+                {name}
+              </p>
               <p className="font-sans-consumer text-[9px] tracking-[0.1em] uppercase text-cc-text-lt">
                 Spirit Partner
               </p>

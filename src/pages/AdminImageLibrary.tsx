@@ -304,7 +304,7 @@ export default function AdminImageLibrary() {
                 <p className="text-[10px] text-muted-foreground mt-1">JPG, PNG, WebP · Max 10MB each · Multiple files</p>
                 <input
                   type="file"
-                  accept="image/jpeg,image/png,image/webp"
+                  accept="image/jpeg,image/png,image/webp,image/gif,image/avif,image/svg+xml"
                   multiple
                   className="hidden"
                   onChange={(e) => handleUpload(e.target.files)}

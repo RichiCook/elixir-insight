@@ -41,7 +41,7 @@ export function ImagePickerDialog({ onSelect, onClose, multiple, onSelectMultipl
     const files = e.target.files;
     if (!files?.length) return;
 
-    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'];
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif', 'image/svg+xml'];
     const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
 
     setUploading(true);
