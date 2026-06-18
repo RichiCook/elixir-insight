@@ -267,6 +267,9 @@ export default function AdminCustomDetail() {
         abv: newSig.abv,
         collaboration_id: brand.id,
         is_collaboration: true,
+        // products.brand_id is NOT NULL with no default — inherit the base
+        // product's brand, else the Classy brand. Without this the insert fails.
+        brand_id: (baseProduct as any)?.brand_id ?? '00000000-0000-0000-0000-000000000001',
       };
 
       if (baseProduct) {
