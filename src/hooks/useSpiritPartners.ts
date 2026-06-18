@@ -25,6 +25,19 @@ export function useSpiritPartners() {
   });
 }
 
+/**
+ * Split a product's `spirit` field into individual partner names. Products use
+ * mixed separators: '+', ',', and ' - ' (spaced dash). The spaced-dash rule
+ * avoids breaking hyphenated names (e.g. "Coca-Cola" stays one).
+ */
+export function splitSpirits(spirit: string | null | undefined): string[] {
+  if (!spirit) return [];
+  return spirit
+    .split(/\s*\+\s*|\s*,\s*|\s+-\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 /** Case-insensitive lookup of a partner by its display name. */
 export function findSpiritPartner(
   partners: SpiritPartner[] | undefined,

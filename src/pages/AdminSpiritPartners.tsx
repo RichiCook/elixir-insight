@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useProducts } from '@/hooks/useProduct';
-import { useSpiritPartners, findSpiritPartner, useUpsertSpiritPartner } from '@/hooks/useSpiritPartners';
+import { useSpiritPartners, findSpiritPartner, useUpsertSpiritPartner, splitSpirits } from '@/hooks/useSpiritPartners';
 import { ImagePickerDialog } from '@/components/admin/ImagePickerDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,11 +22,8 @@ export default function AdminSpiritPartners() {
   const names = useMemo(() => {
     const map = new Map<string, string>();
     for (const p of products ?? []) {
-      const spirit = (p as any).spirit as string | null;
-      if (!spirit) continue;
-      for (const raw of spirit.split('+')) {
-        const name = raw.trim();
-        if (name) map.set(name.toLowerCase(), name);
+      for (const name of splitSpirits((p as any).spirit)) {
+        map.set(name.toLowerCase(), name);
       }
     }
     for (const sp of partners ?? []) {

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useSpiritPartners, findSpiritPartner } from '@/hooks/useSpiritPartners';
+import { useSpiritPartners, findSpiritPartner, splitSpirits } from '@/hooks/useSpiritPartners';
 
 interface Props {
   spirit: string;
@@ -7,7 +7,7 @@ interface Props {
 
 export function CraftedWith({ spirit }: Props) {
   const { data: partners } = useSpiritPartners();
-  const names = spirit.split('+').map((s) => s.trim()).filter(Boolean);
+  const names = splitSpirits(spirit);
 
   return (
     <section className="px-6 py-6 border-t border-cc-border">
