@@ -27,6 +27,7 @@ const AdminActivations         = lazy(() => import('@/pages/AdminActivations'));
 const AdminActivationEditor    = lazy(() => import('@/pages/AdminActivationEditor'));
 const AdminDefaultLayout       = lazy(() => import('@/pages/AdminDefaultLayout'));
 const AdminLineContent         = lazy(() => import('@/pages/AdminLineContent'));
+const AdminSpiritPartners      = lazy(() => import('@/pages/AdminSpiritPartners'));
 const AdminCollaborations      = lazy(() => import('@/pages/AdminCollaborations'));
 const AdminCollaborationDetail = lazy(() => import('@/pages/AdminCollaborationDetail'));
 const AdminCustom              = lazy(() => import('@/pages/AdminCustom'));
@@ -161,6 +162,16 @@ function AppInner() {
             <ProtectedRoute>
               <ErrorBoundary>
                 <AdminLineContent />
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/spirit-partners"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <AdminSpiritPartners />
               </ErrorBoundary>
             </ProtectedRoute>
           }
