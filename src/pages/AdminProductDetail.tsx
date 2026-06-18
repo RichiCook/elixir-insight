@@ -14,6 +14,7 @@ import { TechnicalTab } from '@/components/admin/product/TechnicalTab';
 import { EanTab } from '@/components/admin/product/EanTab';
 import { ImagesTab } from '@/components/admin/product/ImagesTab';
 import { PairingsTab } from '@/components/admin/product/PairingsTab';
+import { CompositionTab } from '@/components/admin/product/CompositionTab';
 import { LivePreviewPanel } from '@/components/admin/product/LivePreviewPanel';
 import { ChangeLogTimeline } from '@/components/admin/ChangeLogTimeline';
 import { CopyLink } from '@/components/admin/CopyLink';
@@ -197,6 +198,7 @@ export default function AdminProductDetail() {
               <TabsTrigger value="ean">EAN Codes</TabsTrigger>
               <TabsTrigger value="images">Images</TabsTrigger>
               <TabsTrigger value="pairings">Pairings</TabsTrigger>
+              <TabsTrigger value="composition">Composition</TabsTrigger>
               <TabsTrigger value="layout">Layout</TabsTrigger>
               <TabsTrigger value="history">History</TabsTrigger>
             </TabsList>
@@ -223,6 +225,9 @@ export default function AdminProductDetail() {
             </TabsContent>
             <TabsContent value="pairings">
               <PairingsTab productId={product.id} onSaved={() => markTouched(['pairings'])} />
+            </TabsContent>
+            <TabsContent value="composition">
+              <CompositionTab productId={product.id} onSaved={() => { markTouched(['composition']); invalidateProduct(); }} />
             </TabsContent>
             <TabsContent value="layout">
               <LayoutTab productId={product.id} onSave={invalidateProduct} />
