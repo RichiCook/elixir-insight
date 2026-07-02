@@ -25,6 +25,7 @@ const AdminImageLibrary        = lazy(() => import('@/pages/AdminImageLibrary'))
 const AdminAnalytics           = lazy(() => import('@/pages/AdminAnalytics'));
 const AdminActivations         = lazy(() => import('@/pages/AdminActivations'));
 const AdminLeads               = lazy(() => import('@/pages/AdminLeads'));
+const AdminScans               = lazy(() => import('@/pages/AdminScans'));
 const AdminActivationEditor    = lazy(() => import('@/pages/AdminActivationEditor'));
 const AdminDefaultLayout       = lazy(() => import('@/pages/AdminDefaultLayout'));
 const AdminLineContent         = lazy(() => import('@/pages/AdminLineContent'));
@@ -153,6 +154,16 @@ function AppInner() {
             <ProtectedRoute>
               <ErrorBoundary>
                 <AdminLeads />
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/scans"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <AdminScans />
               </ErrorBoundary>
             </ProtectedRoute>
           }

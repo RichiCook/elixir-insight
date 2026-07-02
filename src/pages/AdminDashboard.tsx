@@ -103,6 +103,9 @@ export default function AdminDashboard() {
           {perms.canViewAnalytics && (
             <Link to="/admin/analytics"><Button variant="outline" size="sm">Analytics</Button></Link>
           )}
+          {perms.canViewAnalytics && (
+            <Link to="/admin/scans"><Button variant="outline" size="sm">Scan Explorer</Button></Link>
+          )}
           {perms.canManageSettings && (
             <Link to="/admin/site-settings"><Button variant="outline" size="sm">Site Settings</Button></Link>
           )}
