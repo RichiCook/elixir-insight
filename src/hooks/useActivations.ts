@@ -165,6 +165,21 @@ export function useActivationLeads(activationId: string | undefined) {
   });
 }
 
+/** All captured leads across every activation, newest first (admin dashboard). */
+export function useAllActivationLeads() {
+  return useQuery({
+    queryKey: ['all-activation-leads'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('activation_leads')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+}
+
 export function useSubmitActivationLead() {
   return useMutation({
     mutationFn: async (lead: {

@@ -30,9 +30,12 @@ function safeUrl(url: unknown): string | undefined {
   return typeof url === 'string' && /^https?:\/\//i.test(url) ? url : undefined;
 }
 
-/** Discount reveal shown after a successful lead capture: the code + a button
- *  that opens the discount URL (with the code appended if the URL has no path/query). */
-function RewardReveal({ code, url }: { code?: string | null; url?: unknown }) {
+/** Discount reveal shown after a successful lead capture: the code (coupon
+ *  style) + a button that opens the discount URL. Label and button text are
+ *  editable per activation (content.reward_label / content.reward_button_text). */
+function RewardReveal({ code, url, codeLabel, buttonText }: {
+  code?: string | null; url?: unknown; codeLabel?: unknown; buttonText?: unknown;
+}) {
   const base = safeUrl(url);
   const trimmed = typeof code === 'string' ? code.trim() : '';
   if (!trimmed && !base) return null;
@@ -45,12 +48,14 @@ function RewardReveal({ code, url }: { code?: string | null; url?: unknown }) {
       href = u.toString();
     } catch { /* keep base */ }
   }
+  const label = (typeof codeLabel === 'string' && codeLabel.trim()) || 'Your discount code';
+  const btn = (typeof buttonText === 'string' && buttonText.trim()) || 'Redeem your discount';
   return (
-    <div className="mt-4 space-y-2">
+    <div className="mt-5 space-y-3">
       {trimmed && (
-        <div className="inline-block px-4 py-2 rounded-lg" style={{ backgroundColor: '#b8975a', color: '#fff' }}>
-          <p className="text-[10px] uppercase tracking-wider mb-1">Your discount code</p>
-          <p className="font-mono text-lg font-bold">{trimmed}</p>
+        <div className="mx-auto max-w-[260px] rounded-xl border border-dashed px-5 py-3.5 text-center" style={{ borderColor: '#c9a96e', backgroundColor: '#fbf7ef' }}>
+          <p className="font-sans-consumer text-[9px] tracking-[0.24em] uppercase mb-1.5" style={{ color: '#9a8a72' }}>{label}</p>
+          <p className="font-mono text-xl font-semibold tracking-[0.18em]" style={{ color: '#2a2a2a' }}>{trimmed}</p>
         </div>
       )}
       {href && (
@@ -58,10 +63,10 @@ function RewardReveal({ code, url }: { code?: string | null; url?: unknown }) {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="block w-full text-center font-sans-consumer text-[13px] font-medium tracking-[0.06em] text-white rounded py-3"
-          style={{ backgroundColor: '#0a0a0a' }}
+          className="block w-full text-center font-sans-consumer text-[12px] font-medium tracking-[0.14em] uppercase text-white rounded-full py-3.5 transition-transform hover:scale-[1.02]"
+          style={{ backgroundColor: '#b8975a' }}
         >
-          Redeem your discount ↗
+          {btn} ↗
         </a>
       )}
     </div>
@@ -313,7 +318,7 @@ function LeadCaptureActivation({ activation, productSlug, brandName = 'Classy Co
               <p className="font-sans-consumer text-sm mt-2" style={{ color: '#5a5a5a' }}>
                 {content.success_message || 'Thank you!'}
               </p>
-              <RewardReveal code={activation.reward_code} url={content.reward_url} />
+              <RewardReveal code={activation.reward_code} url={content.reward_url} codeLabel={content.reward_label} buttonText={content.reward_button_text} />
             </motion.div>
           ) : (
             <motion.form key="form" onSubmit={handleSubmit} className="space-y-3">
@@ -326,7 +331,7 @@ function LeadCaptureActivation({ activation, productSlug, brandName = 'Classy Co
                   value={form.name || ''}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   required
-                  className="w-full px-4 py-2.5 rounded-lg text-sm border"
+                  className="w-full px-4 py-2.5 rounded-lg text-base border"
                   style={{ borderColor: '#e5e0d8', backgroundColor: '#fff', color: '#2a2a2a' }}
                 />
               )}
@@ -337,7 +342,7 @@ function LeadCaptureActivation({ activation, productSlug, brandName = 'Classy Co
                   value={form.email || ''}
                   onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                   required
-                  className="w-full px-4 py-2.5 rounded-lg text-sm border"
+                  className="w-full px-4 py-2.5 rounded-lg text-base border"
                   style={{ borderColor: '#e5e0d8', backgroundColor: '#fff', color: '#2a2a2a' }}
                 />
               )}
@@ -347,7 +352,7 @@ function LeadCaptureActivation({ activation, productSlug, brandName = 'Classy Co
                   placeholder="Phone"
                   value={form.phone || ''}
                   onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-lg text-sm border"
+                  className="w-full px-4 py-2.5 rounded-lg text-base border"
                   style={{ borderColor: '#e5e0d8', backgroundColor: '#fff', color: '#2a2a2a' }}
                 />
               )}
@@ -451,13 +456,13 @@ function LeadCaptureRatingActivation({ activation, productSlug, brandName = 'Cla
             <motion.form key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onSubmit={handleSubmit} className="space-y-3">
               {content.form_title && <h3 className="font-display text-lg" style={{ color: '#2a2a2a' }}>{content.form_title}</h3>}
               {fields.includes('name') && (
-                <input type="text" placeholder="Name" value={form.name || ''} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required className="w-full px-4 py-2.5 rounded-lg text-sm border" style={{ borderColor: '#e5e0d8', backgroundColor: '#fff', color: '#2a2a2a' }} />
+                <input type="text" placeholder="Name" value={form.name || ''} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required className="w-full px-4 py-2.5 rounded-lg text-base border" style={{ borderColor: '#e5e0d8', backgroundColor: '#fff', color: '#2a2a2a' }} />
               )}
               {fields.includes('email') && (
-                <input type="email" placeholder="Email" value={form.email || ''} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} required className="w-full px-4 py-2.5 rounded-lg text-sm border" style={{ borderColor: '#e5e0d8', backgroundColor: '#fff', color: '#2a2a2a' }} />
+                <input type="email" placeholder="Email" value={form.email || ''} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} required className="w-full px-4 py-2.5 rounded-lg text-base border" style={{ borderColor: '#e5e0d8', backgroundColor: '#fff', color: '#2a2a2a' }} />
               )}
               {fields.includes('phone') && (
-                <input type="tel" placeholder="Phone" value={form.phone || ''} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} className="w-full px-4 py-2.5 rounded-lg text-sm border" style={{ borderColor: '#e5e0d8', backgroundColor: '#fff', color: '#2a2a2a' }} />
+                <input type="tel" placeholder="Phone" value={form.phone || ''} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} className="w-full px-4 py-2.5 rounded-lg text-base border" style={{ borderColor: '#e5e0d8', backgroundColor: '#fff', color: '#2a2a2a' }} />
               )}
               {/* GDPR consent — required before submit */}
               <label className="flex items-start gap-2 cursor-pointer">
@@ -488,7 +493,7 @@ function LeadCaptureRatingActivation({ activation, productSlug, brandName = 'Cla
               <p className="font-sans-consumer text-sm mt-2" style={{ color: '#5a5a5a' }}>
                 {content.success_message || 'Thank you!'}
               </p>
-              <RewardReveal code={activation.reward_code} url={content.reward_url} />
+              <RewardReveal code={activation.reward_code} url={content.reward_url} codeLabel={content.reward_label} buttonText={content.reward_button_text} />
             </motion.div>
           )}
         </AnimatePresence>
