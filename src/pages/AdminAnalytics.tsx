@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { format } from 'date-fns';
 import { useProducts } from '@/hooks/useProduct';
-import { usePageViews, useSectionInteractions, useImageViews, useImageStats, type DateRange } from '@/hooks/useAnalytics';
+import { usePageViews, useSectionInteractions, useScanEvents, useImageViews, useImageStats, type DateRange } from '@/hooks/useAnalytics';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
@@ -89,6 +90,7 @@ export default function AdminAnalytics() {
   const { data: products } = useProducts();
   const { data: pageViews = [], isLoading: pvLoading } = usePageViews(range);
   const { data: interactions = [], isLoading: intLoading } = useSectionInteractions(range);
+  const { data: scanEvents = [] } = useScanEvents(range);
   const { data: imageStats } = useImageStats();
 
   const isLoading = pvLoading || intLoading;
@@ -198,22 +200,29 @@ export default function AdminAnalytics() {
 
   // Timeline
   const timelineData = useMemo(() => {
+    const isHourly = range === '24h';
+    const bucketKey = (v: any) => isHourly
+      ? (v.viewed_at || '').substring(0, 13)
+      : (v.viewed_at || '').substring(0, 10);
+    const bucketLabel = (key: string) => isHourly
+      ? key.substring(11) + ':00'
+      : key;
     const dayMap: Record<string, Record<string, number>> = {};
     const allSlugs = new Set<string>();
     pageViews.forEach((v: any) => {
-      const day = (v.viewed_at || '').substring(0, 10);
-      if (!day) return;
-      if (!dayMap[day]) dayMap[day] = {};
-      dayMap[day][v.product_slug] = (dayMap[day][v.product_slug] || 0) + 1;
+      const key = bucketKey(v);
+      if (!key) return;
+      if (!dayMap[key]) dayMap[key] = {};
+      dayMap[key][v.product_slug] = (dayMap[key][v.product_slug] || 0) + 1;
       allSlugs.add(v.product_slug);
     });
     return {
       data: Object.entries(dayMap)
         .sort((a, b) => a[0].localeCompare(b[0]))
-        .map(([day, slugs]) => ({ day, ...slugs })),
+        .map(([key, slugs]) => ({ day: bucketLabel(key), ...slugs })),
       slugs: Array.from(allSlugs),
     };
-  }, [pageViews]);
+  }, [pageViews, range]);
 
   // Peak day
   const peakDay = useMemo(() => {
@@ -280,8 +289,9 @@ export default function AdminAnalytics() {
         </div>
         <div className="flex items-center gap-3">
           <Select value={range} onValueChange={(v) => setRange(v as DateRange)}>
-            <SelectTrigger className="w-[150px] text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-[160px] text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
+              <SelectItem value="24h">Last 24 hours</SelectItem>
               <SelectItem value="7d">Last 7 days</SelectItem>
               <SelectItem value="30d">Last 30 days</SelectItem>
               <SelectItem value="90d">Last 90 days</SelectItem>
@@ -515,11 +525,88 @@ export default function AdminAnalytics() {
               </>
             )}
 
-            {/* SECTION 8: Export */}
+            {/* SECTION 8: Scan Log */}
+            <SectionTitle>Scan Log</SectionTitle>
+            <div className="rounded-lg overflow-hidden" style={{ backgroundColor: COLORS.bg, border: '1px solid rgba(255,255,255,0.07)' }}>
+              {scanEvents.length === 0 ? (
+                <p className="text-xs text-muted-foreground p-5">No scans recorded in this period.</p>
+              ) : (
+                <>
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-border">
+                        {['Time', 'Product', 'Language', 'Country', 'City', 'Source'].map((h) => (
+                          <th key={h} className="px-4 py-2 text-left font-admin text-[9px] uppercase tracking-wider text-muted-foreground">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {scanEvents.slice(0, 200).map((e: any) => (
+                        <tr key={e.id} className="border-b border-border/30 hover:bg-white/[0.02]">
+                          <td className="px-4 py-2 text-muted-foreground whitespace-nowrap">{e.scanned_at ? format(new Date(e.scanned_at), 'PP p') : '—'}</td>
+                          <td className="px-4 py-2 text-foreground">{e.product_slug || '—'}</td>
+                          <td className="px-4 py-2 text-muted-foreground">{e.language?.toUpperCase() || '—'}</td>
+                          <td className="px-4 py-2 text-muted-foreground">{e.country || '—'}</td>
+                          <td className="px-4 py-2 text-muted-foreground">{e.city || '—'}</td>
+                          <td className="px-4 py-2 text-muted-foreground">{e.ean_code ? `EAN ${e.ean_code}` : (e.source || 'QR')}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {scanEvents.length > 200 && (
+                    <p className="text-[10px] text-muted-foreground px-4 py-2">Showing 200 of {scanEvents.length} scans</p>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* SECTION 9: User Event Log */}
+            <SectionTitle>User Event Log</SectionTitle>
+            <div className="rounded-lg overflow-hidden" style={{ backgroundColor: COLORS.bg, border: '1px solid rgba(255,255,255,0.07)' }}>
+              {interactions.length === 0 ? (
+                <p className="text-xs text-muted-foreground p-5">No events recorded in this period.</p>
+              ) : (
+                <>
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-border">
+                        {['Time', 'Product', 'Section', 'Event'].map((h) => (
+                          <th key={h} className="px-4 py-2 text-left font-admin text-[9px] uppercase tracking-wider text-muted-foreground">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {interactions.slice(0, 200).map((e: any) => (
+                        <tr key={e.id} className="border-b border-border/30 hover:bg-white/[0.02]">
+                          <td className="px-4 py-2 text-muted-foreground whitespace-nowrap">{e.interacted_at ? format(new Date(e.interacted_at), 'PP p') : '—'}</td>
+                          <td className="px-4 py-2 text-foreground">{e.product_slug || '—'}</td>
+                          <td className="px-4 py-2 text-muted-foreground">{SECTION_LABELS[e.section_name] || e.section_name || '—'}</td>
+                          <td className="px-4 py-2">
+                            <span className="rounded px-1.5 py-0.5 text-[9px] uppercase tracking-wider font-medium"
+                              style={{
+                                backgroundColor: e.interaction_type === 'cta_click' ? 'rgba(184,151,90,0.15)' : 'rgba(255,255,255,0.06)',
+                                color: e.interaction_type === 'cta_click' ? COLORS.gold : '#999',
+                              }}>
+                              {e.interaction_type || 'view'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {interactions.length > 200 && (
+                    <p className="text-[10px] text-muted-foreground px-4 py-2">Showing 200 of {interactions.length} events</p>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* SECTION 10: Export */}
             <SectionTitle>Export & Reports</SectionTitle>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               <Button variant="outline" size="sm" onClick={() => exportCsv(pageViews, 'page_views.csv')}>Export Page Views CSV</Button>
               <Button variant="outline" size="sm" onClick={() => exportCsv(interactions, 'section_interactions.csv')}>Export Interactions CSV</Button>
+              <Button variant="outline" size="sm" onClick={() => exportCsv(scanEvents, 'scan_events.csv')}>Export Scan Log CSV</Button>
               <Button variant="outline" size="sm" onClick={() => toast.info('Coming Soon — PDF reports are in development')}>Generate PDF Report</Button>
             </div>
           </>

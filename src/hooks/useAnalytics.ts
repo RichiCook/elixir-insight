@@ -1,12 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export type DateRange = '7d' | '30d' | '90d' | 'all';
+export type DateRange = '24h' | '7d' | '30d' | '90d' | 'all';
 
 function getDateFilter(range: DateRange): string | null {
   if (range === 'all') return null;
-  const days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
   const d = new Date();
+  if (range === '24h') { d.setHours(d.getHours() - 24); return d.toISOString(); }
+  const days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
   d.setDate(d.getDate() - days);
   return d.toISOString();
 }
@@ -33,6 +34,20 @@ export function useSectionInteractions(range: DateRange) {
       const since = getDateFilter(range);
       if (since) q = q.gte('interacted_at', since);
       const { data, error } = await q.order('interacted_at', { ascending: false }).limit(10000);
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+  });
+}
+
+export function useScanEvents(range: DateRange) {
+  return useQuery({
+    queryKey: ['analytics', 'scan_events', range],
+    queryFn: async () => {
+      let q = (supabase.from('scan_events') as any).select('*');
+      const since = getDateFilter(range);
+      if (since) q = q.gte('scanned_at', since);
+      const { data, error } = await q.order('scanned_at', { ascending: false }).limit(5000);
       if (error) throw error;
       return (data || []) as any[];
     },

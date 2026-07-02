@@ -106,25 +106,35 @@ export default function BottlePage() {
 
     const consented = isQrScan || hasTrackingConsent();
 
-    // Always record the visit for aggregate counts (legitimate interest).
-    // Personal identifiers (session_id, user_agent) are only stored with consent.
-    const payload = {
-      product_slug: product.slug,
-      brand_slug:   brandSlug ?? null,
-      source:       isQrScan ? 'qr' : 'direct',
-      language:     lang,
-      ...(consented && {
-        session_id: getSessionId(),
-        user_agent: navigator.userAgent.slice(0, 255),
-      }),
-    };
+    // Fetch geo from Vercel edge then insert — fire-and-forget.
+    (async () => {
+      let country: string | null = null;
+      let city: string | null = null;
+      let region: string | null = null;
+      try {
+        const geo = await fetch('/api/geo').then((r) => r.json());
+        country = geo.country ?? null;
+        city    = geo.city    ?? null;
+        region  = geo.region  ?? null;
+      } catch {}
 
-    supabase
-      .from('scan_events')
-      .insert(payload as any)
-      .then(({ error }) => {
-        if (error) console.error('[scan_events] insert failed:', error.message, error.details, payload);
-      });
+      const payload = {
+        product_slug: product.slug,
+        brand_slug:   brandSlug ?? null,
+        source:       isQrScan ? 'qr' : 'direct',
+        language:     lang,
+        country,
+        city,
+        region,
+        ...(consented && {
+          session_id: getSessionId(),
+          user_agent: navigator.userAgent.slice(0, 255),
+        }),
+      };
+
+      const { error } = await supabase.from('scan_events').insert(payload as any);
+      if (error) console.error('[scan_events] insert failed:', error.message, error.details, payload);
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product?.id]);
 
