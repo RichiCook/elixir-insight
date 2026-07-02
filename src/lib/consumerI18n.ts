@@ -203,6 +203,39 @@ export function t(lang: string, key: StringKey): string {
 }
 
 // ---------------------------------------------------------------------------
+// Serve-fact value normalization
+// The how-to-serve fields (glass / ice / serving / garnish) are single-value
+// product data, sometimes entered in Italian. On non-Italian pages we map the
+// common Italian bar terms to English so nothing shows in the wrong language.
+// ---------------------------------------------------------------------------
+
+const IT_TO_EN_TERMS: Record<string, string> = {
+  // glass
+  'tumbler basso': 'Tumbler', 'tumbler alto': 'Highball', 'bicchiere basso': 'Tumbler',
+  'coppa': 'Coupe', 'coppetta': 'Coupe', 'calice': 'Glass', 'bicchiere': 'Glass', 'flute': 'Flute',
+  // ice
+  'cubo': 'Cube', 'cubo xl': 'XL Cube', 'cubetto': 'Cube', 'cubetti': 'Cubes', 'listella': 'Stick',
+  'sfera': 'Sphere', 'tritato': 'Crushed', 'ghiaccio tritato': 'Crushed ice',
+  'senza ghiaccio': 'No ice', 'nessuno': 'None', 'senza': 'None',
+  // serving
+  'singolo': 'Single', 'doppio': 'Double', 'porzione singola': 'Single serving',
+  // garnish
+  "scorza d'arancia": 'Orange twist', 'scorza di arancia': 'Orange twist',
+  'scorza di limone': 'Lemon twist', 'scorza di lime': 'Lime twist',
+  'fetta di lime': 'Lime wheel', 'fetta di arancia': 'Orange slice', 'fetta di limone': 'Lemon slice',
+  'spicchio di lime': 'Lime wedge', 'zenzero candito': 'Candied ginger',
+  'zenzero': 'Ginger', 'peperoncino': 'Chilli', 'peperoncino rosso': 'Red chilli',
+};
+
+/** Normalize an Italian serve-fact value to English on non-Italian pages. */
+export function localizeServeValue(value: string | null | undefined, lang: string): string {
+  const v = (value ?? '').trim();
+  if (!v || lang.toUpperCase() === 'IT') return v;
+  const hit = IT_TO_EN_TERMS[v.toLowerCase()];
+  return hit ?? v;
+}
+
+// ---------------------------------------------------------------------------
 // Section custom_content multilingual helper
 // ---------------------------------------------------------------------------
 
