@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import DOMPurify from 'dompurify';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type Activation, useSubmitActivationLead } from '@/hooks/useActivations';
@@ -94,6 +94,21 @@ function VideoActivation({ content }: { content: Record<string, any> }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const url = typeof content.video_url === 'string' ? content.video_url.trim() : '';
+  const autoplay = !!content.autoplay;
+
+  // React's `muted` attribute is unreliable on <video>, so the browser sees an
+  // unmuted element and blocks muted-autoplay (esp. iOS). Force the muted
+  // *property* on the DOM node and kick off playback once it can start.
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v || !autoplay) return;
+    v.muted = true;
+    const tryPlay = () => v.play().then(() => setStarted(true)).catch(() => {});
+    tryPlay();
+    v.addEventListener('canplay', tryPlay, { once: true });
+    return () => v.removeEventListener('canplay', tryPlay);
+  }, [autoplay, url]);
+
   if (!/^https?:\/\//i.test(url)) return null;
 
   // Play-button label: undefined = never configured → legacy default;
@@ -145,10 +160,10 @@ function VideoActivation({ content }: { content: Record<string, any> }) {
               className="block w-full h-auto"
               controls={started}
               playsInline
-              preload="metadata"
+              preload={autoplay ? 'auto' : 'metadata'}
               poster={typeof content.poster_url === 'string' ? content.poster_url : undefined}
-              autoPlay={!!content.autoplay}
-              muted={!!content.autoplay}
+              autoPlay={autoplay}
+              muted={autoplay}
               loop={!!content.loop}
             />
             {!started && (
