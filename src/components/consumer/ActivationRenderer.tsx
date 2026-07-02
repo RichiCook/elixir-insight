@@ -30,6 +30,44 @@ function safeUrl(url: unknown): string | undefined {
   return typeof url === 'string' && /^https?:\/\//i.test(url) ? url : undefined;
 }
 
+/** Discount reveal shown after a successful lead capture: the code + a button
+ *  that opens the discount URL (with the code appended if the URL has no path/query). */
+function RewardReveal({ code, url }: { code?: string | null; url?: unknown }) {
+  const base = safeUrl(url);
+  const trimmed = typeof code === 'string' ? code.trim() : '';
+  if (!trimmed && !base) return null;
+  // If a code exists and the URL is a bare origin, append it so the shop can apply it.
+  let href = base;
+  if (base && trimmed) {
+    try {
+      const u = new URL(base);
+      if (u.pathname === '/' && !u.search) u.searchParams.set('discount', trimmed);
+      href = u.toString();
+    } catch { /* keep base */ }
+  }
+  return (
+    <div className="mt-4 space-y-2">
+      {trimmed && (
+        <div className="inline-block px-4 py-2 rounded-lg" style={{ backgroundColor: '#b8975a', color: '#fff' }}>
+          <p className="text-[10px] uppercase tracking-wider mb-1">Your discount code</p>
+          <p className="font-mono text-lg font-bold">{trimmed}</p>
+        </div>
+      )}
+      {href && (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block w-full text-center font-sans-consumer text-[13px] font-medium tracking-[0.06em] text-white rounded py-3"
+          style={{ backgroundColor: '#0a0a0a' }}
+        >
+          Redeem your discount ↗
+        </a>
+      )}
+    </div>
+  );
+}
+
 function ActivationCard({ activation, productSlug, brandName }: { activation: Activation; productSlug: string; brandName?: string }) {
   const { activation_type, content } = activation;
 
@@ -275,6 +313,7 @@ function LeadCaptureActivation({ activation, productSlug, brandName = 'Classy Co
               <p className="font-sans-consumer text-sm mt-2" style={{ color: '#5a5a5a' }}>
                 {content.success_message || 'Thank you!'}
               </p>
+              <RewardReveal code={activation.reward_code} url={content.reward_url} />
             </motion.div>
           ) : (
             <motion.form key="form" onSubmit={handleSubmit} className="space-y-3">
@@ -449,12 +488,7 @@ function LeadCaptureRatingActivation({ activation, productSlug, brandName = 'Cla
               <p className="font-sans-consumer text-sm mt-2" style={{ color: '#5a5a5a' }}>
                 {content.success_message || 'Thank you!'}
               </p>
-              {activation.reward_code && (
-                <div className="mt-3 inline-block px-4 py-2 rounded-lg" style={{ backgroundColor: '#b8975a', color: '#fff' }}>
-                  <p className="text-[10px] uppercase tracking-wider mb-1">Your reward code</p>
-                  <p className="font-mono text-lg font-bold">{activation.reward_code}</p>
-                </div>
-              )}
+              <RewardReveal code={activation.reward_code} url={content.reward_url} />
             </motion.div>
           )}
         </AnimatePresence>
