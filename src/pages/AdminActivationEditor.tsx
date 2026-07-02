@@ -667,6 +667,15 @@ function ContentEditor({ type, content, onChange }: { type: ActivationType; cont
             <Input value={content.submit_text || 'Submit'} onChange={(e) => set('submit_text', e.target.value)} />
           </div>
           <div>
+            <Label className="text-xs text-muted-foreground mb-1.5 block">Discount / Reward Code (optional)</Label>
+            <Input value={content.reward_code || ''} onChange={(e) => set('reward_code', e.target.value)} placeholder="SUMMER10" />
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1.5 block">Discount URL (optional)</Label>
+            <Input value={content.reward_url || ''} onChange={(e) => set('reward_url', e.target.value)} placeholder="https://shop.classycocktails.com/discount/SUMMER10" />
+            <p className="text-[10px] text-muted-foreground mt-1">Shown as a “Redeem your discount” button after submit. Use a link that applies the discount (e.g. a Shopify discount link).</p>
+          </div>
+          <div>
             <Label className="text-xs text-muted-foreground mb-1.5 block">Success Message</Label>
             <Input value={content.success_message || 'Thank you!'} onChange={(e) => set('success_message', e.target.value)} />
           </div>
@@ -712,8 +721,13 @@ function ContentEditor({ type, content, onChange }: { type: ActivationType; cont
             </div>
           </div>
           <div>
-            <Label className="text-xs text-muted-foreground mb-1.5 block">Reward Code (optional)</Label>
+            <Label className="text-xs text-muted-foreground mb-1.5 block">Discount / Reward Code (optional)</Label>
             <Input value={content.reward_code || ''} onChange={(e) => set('reward_code', e.target.value)} placeholder="SUMMER10" />
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1.5 block">Discount URL (optional)</Label>
+            <Input value={content.reward_url || ''} onChange={(e) => set('reward_url', e.target.value)} placeholder="https://shop.classycocktails.com/discount/SUMMER10" />
+            <p className="text-[10px] text-muted-foreground mt-1">Shown as a “Redeem your discount” button after submit.</p>
           </div>
           <div>
             <Label className="text-xs text-muted-foreground mb-1.5 block">Success Message</Label>

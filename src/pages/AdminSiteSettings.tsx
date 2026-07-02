@@ -19,6 +19,11 @@ export default function AdminSiteSettings() {
   const [loading, setLoading] = useState(true);
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [initial, setInitial] = useState<SiteSettingsForm | undefined>();
+  // Classy brand logo (stored on the brands table, shown on consumer pages)
+  const [brandId, setBrandId] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState('');
+  const [logoPicker, setLogoPicker] = useState(false);
+  const [savingLogo, setSavingLogo] = useState(false);
 
   useEffect(() => {
     supabase.from('site_settings' as any).select('*').limit(1).single().then(({ data }) => {
@@ -28,7 +33,21 @@ export default function AdminSiteSettings() {
       }
       setLoading(false);
     });
+    supabase.from('brands' as any).select('id, logo_url').eq('slug', 'classy').maybeSingle().then(({ data }) => {
+      if (data) { setBrandId((data as any).id); setLogoUrl((data as any).logo_url || ''); }
+    });
   }, []);
+
+  const saveLogo = async (url: string | null) => {
+    if (!brandId) { toast.error('Brand not found'); return; }
+    setSavingLogo(true);
+    const { error } = await supabase.from('brands' as any).update({ logo_url: url || null }).eq('id', brandId);
+    setSavingLogo(false);
+    if (error) { toast.error('Failed to save logo'); return; }
+    setLogoUrl(url || '');
+    toast.success(url ? 'Brand logo saved' : 'Brand logo removed');
+  };
+  const handleLogoSelected = (url: string) => { setLogoPicker(false); saveLogo(url); };
 
   const { form, set, saving, handleSave } = useApiForm<SiteSettingsForm>(initial, async (data) => {
     if (!settingsId) return;
@@ -103,6 +122,31 @@ export default function AdminSiteSettings() {
           <p className="text-xs text-muted-foreground">Upload or pick from your image library. Square images (32×32 or 64×64) work best.</p>
         </div>
 
+        {/* Brand Logo (Classy) — saved immediately */}
+        <div className="space-y-2">
+          <Label>Brand Logo — Classy</Label>
+          <div className="flex items-center gap-4">
+            {logoUrl ? (
+              <div className="h-12 px-2 border border-border rounded flex items-center bg-muted overflow-hidden">
+                <img src={logoUrl} alt="Brand logo" className="h-8 w-auto object-contain" />
+              </div>
+            ) : (
+              <div className="w-12 h-12 border border-border rounded flex items-center justify-center bg-muted">
+                <span className="text-xs text-muted-foreground">None</span>
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setLogoPicker(true)} disabled={!brandId || savingLogo}>
+                <Upload className="w-3 h-3 mr-1" /> {savingLogo ? 'Saving…' : 'Upload Logo'}
+              </Button>
+              {logoUrl && (
+                <Button variant="ghost" size="sm" onClick={() => saveLogo(null)} disabled={savingLogo}>Remove</Button>
+              )}
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">Shown on the consumer bottle pages. PNG with a transparent background works best. Saved as soon as you pick it.</p>
+        </div>
+
         <Button onClick={handleSave} disabled={saving} className="bg-primary text-primary-foreground">
           {saving ? 'Saving…' : 'Save Settings'}
         </Button>
@@ -114,6 +158,17 @@ export default function AdminSiteSettings() {
             <ImagePickerDialog
               onClose={() => setShowImagePicker(false)}
               onSelect={handleFaviconSelected}
+            />
+          </div>
+        </div>
+      )}
+
+      {logoPicker && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-background rounded-lg border border-border max-w-3xl w-full max-h-[80vh] overflow-auto p-4">
+            <ImagePickerDialog
+              onClose={() => setLogoPicker(false)}
+              onSelect={handleLogoSelected}
             />
           </div>
         </div>
