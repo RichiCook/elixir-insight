@@ -1,5 +1,5 @@
 import type { Database } from '@/integrations/supabase/types';
-import { t } from '@/lib/consumerI18n';
+import { t, localizeServeValue } from '@/lib/consumerI18n';
 
 type Product = Database['public']['Tables']['products']['Row'];
 
@@ -38,7 +38,7 @@ export function BottleQuickFacts({ product, lang = 'EN', translation }: Props) {
               {t(lang, fact.labelKey)}
             </p>
             <p className="font-sans-consumer text-sm text-cc-text">
-              {fact.value}
+              {localizeServeValue(fact.value, lang)}
             </p>
           </div>
         ))}

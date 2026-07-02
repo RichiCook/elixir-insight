@@ -6,6 +6,7 @@ const STORAGE_KEY = 'cc_age_verified';
 interface Props {
   brandName?: string;
   brandWebsiteUrl?: string;
+  logoUrl?: string | null;
 }
 
 export function AgeGate({ brandWebsiteUrl = 'https://classycocktails.com' }: Props) {

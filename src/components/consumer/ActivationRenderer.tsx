@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import DOMPurify from 'dompurify';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type Activation, useSubmitActivationLead } from '@/hooks/useActivations';
@@ -100,12 +100,30 @@ function VideoActivation({ content }: { content: Record<string, any> }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const url = typeof content.video_url === 'string' ? content.video_url.trim() : '';
+  const autoplay = !!content.autoplay;
+
+  // React's `muted` attribute is unreliable on <video>, so the browser sees an
+  // unmuted element and blocks muted-autoplay (esp. iOS). Force the muted
+  // *property* on the DOM node and kick off playback once it can start.
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v || !autoplay) return;
+    v.muted = true;
+    const tryPlay = () => v.play().then(() => setStarted(true)).catch(() => {});
+    tryPlay();
+    v.addEventListener('canplay', tryPlay, { once: true });
+    return () => v.removeEventListener('canplay', tryPlay);
+  }, [autoplay, url]);
+
   if (!/^https?:\/\//i.test(url)) return null;
 
+  // Play-button label: undefined = never configured → legacy default;
+  // empty string = explicitly cleared → icon-only button; otherwise the text.
   const playLabel =
-    typeof content.play_label === 'string' && content.play_label.trim()
-      ? content.play_label
-      : 'Ascolta la storia del drink';
+    content.play_label === undefined || content.play_label === null
+      ? 'Ascolta la storia del drink'
+      : String(content.play_label).trim();
+  const hasLabel = playLabel.length > 0;
 
   // YouTube / Vimeo → iframe embed. Anything else (e.g. an uploaded .mp4 in the
   // brand-videos bucket) → native <video> player.
@@ -148,16 +166,16 @@ function VideoActivation({ content }: { content: Record<string, any> }) {
               className="block w-full h-auto"
               controls={started}
               playsInline
-              preload="metadata"
+              preload={autoplay ? 'auto' : 'metadata'}
               poster={typeof content.poster_url === 'string' ? content.poster_url : undefined}
-              autoPlay={!!content.autoplay}
-              muted={!!content.autoplay}
+              autoPlay={autoplay}
+              muted={autoplay}
               loop={!!content.loop}
             />
             {!started && (
               <button
                 type="button"
-                aria-label={playLabel}
+                aria-label={hasLabel ? playLabel : 'Play'}
                 onClick={() => {
                   const v = videoRef.current;
                   if (v) { v.muted = false; void v.play(); }
@@ -166,13 +184,15 @@ function VideoActivation({ content }: { content: Record<string, any> }) {
               >
                 {/* subtle darkening so the button reads on any frame */}
                 <span className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-black/20" />
-                <span className="relative flex items-center gap-3 rounded-full border border-white/40 bg-white/10 px-6 py-3.5 text-white shadow-[0_8px_30px_rgba(0,0,0,0.35)] backdrop-blur-md transition duration-300 group-hover:scale-[1.03] group-hover:bg-white/20">
+                <span className={`relative flex items-center rounded-full border border-white/40 bg-white/10 text-white shadow-[0_8px_30px_rgba(0,0,0,0.35)] backdrop-blur-md transition duration-300 group-hover:scale-[1.03] group-hover:bg-white/20 ${hasLabel ? 'gap-3 px-6 py-3.5' : 'p-4'}`}>
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20 ring-1 ring-white/30 backdrop-blur-sm">
                     <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 translate-x-[1px] fill-white">
                       <path d="M8 5v14l11-7z" />
                     </svg>
                   </span>
-                  <span className="font-sans-consumer text-[13px] font-medium tracking-[0.06em]">{playLabel}</span>
+                  {hasLabel && (
+                    <span className="font-sans-consumer text-[13px] font-medium tracking-[0.06em]">{playLabel}</span>
+                  )}
                 </span>
               </button>
             )}
@@ -388,8 +408,8 @@ function LeadCaptureActivation({ activation, productSlug, brandName = 'Classy Co
                   value={form.name || ''}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   required
-                  className="w-full px-4 py-2.5 rounded-lg text-sm border"
-                  style={inputStyle}
+                  className="w-full px-4 py-2.5 rounded-lg text-base border"
+                  style={{ borderColor: '#e5e0d8', backgroundColor: '#fff', color: '#2a2a2a' }}
                 />
               )}
               {fields.includes('email') && (
@@ -399,8 +419,8 @@ function LeadCaptureActivation({ activation, productSlug, brandName = 'Classy Co
                   value={form.email || ''}
                   onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                   required
-                  className="w-full px-4 py-2.5 rounded-lg text-sm border"
-                  style={inputStyle}
+                  className="w-full px-4 py-2.5 rounded-lg text-base border"
+                  style={{ borderColor: '#e5e0d8', backgroundColor: '#fff', color: '#2a2a2a' }}
                 />
               )}
               {fields.includes('phone') && (
@@ -409,8 +429,8 @@ function LeadCaptureActivation({ activation, productSlug, brandName = 'Classy Co
                   placeholder="Phone"
                   value={form.phone || ''}
                   onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-lg text-sm border"
-                  style={inputStyle}
+                  className="w-full px-4 py-2.5 rounded-lg text-base border"
+                  style={{ borderColor: '#e5e0d8', backgroundColor: '#fff', color: '#2a2a2a' }}
                 />
               )}
               {/* GDPR consent — required before submit */}
@@ -513,13 +533,13 @@ function LeadCaptureRatingActivation({ activation, productSlug, brandName = 'Cla
             <motion.form key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onSubmit={handleSubmit} className="space-y-3">
               {content.form_title && <h3 className="font-display text-lg" style={{ color: '#2a2a2a' }}>{content.form_title}</h3>}
               {fields.includes('name') && (
-                <input type="text" placeholder="Name" value={form.name || ''} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required className="w-full px-4 py-2.5 rounded-lg text-sm border" style={{ borderColor: '#e5e0d8', backgroundColor: '#fff', color: '#2a2a2a' }} />
+                <input type="text" placeholder="Name" value={form.name || ''} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required className="w-full px-4 py-2.5 rounded-lg text-base border" style={{ borderColor: '#e5e0d8', backgroundColor: '#fff', color: '#2a2a2a' }} />
               )}
               {fields.includes('email') && (
-                <input type="email" placeholder="Email" value={form.email || ''} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} required className="w-full px-4 py-2.5 rounded-lg text-sm border" style={{ borderColor: '#e5e0d8', backgroundColor: '#fff', color: '#2a2a2a' }} />
+                <input type="email" placeholder="Email" value={form.email || ''} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} required className="w-full px-4 py-2.5 rounded-lg text-base border" style={{ borderColor: '#e5e0d8', backgroundColor: '#fff', color: '#2a2a2a' }} />
               )}
               {fields.includes('phone') && (
-                <input type="tel" placeholder="Phone" value={form.phone || ''} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} className="w-full px-4 py-2.5 rounded-lg text-sm border" style={{ borderColor: '#e5e0d8', backgroundColor: '#fff', color: '#2a2a2a' }} />
+                <input type="tel" placeholder="Phone" value={form.phone || ''} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} className="w-full px-4 py-2.5 rounded-lg text-base border" style={{ borderColor: '#e5e0d8', backgroundColor: '#fff', color: '#2a2a2a' }} />
               )}
               {/* GDPR consent — required before submit */}
               <label className="flex items-start gap-2 cursor-pointer">
@@ -550,12 +570,7 @@ function LeadCaptureRatingActivation({ activation, productSlug, brandName = 'Cla
               <p className="font-sans-consumer text-sm mt-2" style={{ color: '#5a5a5a' }}>
                 {content.success_message || 'Thank you!'}
               </p>
-              {activation.reward_code && (
-                <div className="mt-3 inline-block px-4 py-2 rounded-lg" style={{ backgroundColor: '#b8975a', color: '#fff' }}>
-                  <p className="text-[10px] uppercase tracking-wider mb-1">Your reward code</p>
-                  <p className="font-mono text-lg font-bold">{activation.reward_code}</p>
-                </div>
-              )}
+              <RewardReveal code={activation.reward_code} url={content.reward_url} codeLabel={content.reward_label} buttonText={content.reward_button_text} />
             </motion.div>
           )}
         </AnimatePresence>

@@ -8,10 +8,15 @@ interface Props {
   product: Product;
 }
 
+/** Show the alcohol unit when the ABV field is a bare number (e.g. "10.7" → "10.7% Vol"). */
+function formatAbv(abv: string | null | undefined): string {
+  const v = (abv ?? '').trim();
+  if (!v) return '';
+  if (/%|vol|abv|alc/i.test(v)) return v; // already has a unit
+  return `${v}% Vol`;
+}
+
 export function GenuineCard({ product }: Props) {
-  const handleViewDpp = () => {
-    window.dispatchEvent(new CustomEvent('dpp:open'));
-  };
   const isNoRegrets = product.line === 'No Regrets';
   return (
     <motion.div
@@ -58,34 +63,6 @@ export function GenuineCard({ product }: Props) {
         </div>
       </div>
 
-      {/* Divider */}
-      <div className="border-t border-cc-border mb-3" />
-
-      {/* Bottom row */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          <span
-            className="w-1.5 h-1.5 rounded-full bg-cc-green"
-            style={{ animation: 'cc-pulse-dot 2.4s ease-in-out infinite' }}
-          />
-          <style>{`
-            @keyframes cc-pulse-dot {
-              0%, 100% { opacity: 1; transform: scale(1); }
-              50% { opacity: 0.35; transform: scale(0.85); }
-            }
-          `}</style>
-          <span className="font-sans-consumer text-[11px] text-cc-text">
-            Digital Passport Available
-          </span>
-        </div>
-        <button
-          type="button"
-          onClick={handleViewDpp}
-          className="font-sans-consumer text-[11px] border border-cc-border rounded px-4 py-1.5 text-cc-text hover:bg-cc-cream2 transition-colors"
-        >
-          View ↗
-        </button>
-      </div>
     </motion.div>
   );
 }

@@ -31,6 +31,7 @@ import { ActivationSlot } from '@/components/consumer/ActivationRenderer';
 import { useApplySiteSettings } from '@/hooks/useSiteSettings';
 import { useSlugRedirect } from '@/hooks/useSlugRedirect';
 import { useCocktailType } from '@/hooks/useCocktailType';
+import { useAvailableLanguages } from '@/hooks/useAvailableLanguages';
 
 // Map section keys to activation placement names
 const ACTIVATION_AFTER: Record<string, string> = {
@@ -75,6 +76,9 @@ export default function BottlePage() {
   // Signature collab cocktails get a "Explore Classy Cocktails" CTA instead of a per-product store link.
   const { data: cocktailType } = useCocktailType(collab?.id, product?.id, !!collab && !!product);
   const isSignatureCocktail = cocktailType === 'signature';
+
+  // Only offer languages that are actually translated for this product.
+  const shownLangs = useAvailableLanguages(product?.id, availableLangs);
 
   // Technical/nutritional data still fetched separately (admin-only columns
   // are gated by a dedicated RPC — get_product_nutrition — already called
@@ -359,6 +363,7 @@ export default function BottlePage() {
         <AgeGate
           brandName={brand?.name}
           brandWebsiteUrl={brand?.website_url ?? undefined}
+          logoUrl={brand?.logo_url}
         />
       )}
 
@@ -384,25 +389,25 @@ export default function BottlePage() {
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.5 }}>
           {sections.map((sec) => {
-            // Composition is data-driven: it appears whenever the product has
-            // composition data, even if the block is hidden in the layout — and
-            // never appears without data (renderSection returns null when empty).
+            // Composition is data-driven: visible when data exists regardless of is_visible flag.
             const compositionHasData = sec.section_key === 'composition' && composition && composition.length > 0;
             if (!sec.is_visible && !compositionHasData) return null;
             const rendered = renderSection(sec.section_key, effectiveContent(sec), sec.block_type, sec.block_config);
             if (!rendered) return null;
 
             const activationPlacement = ACTIVATION_AFTER[sec.section_key];
+            const acts = Array.isArray(activeActivations) ? activeActivations : [];
+            const hasSlot = !!activationPlacement && acts.some((a: any) => a.placement === activationPlacement);
+            const hasBeforeCta = sec.section_key === 'store_cta' && acts.some((a: any) => a.placement === 'before_cta');
 
             return (
               <div key={sec.section_key}>
-                {/* before_cta slot */}
-                {sec.section_key === 'store_cta' && activeActivations && (
+                {hasBeforeCta && (
                   <ActivationSlot activations={activeActivations} placement="before_cta" productSlug={product.slug} brandName={brand?.name} />
                 )}
                 {rendered}
-                {activationPlacement && activeActivations && (
-                  <ActivationSlot activations={activeActivations} placement={activationPlacement} productSlug={product.slug} brandName={brand?.name} />
+                {hasSlot && (
+                  <ActivationSlot activations={activeActivations} placement={activationPlacement!} productSlug={product.slug} brandName={brand?.name} />
                 )}
               </div>
             );

@@ -609,6 +609,15 @@ function ContentEditor({ type, content, onChange }: { type: ActivationType; cont
             )}
           </div>
           <div>
+            <Label className="text-xs text-muted-foreground mb-1.5 block">Play button text</Label>
+            <Input
+              value={content.play_label ?? 'Ascolta la storia del drink'}
+              onChange={(e) => set('play_label', e.target.value)}
+              placeholder="Leave empty for play icon only"
+            />
+            <p className="text-[10px] text-muted-foreground mt-1">Shown on the play button. Clear it to show just the ▶ icon.</p>
+          </div>
+          <div>
             <Label className="text-xs text-muted-foreground mb-1.5 block">Caption</Label>
             <Input value={content.caption || ''} onChange={(e) => set('caption', e.target.value)} />
           </div>
@@ -731,6 +740,25 @@ function ContentEditor({ type, content, onChange }: { type: ActivationType; cont
             <Input value={content.submit_text || 'Submit'} onChange={(e) => set('submit_text', e.target.value)} />
           </div>
           <div>
+            <Label className="text-xs text-muted-foreground mb-1.5 block">Discount / Reward Code (optional)</Label>
+            <Input value={content.reward_code || ''} onChange={(e) => set('reward_code', e.target.value)} placeholder="SUMMER10" />
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1.5 block">Discount URL (optional)</Label>
+            <Input value={content.reward_url || ''} onChange={(e) => set('reward_url', e.target.value)} placeholder="https://shop.classycocktails.com/discount/SUMMER10" />
+            <p className="text-[10px] text-muted-foreground mt-1">Shown as a “Redeem your discount” button after submit. Use a link that applies the discount (e.g. a Shopify discount link).</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Code label</Label>
+              <Input value={content.reward_label || ''} onChange={(e) => set('reward_label', e.target.value)} placeholder="Your discount code" />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Redeem button text</Label>
+              <Input value={content.reward_button_text || ''} onChange={(e) => set('reward_button_text', e.target.value)} placeholder="Redeem your discount" />
+            </div>
+          </div>
+          <div>
             <Label className="text-xs text-muted-foreground mb-1.5 block">Success Message</Label>
             <Input value={content.success_message || 'Thank you!'} onChange={(e) => set('success_message', e.target.value)} />
           </div>
@@ -826,8 +854,23 @@ function ContentEditor({ type, content, onChange }: { type: ActivationType; cont
             </div>
           </div>
           <div>
-            <Label className="text-xs text-muted-foreground mb-1.5 block">Reward Code (optional)</Label>
+            <Label className="text-xs text-muted-foreground mb-1.5 block">Discount / Reward Code (optional)</Label>
             <Input value={content.reward_code || ''} onChange={(e) => set('reward_code', e.target.value)} placeholder="SUMMER10" />
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1.5 block">Discount URL (optional)</Label>
+            <Input value={content.reward_url || ''} onChange={(e) => set('reward_url', e.target.value)} placeholder="https://shop.classycocktails.com/discount/SUMMER10" />
+            <p className="text-[10px] text-muted-foreground mt-1">Shown as a “Redeem your discount” button after submit.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Code label</Label>
+              <Input value={content.reward_label || ''} onChange={(e) => set('reward_label', e.target.value)} placeholder="Your discount code" />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Redeem button text</Label>
+              <Input value={content.reward_button_text || ''} onChange={(e) => set('reward_button_text', e.target.value)} placeholder="Redeem your discount" />
+            </div>
           </div>
           <div>
             <Label className="text-xs text-muted-foreground mb-1.5 block">Success Message</Label>
