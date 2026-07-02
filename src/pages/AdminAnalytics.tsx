@@ -28,6 +28,25 @@ const LINE_COLORS: Record<string, string> = {
   Sparkling: COLORS.blue,
 };
 
+const PALETTE = [
+  '#b8975a', // gold
+  '#4a8c5c', // green
+  '#4a70c4', // blue
+  '#c45a5a', // red
+  '#9b6dc4', // purple
+  '#c4935a', // amber
+  '#5aa8c4', // teal
+  '#c4b45a', // yellow
+  '#c45a9b', // pink
+  '#5ac4a0', // mint
+  '#7a8cc4', // periwinkle
+  '#c47a5a', // terracotta
+];
+
+function paletteColor(index: number): string {
+  return PALETTE[index % PALETTE.length];
+}
+
 const SECTION_LABELS: Record<string, string> = {
   hero: 'Hero',
   how_to_serve: 'How to Serve',
@@ -331,7 +350,7 @@ export default function AdminAnalytics() {
                   <Tooltip content={<ChartTooltipContent />} />
                   <Bar dataKey="views" radius={[0, 4, 4, 0]}>
                     {productBarData.map((entry, i) => (
-                      <Cell key={i} fill={LINE_COLORS[entry.line] || COLORS.gold} />
+                      <Cell key={i} fill={paletteColor(i)} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -430,8 +449,7 @@ export default function AdminAnalytics() {
                   <Legend />
                   {timelineData.slugs.map((slug, i) => {
                     const p = products?.find((pr) => pr.slug === slug);
-                    const color = LINE_COLORS[p?.line || 'Classic'] || COLORS.gold;
-                    return <Line key={slug} type="monotone" dataKey={slug} name={p?.name || slug} stroke={color} strokeWidth={2} dot={false} />;
+                    return <Line key={slug} type="monotone" dataKey={slug} name={p?.name || slug} stroke={paletteColor(i)} strokeWidth={2} dot={false} />;
                   })}
                 </LineChart>
               </ResponsiveContainer>
