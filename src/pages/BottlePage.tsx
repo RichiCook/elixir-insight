@@ -11,7 +11,8 @@ import { CookieBanner } from '@/components/consumer/CookieBanner';
 import { BottleHero } from '@/components/consumer/BottleHero';
 import { GenuineCard } from '@/components/consumer/GenuineCard';
 import { AbvDisplay } from '@/components/consumer/AbvDisplay';
-import { ClassyLogo } from '@/components/consumer/ClassyLogo';
+import { ClassyWordmark } from '@/components/consumer/ClassyWordmark';
+import { LanguageDropdown } from '@/components/consumer/LanguageDropdown';
 import { BottleQuickFacts } from '@/components/consumer/BottleQuickFacts';
 import { BottleSensory } from '@/components/consumer/BottleSensory';
 import { BottleComposition } from '@/components/consumer/BottleComposition';
@@ -239,7 +240,7 @@ export default function BottlePage() {
       case 'quick_facts':
         return (
           <div ref={serveRef}>
-            <BottleQuickFacts product={product} lang={lang} />
+            <BottleQuickFacts product={product} lang={lang} translation={translation} />
           </div>
         );
       case 'crafted_with':
@@ -364,35 +365,30 @@ export default function BottlePage() {
       <div className="mx-auto max-w-bottle min-h-screen bg-cc-white shadow-xl">
         {/* Top nav — hidden in preview mode */}
         {!isPreview && (
-          <div className="flex items-center justify-between px-5 pt-4">
+          <div className="relative z-20 flex items-center justify-between px-5 py-2">
             <div className="flex items-center gap-2">
-              {brand?.logo_url
-                ? <img src={brand.logo_url} alt={brand.name} className="h-6 w-auto object-contain" />
-                : <ClassyLogo size={24} />
-              }
-              <span className="font-sans-consumer text-[10px] tracking-[0.3em] uppercase text-cc-text-lt">
-                {brand?.name ?? 'Classy Cocktails'}
-              </span>
+              {brand?.logo_url ? (
+                <>
+                  <img src={brand.logo_url} alt={brand.name} className="h-9 w-auto object-contain" />
+                  <span className="font-sans-consumer text-[10px] tracking-[0.3em] uppercase text-cc-text-lt">
+                    {brand?.name}
+                  </span>
+                </>
+              ) : (
+                <ClassyWordmark color="#1a1a1a" height={34} />
+              )}
             </div>
-            <div className="flex gap-2">
-              {availableLangs.map((l) => (
-                <button
-                  key={l}
-                  onClick={() => handleLangSwitch(l)}
-                  className={`font-sans-consumer text-xs tracking-widest px-2 py-1 transition-colors ${
-                    lang === l ? 'text-cc-gold font-medium' : 'text-cc-text-lt hover:text-cc-text-md'
-                  }`}
-                >
-                  {l}
-                </button>
-              ))}
-            </div>
+            <LanguageDropdown langs={availableLangs} current={lang} onChange={handleLangSwitch} />
           </div>
         )}
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.5 }}>
           {sections.map((sec) => {
-            if (!sec.is_visible) return null;
+            // Composition is data-driven: it appears whenever the product has
+            // composition data, even if the block is hidden in the layout — and
+            // never appears without data (renderSection returns null when empty).
+            const compositionHasData = sec.section_key === 'composition' && composition && composition.length > 0;
+            if (!sec.is_visible && !compositionHasData) return null;
             const rendered = renderSection(sec.section_key, effectiveContent(sec), sec.block_type, sec.block_config);
             if (!rendered) return null;
 

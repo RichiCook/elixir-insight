@@ -12,19 +12,29 @@ import { useApiForm } from '@/hooks/useApiForm';
 interface SiteSettingsForm {
   site_title: string;
   favicon_url: string;
+  brand_logo_url: string;
+  brand_logo_light_url: string;
 }
+
+type PickTarget = keyof SiteSettingsForm | null;
 
 export default function AdminSiteSettings() {
   const [settingsId, setSettingsId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showImagePicker, setShowImagePicker] = useState(false);
+  const [pickTarget, setPickTarget] = useState<PickTarget>(null);
   const [initial, setInitial] = useState<SiteSettingsForm | undefined>();
 
   useEffect(() => {
     supabase.from('site_settings' as any).select('*').limit(1).single().then(({ data }) => {
       if (data) {
-        setInitial({ site_title: (data as any).site_title || '', favicon_url: (data as any).favicon_url || '' });
-        setSettingsId((data as any).id);
+        const d = data as any;
+        setInitial({
+          site_title: d.site_title || '',
+          favicon_url: d.favicon_url || '',
+          brand_logo_url: d.brand_logo_url || '',
+          brand_logo_light_url: d.brand_logo_light_url || '',
+        });
+        setSettingsId(d.id);
       }
       setLoading(false);
     });
@@ -35,16 +45,13 @@ export default function AdminSiteSettings() {
     const { error } = await supabase.from('site_settings' as any).update({
       site_title: data.site_title,
       favicon_url: data.favicon_url || null,
+      brand_logo_url: data.brand_logo_url || null,
+      brand_logo_light_url: data.brand_logo_light_url || null,
       updated_at: new Date().toISOString(),
     } as any).eq('id', settingsId);
     if (error) toast.error('Failed to save settings');
     else toast.success('Site settings saved');
   });
-
-  const handleFaviconSelected = (url: string) => {
-    set('favicon_url', url);
-    setShowImagePicker(false);
-  };
 
   if (loading) {
     return (
@@ -54,69 +61,83 @@ export default function AdminSiteSettings() {
     );
   }
 
+  const AssetPicker = ({ field, label, hint, preview }: { field: keyof SiteSettingsForm; label: string; hint: string; preview: 'light' | 'dark' | 'square' }) => (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <div className="flex items-center gap-4">
+        <div
+          className="h-14 min-w-[112px] px-3 border border-border rounded flex items-center justify-center overflow-hidden"
+          style={{ background: preview === 'dark' ? '#0c0b0f' : preview === 'light' ? '#ffffff' : 'hsl(var(--muted))' }}
+        >
+          {form[field] ? (
+            <img src={form[field]} alt={`${label} preview`} className={preview === 'square' ? 'w-9 h-9 object-contain' : 'h-9 w-auto object-contain'} />
+          ) : (
+            <span className="text-xs text-muted-foreground">None</span>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setPickTarget(field)}>
+            <Upload className="w-3 h-3 mr-1" /> Choose Image
+          </Button>
+          {form[field] && <Button variant="ghost" size="sm" onClick={() => set(field, '')}>Remove</Button>}
+        </div>
+      </div>
+      <p className="text-xs text-muted-foreground">{hint}</p>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border px-6 py-4 flex items-center gap-4">
-        <Link to="/admin">
-          <Button variant="ghost" size="sm"><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
-        </Link>
+        <Link to="/admin"><Button variant="ghost" size="sm"><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button></Link>
         <div>
           <h1 className="text-lg font-admin font-semibold text-foreground">Site Settings</h1>
-          <p className="text-xs text-muted-foreground">Global favicon &amp; browser tab title</p>
+          <p className="text-xs text-muted-foreground">Brand assets, favicon &amp; browser tab title</p>
         </div>
       </header>
 
-      <main className="p-6 max-w-xl mx-auto space-y-6">
-        {/* Site Title */}
-        <div className="space-y-2">
-          <Label>Browser Tab Title</Label>
-          <Input
-            value={form.site_title ?? ''}
-            onChange={(e) => set('site_title', e.target.value)}
-            placeholder="Classy Cocktails"
-          />
-          <p className="text-xs text-muted-foreground">Shown in the browser tab on all consumer pages</p>
-        </div>
-
-        {/* Favicon */}
-        <div className="space-y-2">
-          <Label>Favicon</Label>
-          <div className="flex items-center gap-4">
-            {form.favicon_url ? (
-              <div className="w-12 h-12 border border-border rounded flex items-center justify-center bg-muted overflow-hidden">
-                <img src={form.favicon_url} alt="Favicon preview" className="w-8 h-8 object-contain" />
-              </div>
-            ) : (
-              <div className="w-12 h-12 border border-border rounded flex items-center justify-center bg-muted">
-                <span className="text-xs text-muted-foreground">None</span>
-              </div>
-            )}
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setShowImagePicker(true)}>
-                <Upload className="w-3 h-3 mr-1" /> Choose Image
-              </Button>
-              {form.favicon_url && (
-                <Button variant="ghost" size="sm" onClick={() => set('favicon_url', '')}>Remove</Button>
-              )}
-            </div>
+      <main className="p-6 max-w-xl mx-auto space-y-8">
+        {/* Brand assets */}
+        <section className="space-y-5">
+          <div>
+            <h2 className="text-sm font-medium text-foreground">Brand Assets</h2>
+            <p className="text-xs text-muted-foreground">The logo shown wherever “Classy Cocktails” appears as a heading, co-brand tag, or footer mark.</p>
           </div>
-          <p className="text-xs text-muted-foreground">Upload or pick from your image library. Square images (32×32 or 64×64) work best.</p>
-        </div>
+          <AssetPicker
+            field="brand_logo_url"
+            label="Logo"
+            preview="light"
+            hint="Your primary logo (used on light surfaces, and auto-inverted to white on dark surfaces)."
+          />
+          <AssetPicker
+            field="brand_logo_light_url"
+            label="Logo — on dark (optional)"
+            preview="dark"
+            hint="A light/white version for dark backgrounds. If left empty, the primary logo is inverted automatically."
+          />
+        </section>
+
+        {/* Tab + favicon */}
+        <section className="space-y-5">
+          <h2 className="text-sm font-medium text-foreground">Browser Tab</h2>
+          <div className="space-y-2">
+            <Label>Tab Title</Label>
+            <Input value={form.site_title ?? ''} onChange={(e) => set('site_title', e.target.value)} placeholder="Classy Cocktails" />
+            <p className="text-xs text-muted-foreground">Shown in the browser tab on all consumer pages.</p>
+          </div>
+          <AssetPicker field="favicon_url" label="Favicon" preview="square" hint="Square images (32×32 or 64×64) work best." />
+        </section>
 
         <Button onClick={handleSave} disabled={saving} className="bg-primary text-primary-foreground">
           {saving ? 'Saving…' : 'Save Settings'}
         </Button>
       </main>
 
-      {showImagePicker && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-background rounded-lg border border-border max-w-3xl w-full max-h-[80vh] overflow-auto p-4">
-            <ImagePickerDialog
-              onClose={() => setShowImagePicker(false)}
-              onSelect={handleFaviconSelected}
-            />
-          </div>
-        </div>
+      {pickTarget && (
+        <ImagePickerDialog
+          onClose={() => setPickTarget(null)}
+          onSelect={(url) => { set(pickTarget, url); setPickTarget(null); }}
+        />
       )}
     </div>
   );

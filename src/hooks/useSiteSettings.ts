@@ -7,7 +7,13 @@ export function useSiteSettings() {
     queryKey: ['site-settings'],
     queryFn: async () => {
       const { data } = await supabase.from('site_settings' as any).select('*').limit(1).single();
-      return (data as unknown) as { site_title: string; favicon_url: string | null } | null;
+      return (data as unknown) as {
+        site_title: string;
+        favicon_url: string | null;
+        brand_logo_url: string | null;
+        brand_logo_light_url: string | null;
+        show_spirit_partner_names: boolean;
+      } | null;
     },
     staleTime: 60_000,
   });

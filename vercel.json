@@ -2,6 +2,14 @@
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ],
+  "images": {
+    "sizes": [256, 384, 480, 640, 800, 1080],
+    "formats": ["image/webp"],
+    "minimumCacheTTL": 86400,
+    "remotePatterns": [
+      { "protocol": "https", "hostname": "ieetamojfomrtyzgmpnw.supabase.co" }
+    ]
+  },
   "headers": [
     {
       "source": "/(.*)",

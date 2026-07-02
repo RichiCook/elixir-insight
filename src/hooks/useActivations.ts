@@ -165,6 +165,43 @@ export function useActivationLeads(activationId: string | undefined) {
   });
 }
 
+// All captured leads across activations (top-level Leads page). Admin/marketing read.
+export function useAllActivationLeads() {
+  return useQuery({
+    queryKey: ['all-activation-leads'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('activation_leads')
+        .select('*, activations(name)')
+        .order('created_at', { ascending: false })
+        .limit(5000);
+      if (error) throw error;
+      return data as any[];
+    },
+    staleTime: 30_000,
+  });
+}
+
+// Lead counts per activation (admin list + stats). Admins/marketing can read.
+export function useActivationLeadCounts() {
+  return useQuery({
+    queryKey: ['activation-lead-counts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('activation_leads')
+        .select('activation_id');
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      for (const row of data ?? []) {
+        const id = (row as { activation_id: string }).activation_id;
+        counts[id] = (counts[id] || 0) + 1;
+      }
+      return counts;
+    },
+    staleTime: 30_000,
+  });
+}
+
 export function useSubmitActivationLead() {
   return useMutation({
     mutationFn: async (lead: {

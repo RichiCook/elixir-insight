@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { GripVertical, ChevronDown, ChevronRight, Eye, EyeOff, Plus, Trash2, Image, X, Play } from 'lucide-react';
+import { GripVertical, ChevronDown, ChevronRight, Eye, EyeOff, Plus, Trash2, Image, X, Play, RotateCcw } from 'lucide-react';
 import { VideoPickerDialog } from '@/components/admin/VideoPickerDialog';
 import {
   useProductSections,
@@ -220,6 +220,42 @@ export function LayoutTab({ productId, onSave }: Props) {
     setSaving(false);
   };
 
+  // Replace this product's layout with the brand default (drops custom blocks + overrides).
+  const resetToDefault = async () => {
+    const ok = window.confirm(
+      "Reset this product to the current default layout?\n\nCustom blocks and content overrides on this page will be removed. This can't be undone."
+    );
+    if (!ok) return;
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    setSaving(true);
+    try {
+      const defaults = getMergedSections([], defaultSections);
+      setSections(defaults);
+      sectionsRef.current = defaults;
+
+      await supabase.from('product_sections').delete().eq('product_id', productId);
+      const rows = defaults.map((s, i) => ({
+        product_id: productId,
+        section_key: s.section_key,
+        sort_order: i,
+        is_visible: s.is_visible,
+        custom_content: s.custom_content || {},
+        block_type: s.block_type || 'built_in',
+        block_config: s.block_config || {},
+      }));
+      const { error } = await supabase.from('product_sections').insert(rows);
+      if (error) throw error;
+
+      toast.success('Layout reset to default');
+      queryClient.invalidateQueries({ queryKey: ['product-sections', productId] });
+      onSave?.();
+      (window as any).__refreshPreview?.();
+    } catch {
+      toast.error('Failed to reset layout');
+    }
+    setSaving(false);
+  };
+
   if (isLoading) return <div className="py-10 text-center text-muted-foreground text-xs">Loading…</div>;
 
   return (
@@ -232,6 +268,9 @@ export function LayoutTab({ productId, onSave }: Props) {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button onClick={resetToDefault} disabled={saving} variant="outline" size="sm" title="Replace this product's layout with the brand default">
+            <RotateCcw className="w-3 h-3 mr-1" /> Reset to Default
+          </Button>
           <Button onClick={() => setShowAddBlock(true)} variant="outline" size="sm">
             <Plus className="w-3 h-3 mr-1" /> Add Block
           </Button>

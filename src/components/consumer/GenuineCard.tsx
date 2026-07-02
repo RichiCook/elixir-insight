@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import type { Database } from '@/integrations/supabase/types';
+import { formatAbv } from '@/lib/abv';
 
 type Product = Database['public']['Tables']['products']['Row'];
 
@@ -41,7 +42,7 @@ export function GenuineCard({ product }: Props) {
       {/* Compact product info row (ABV + EAN + Serving) */}
       <div className="flex items-baseline justify-between mb-3">
         <span className="font-display text-[15px] font-light text-cc-text leading-none">
-          {isNoRegrets ? '0.0% ALC. FREE' : product.abv}
+          {isNoRegrets ? '0.0% ALC. FREE' : formatAbv(product.abv)}
         </span>
         <div className="text-right space-y-0.5">
           {product.ean_int && (

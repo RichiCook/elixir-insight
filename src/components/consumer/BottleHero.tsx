@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import type { Database } from '@/integrations/supabase/types';
+import { ClassyWordmark } from './ClassyWordmark';
 
 type Product = Database['public']['Tables']['products']['Row'];
 
@@ -56,7 +57,7 @@ export function BottleHero({ product, heroImageUrl, collab }: Props) {
             <span className="text-xs font-semibold" style={{ color: collab.brand_color || '#000' }}>{collab.brand_name}</span>
           )}
           <span className="text-[8px] text-cc-text-lt">×</span>
-          <span className="text-[8px] tracking-[0.15em] uppercase text-cc-text-lt">Classy</span>
+          <ClassyWordmark color="#1a1a1a" height={14} showCocktails={false} />
         </div>
       )}
 

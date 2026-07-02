@@ -15,6 +15,7 @@ import { BrandSwitcher } from '@/components/admin/BrandSwitcher';
 import { useBrandStore } from '@/stores/brandStore';
 import { useScanStats } from '@/hooks/useScanStats';
 import { ProductInsightCard } from '@/components/admin/ProductInsightCard';
+import { CASE_STUDY_BETA } from '@/lib/featureFlags';
 
 export default function AdminDashboard() {
   const { data: products, isLoading } = useProducts();
@@ -97,6 +98,12 @@ export default function AdminDashboard() {
           {perms.canManageActivations && (
             <Link to="/admin/activations"><Button variant="outline" size="sm">Activations</Button></Link>
           )}
+          {perms.canManageActivations && (
+            <Link to="/admin/catalogues"><Button variant="outline" size="sm">Catalogues</Button></Link>
+          )}
+          {perms.canManageActivations && (
+            <Link to="/admin/leads"><Button variant="outline" size="sm">Leads</Button></Link>
+          )}
           {perms.canViewAnalytics && (
             <Link to="/admin/analytics"><Button variant="outline" size="sm">Analytics</Button></Link>
           )}
@@ -108,6 +115,9 @@ export default function AdminDashboard() {
           )}
           {perms.canManageUsers && (
             <Link to="/admin/changes"><Button variant="outline" size="sm">Changes</Button></Link>
+          )}
+          {CASE_STUDY_BETA && perms.isAdmin && (
+            <Link to="/admin/case-study-generator"><Button variant="outline" size="sm">Case Study <span className="ml-1 text-[9px] uppercase tracking-wider text-primary">Beta</span></Button></Link>
           )}
           {perms.canManageProducts && (
             <Button size="sm" className="bg-primary text-primary-foreground" onClick={() => setShowNewProduct(true)}>+ New Product</Button>

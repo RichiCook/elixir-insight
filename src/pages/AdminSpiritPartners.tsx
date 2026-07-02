@@ -2,20 +2,44 @@ import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useProducts } from '@/hooks/useProduct';
 import { useSpiritPartners, findSpiritPartner, useUpsertSpiritPartner, splitSpirits } from '@/hooks/useSpiritPartners';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { ImagePickerDialog } from '@/components/admin/ImagePickerDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Image as ImageIcon, X } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface Draft { logo_url: string | null; website_url: string }
 
 export default function AdminSpiritPartners() {
   const { data: products } = useProducts();
   const { data: partners, isLoading } = useSpiritPartners();
+  const { data: settings } = useSiteSettings();
   const upsert = useUpsertSpiritPartner();
+  const qc = useQueryClient();
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [picker, setPicker] = useState<string | null>(null);
+  const [savingToggle, setSavingToggle] = useState(false);
+
+  const showNames = settings?.show_spirit_partner_names ?? false;
+
+  const handleToggleNames = async (val: boolean) => {
+    setSavingToggle(true);
+    const { data: row } = await supabase.from('site_settings' as any).select('id').limit(1).single();
+    if (row) {
+      const { error } = await supabase.from('site_settings' as any).update({ show_spirit_partner_names: val } as any).eq('id', (row as any).id);
+      if (error) toast.error('Failed to save');
+      else {
+        qc.invalidateQueries({ queryKey: ['site-settings'] });
+        toast.success(val ? 'Partner names shown' : 'Partner names hidden');
+      }
+    }
+    setSavingToggle(false);
+  };
 
   // Distinct partner names = every '+'-split spirit across products, plus any
   // names already in the registry.
@@ -65,6 +89,18 @@ export default function AdminSpiritPartners() {
           Assign a logo to each spirit partner once — it then shows on every product that uses that spirit.
           Upload partner logos to the <Link to="/admin/images" className="text-primary hover:underline">Image Library</Link> first, then pick them here.
         </p>
+
+        <div className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3">
+          <div>
+            <Label className="text-sm font-medium text-foreground">Show partner name alongside logo</Label>
+            <p className="text-xs text-muted-foreground mt-0.5">When off, only the logo image is shown on product pages</p>
+          </div>
+          <Switch
+            checked={showNames}
+            onCheckedChange={handleToggleNames}
+            disabled={savingToggle}
+          />
+        </div>
 
         {isLoading ? (
           <div className="flex justify-center py-20"><div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>

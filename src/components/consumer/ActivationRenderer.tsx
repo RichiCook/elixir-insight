@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import DOMPurify from 'dompurify';
 import { motion, AnimatePresence } from 'framer-motion';
 import { type Activation, useSubmitActivationLead } from '@/hooks/useActivations';
+import { ClassyWordmark } from '@/components/consumer/ClassyWordmark';
 
 interface Props {
   activations: Activation[];
@@ -28,6 +29,11 @@ export function ActivationSlot({ activations, placement, productSlug, brandName 
 
 function safeUrl(url: unknown): string | undefined {
   return typeof url === 'string' && /^https?:\/\//i.test(url) ? url : undefined;
+}
+
+/** Render a single activation outside the product-page slot system (e.g. a catalogue page). */
+export function ActivationEmbed({ activation, productSlug, brandName }: { activation: Activation; productSlug: string; brandName?: string }) {
+  return <ActivationCard activation={activation} productSlug={productSlug} brandName={brandName} />;
 }
 
 function ActivationCard({ activation, productSlug, brandName }: { activation: Activation; productSlug: string; brandName?: string }) {
@@ -216,28 +222,92 @@ function CustomHtmlActivation({ content }: { content: Record<string, any> }) {
   );
 }
 
-// -- Lead Capture --
+// -- Co-brand lockup: Classy mark + an optional partner (logo image or wordmark) --
+function CoBrandLockup({ content, accent, text }: { content: Record<string, any>; accent: string; text: string }) {
+  const partnerLogo = safeUrl(content.partner_logo_url);
+  const partnerName = typeof content.partner_name === 'string' ? content.partner_name.trim() : '';
+  const showClassy = content.show_classy !== false;
+  if (!partnerLogo && !partnerName && !showClassy) return null;
+
+  return (
+    <div className="flex items-center justify-center gap-3 mb-4">
+      {showClassy && <ClassyWordmark color={text} height={26} />}
+      {(partnerLogo || partnerName) && showClassy && (
+        <span className="text-xs leading-none" style={{ color: accent }}>✕</span>
+      )}
+      {partnerLogo ? (
+        <img src={partnerLogo} alt={partnerName || 'Partner'} className="h-6 w-auto max-w-[160px] object-contain" />
+      ) : partnerName ? (
+        <span className="font-display tracking-[0.14em] text-base leading-none text-center" style={{ color: text }}>
+          {partnerName}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+// -- Lead Capture (optionally co-branded, with reward reveal) --
 function LeadCaptureActivation({ activation, productSlug, brandName = 'Classy Cocktails' }: { activation: Activation; productSlug: string; brandName?: string }) {
   const { content } = activation;
   const submitLead = useSubmitActivationLead();
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState<Record<string, string>>({});
   const [consented, setConsented] = useState(false);
+  const [copied, setCopied] = useState(false);
   const fields = content.fields || ['name', 'email'];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Theme — defaults preserve the original cream look for existing activations.
+  const bg = typeof content.bg_color === 'string' ? content.bg_color : '#f5f0ea';
+  const accent = typeof content.accent_color === 'string' ? content.accent_color : '#b8975a';
+  const text = typeof content.text_color === 'string' ? content.text_color : '#2a2a2a';
+  const textMuted = typeof content.text_muted === 'string' ? content.text_muted : '#9a9a9a';
+  const cardBorder = typeof content.border_color === 'string' ? content.border_color : 'rgba(0,0,0,0.08)';
+
+  const rewardUrl = safeUrl(content.reward_url);
+  const redirectOnSubmit = content.redirect_to_link === true && !!rewardUrl;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!consented) return;
     const sessionId = sessionStorage.getItem('cc_session') || '';
-    submitLead.mutate({
+    const payload = {
       activation_id: activation.id,
       product_slug: productSlug,
       session_id: sessionId,
       name: form.name,
       email: form.email,
       phone: form.phone,
-    });
+    };
+    // "Go straight to the link": capture the lead, then send them to the offer.
+    if (redirectOnSubmit) {
+      try { await submitLead.mutateAsync(payload); } catch { /* still send them through */ }
+      window.location.href = rewardUrl!;
+      return;
+    }
+    submitLead.mutate(payload);
     setSubmitted(true);
+  };
+
+  const inputStyle = { borderColor: '#e5e0d8', backgroundColor: '#fff', color: '#2a2a2a' } as const;
+
+  // Tap the revealed code to copy the full discount link.
+  const copyTarget = rewardUrl || activation.reward_code || '';
+  const handleCopy = async () => {
+    if (!copyTarget) return;
+    try {
+      await navigator.clipboard.writeText(copyTarget);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = copyTarget;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch { /* clipboard unavailable */ }
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -247,19 +317,70 @@ function LeadCaptureActivation({ activation, productSlug, brandName = 'Classy Co
       viewport={{ once: true }}
       className="px-5 py-6"
     >
-      <div className="rounded-xl p-6" style={{ backgroundColor: '#f5f0ea', border: '1px solid #e5e0d8' }}>
+      <div className="rounded-xl p-6" style={{ backgroundColor: bg, border: `1px solid ${cardBorder}` }}>
         <AnimatePresence mode="wait">
           {submitted ? (
-            <motion.div key="success" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-4">
-              <p className="font-display text-xl" style={{ color: '#4a8c5c' }}>✓</p>
-              <p className="font-sans-consumer text-sm mt-2" style={{ color: '#5a5a5a' }}>
+            <motion.div key="success" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-2">
+              <CoBrandLockup content={content} accent={accent} text={text} />
+              <p className="font-display text-2xl" style={{ color: accent }}>✓</p>
+              <p className="font-sans-consumer text-sm mt-2" style={{ color: text }}>
                 {content.success_message || 'Thank you!'}
               </p>
+
+              {/* Reward reveal — code in a ticket, optional claim link */}
+              {activation.reward_code && (
+                <div className="mt-5">
+                  <p className="font-sans-consumer text-[10px] uppercase tracking-[0.2em]" style={{ color: textMuted }}>
+                    {content.reward_label || 'Your code'}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    aria-label={`Copy discount link for code ${activation.reward_code}`}
+                    className="mt-2 mx-auto inline-flex items-center gap-2.5 rounded-lg px-6 py-3 cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.99]"
+                    style={{ border: `2px dashed ${accent}`, background: 'transparent' }}
+                  >
+                    <span className="font-mono text-2xl font-bold tracking-[0.18em]" style={{ color: accent }}>
+                      {activation.reward_code}
+                    </span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                  </button>
+                  {copyTarget && (
+                    <p className="font-sans-consumer text-[10px] mt-2 transition-colors" style={{ color: copied ? accent : textMuted }}>
+                      {copied ? '✓ Link copied' : 'Tap the code to copy the link'}
+                    </p>
+                  )}
+                  {rewardUrl && (
+                    <a
+                      href={rewardUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block mt-4 w-full py-3 rounded-full text-xs font-medium tracking-wider uppercase"
+                      style={{ backgroundColor: accent, color: '#fff' }}
+                    >
+                      {content.reward_cta || 'Claim your discount'}
+                    </a>
+                  )}
+                </div>
+              )}
             </motion.div>
           ) : (
             <motion.form key="form" onSubmit={handleSubmit} className="space-y-3">
-              {content.title && <h3 className="font-display text-lg" style={{ color: '#2a2a2a' }}>{content.title}</h3>}
-              {content.description && <p className="font-sans-consumer text-xs" style={{ color: '#9a9a9a' }}>{content.description}</p>}
+              <CoBrandLockup content={content} accent={accent} text={text} />
+              {content.kicker && (
+                <p className="font-sans-consumer text-[10px] uppercase tracking-[0.24em] text-center" style={{ color: accent }}>
+                  {content.kicker}
+                </p>
+              )}
+              {content.title && (
+                <h3 className="font-display text-xl text-center leading-tight" style={{ color: text }}>{content.title}</h3>
+              )}
+              {content.description && (
+                <p className="font-sans-consumer text-xs text-center leading-relaxed" style={{ color: textMuted }}>{content.description}</p>
+              )}
               {fields.includes('name') && (
                 <input
                   type="text"
@@ -268,7 +389,7 @@ function LeadCaptureActivation({ activation, productSlug, brandName = 'Classy Co
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   required
                   className="w-full px-4 py-2.5 rounded-lg text-sm border"
-                  style={{ borderColor: '#e5e0d8', backgroundColor: '#fff', color: '#2a2a2a' }}
+                  style={inputStyle}
                 />
               )}
               {fields.includes('email') && (
@@ -279,7 +400,7 @@ function LeadCaptureActivation({ activation, productSlug, brandName = 'Classy Co
                   onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                   required
                   className="w-full px-4 py-2.5 rounded-lg text-sm border"
-                  style={{ borderColor: '#e5e0d8', backgroundColor: '#fff', color: '#2a2a2a' }}
+                  style={inputStyle}
                 />
               )}
               {fields.includes('phone') && (
@@ -289,7 +410,7 @@ function LeadCaptureActivation({ activation, productSlug, brandName = 'Classy Co
                   value={form.phone || ''}
                   onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
                   className="w-full px-4 py-2.5 rounded-lg text-sm border"
-                  style={{ borderColor: '#e5e0d8', backgroundColor: '#fff', color: '#2a2a2a' }}
+                  style={inputStyle}
                 />
               )}
               {/* GDPR consent — required before submit */}
@@ -301,9 +422,9 @@ function LeadCaptureActivation({ activation, productSlug, brandName = 'Classy Co
                   required
                   className="mt-0.5 shrink-0"
                 />
-                <span className="font-sans-consumer text-[10px] leading-relaxed" style={{ color: '#9a9a9a' }}>
+                <span className="font-sans-consumer text-[10px] leading-relaxed" style={{ color: textMuted }}>
                   I agree to {brandName} processing my data for this promotion.{' '}
-                  <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: '#b8975a' }}>
+                  <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline" style={{ color: accent }}>
                     Privacy Policy
                   </a>
                 </span>
@@ -312,7 +433,7 @@ function LeadCaptureActivation({ activation, productSlug, brandName = 'Classy Co
                 type="submit"
                 disabled={!consented}
                 className="w-full py-2.5 rounded-full text-xs font-medium tracking-wider uppercase disabled:opacity-40"
-                style={{ backgroundColor: '#b8975a', color: '#fff' }}
+                style={{ backgroundColor: accent, color: '#fff' }}
               >
                 {content.submit_text || 'Submit'}
               </button>

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ClassyWordmark } from '@/components/consumer/ClassyWordmark';
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('');
@@ -29,8 +30,8 @@ export default function AdminLogin() {
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
-          <h1 className="text-xl font-admin font-semibold text-foreground">
-            Classy Cocktails
+          <h1 className="flex justify-center text-foreground">
+            <ClassyWordmark color="currentColor" height={30} />
           </h1>
           <p className="text-sm text-muted-foreground mt-1">Brand Admin Panel</p>
         </div>

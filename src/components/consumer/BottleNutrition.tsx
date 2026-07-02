@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { ShieldCheck, ChevronDown } from 'lucide-react';
+import { formatAbv, parseAbvNumber } from '@/lib/abv';
 
 interface TechData {
   [key: string]: any;
@@ -209,10 +210,10 @@ function RawAnalyticalData({ raw }: { raw: Record<string, any> | null }) {
           <SectionLabel>Analytical Results</SectionLabel>
           {Object.entries(analytical_results).map(([key, val]) => {
             const raw = typeof val === 'object' ? JSON.stringify(val) : String(val);
-            // Override unit for alcoholic strength: stored as "21.50 ml/100ml" → display as "21.50% vol"
+            // Alcoholic strength stored as "21.50 ml/100ml" → display as "21.50% alc./vol."
             const display =
               key === 'alcoholic_strength'
-                ? raw.replace(/\s*ml\s*\/\s*100\s*ml/i, '').replace(/\s*ml\s*$/i, '').trim() + '% vol'
+                ? formatAbv(raw)
                 : raw;
             return (
               <DataRow key={key} label={key.replace(/_/g, ' ')} value={display} />
@@ -273,7 +274,7 @@ function TechSheetView({ td, allergensSummary }: { td: TechData; allergensSummar
               {isValidPH(td.ph) && <StatCard value={cleanValue(td.ph)} label="pH" />}
               {td.brix && <StatCard value={cleanValue(td.brix)} label="°Brix" />}
               {td.total_acidity && <StatCard value={cleanValue(td.total_acidity)} label="Total Acidity" />}
-              {td.alcoholic_strength && <StatCard value={`${cleanValue(td.alcoholic_strength)}%`} label="ABV" />}
+              {td.alcoholic_strength && <StatCard value={`${parseAbvNumber(td.alcoholic_strength) ?? cleanValue(td.alcoholic_strength)}%`} label="Alc./vol." />}
             </div>
           </>
         )}
@@ -377,7 +378,7 @@ function LabReportView({ td }: { td: TechData }) {
             <SectionLabel>Chemical Analysis</SectionLabel>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {td.total_acidity && <StatCard value={cleanValue(td.total_acidity)} label="Total Acidity" />}
-              {td.alcoholic_strength && <StatCard value={`${cleanValue(td.alcoholic_strength)}%`} label="Alcoholic Strength % vol" />}
+              {td.alcoholic_strength && <StatCard value={`${parseAbvNumber(td.alcoholic_strength) ?? cleanValue(td.alcoholic_strength)}%`} label="Alc./vol." />}
               {isValidPH(td.ph) && <StatCard value={cleanValue(td.ph)} label="pH" />}
               {td.brix && <StatCard value={cleanValue(td.brix)} label="°Brix" />}
             </div>

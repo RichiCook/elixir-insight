@@ -3,19 +3,27 @@ import { t } from '@/lib/consumerI18n';
 
 type Product = Database['public']['Tables']['products']['Row'];
 
+interface ServeTranslation {
+  glass?: string | null;
+  ice?: string | null;
+  garnish?: string | null;
+  flavour?: string | null;
+}
+
 interface Props {
   product: Product;
   lang?: string;
+  translation?: ServeTranslation | null;
 }
 
-export function BottleQuickFacts({ product, lang = 'EN' }: Props) {
+export function BottleQuickFacts({ product, lang = 'EN', translation }: Props) {
   const facts = [
     { labelKey: 'spirit' as const, value: product.spirit },
     { labelKey: 'serving' as const, value: product.serving },
-    { labelKey: 'glass' as const, value: product.glass },
-    { labelKey: 'ice' as const, value: product.ice },
-    { labelKey: 'garnish' as const, value: product.garnish },
-    { labelKey: 'flavour' as const, value: product.flavour },
+    { labelKey: 'glass' as const, value: translation?.glass || product.glass },
+    { labelKey: 'ice' as const, value: translation?.ice || product.ice },
+    { labelKey: 'garnish' as const, value: translation?.garnish || product.garnish },
+    { labelKey: 'flavour' as const, value: translation?.flavour || product.flavour },
   ].filter((f) => f.value && f.value !== 'None');
 
   return (

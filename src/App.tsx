@@ -35,6 +35,11 @@ const AdminCustomDetail        = lazy(() => import('@/pages/AdminCustomDetail'))
 const AdminSiteSettings        = lazy(() => import('@/pages/AdminSiteSettings'));
 const AdminUsers               = lazy(() => import('@/pages/AdminUsers'));
 const AdminChangeLog           = lazy(() => import('@/pages/AdminChangeLog'));
+const AdminCatalogues          = lazy(() => import('@/pages/AdminCatalogues'));
+const AdminLeads               = lazy(() => import('@/pages/AdminLeads'));
+const AdminCatalogueEditor     = lazy(() => import('@/pages/AdminCatalogueEditor'));
+const CataloguePage            = lazy(() => import('@/pages/CataloguePage'));
+const AdminCaseStudyGenerator  = lazy(() => import('@/pages/AdminCaseStudyGenerator'));
 
 /** Redirect /bottle/:slug → /b/classy/:slug for backward-compat QR codes */
 function LegacyBottleRedirect() {
@@ -87,6 +92,27 @@ function AppInner() {
         } />
         {/* Legacy redirect: /bottle/:slug → /b/classy/:slug */}
         <Route path="/bottle/:slug" element={<LegacyBottleRedirect />} />
+
+        {/* Custom catalogue landing page — public, no auth required.
+            /collab/:slug (full slug) and /c/:slug (short code) both resolve it. */}
+        <Route path="/collab/:slug" element={
+          <ErrorBoundary fallback={
+            <div style={{ minHeight: '100vh', background: '#0c0b0f', color: '#9b9382', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <p>Something went wrong loading this collection.</p>
+            </div>
+          }>
+            <CataloguePage />
+          </ErrorBoundary>
+        } />
+        <Route path="/c/:slug" element={
+          <ErrorBoundary fallback={
+            <div style={{ minHeight: '100vh', background: '#0c0b0f', color: '#9b9382', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <p>Something went wrong loading this collection.</p>
+            </div>
+          }>
+            <CataloguePage />
+          </ErrorBoundary>
+        } />
 
         {/* Privacy policy — public, no auth required */}
         <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -251,6 +277,49 @@ function AppInner() {
             <ProtectedRoute>
               <ErrorBoundary>
                 <AdminChangeLog />
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/catalogues"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <AdminCatalogues />
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/catalogues/:id"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <AdminCatalogueEditor />
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/leads"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <AdminLeads />
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Case Study Generator — hidden admin-only beta (gated in-page by VITE_FEATURE_CASE_STUDY + isAdmin) */}
+        <Route
+          path="/admin/case-study-generator"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary>
+                <AdminCaseStudyGenerator />
               </ErrorBoundary>
             </ProtectedRoute>
           }

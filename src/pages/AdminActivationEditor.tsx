@@ -15,9 +15,10 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { VideoPickerDialog } from '@/components/admin/VideoPickerDialog';
+import { ImagePickerDialog } from '@/components/admin/ImagePickerDialog';
 import { Play, X } from 'lucide-react';
 
-const STEPS = ['Define', 'Content', 'Targeting', 'Schedule', 'Review'];
+const STEPS = ['Define', 'Content', 'Targeting', 'Schedule', 'Review', 'Leads'];
 
 const TYPE_OPTIONS: { value: ActivationType; label: string; desc: string }[] = [
   { value: 'text_image', label: 'Text / Image', desc: 'Simple visual content with optional CTA' },
@@ -114,6 +115,11 @@ export default function AdminActivationEditor() {
     }
   }, [existing, isNew, duplicateId]);
 
+  // Deep-link: /admin/activations/:id?tab=leads opens straight to the Leads step.
+  useEffect(() => {
+    if (!isNew && searchParams.get('tab') === 'leads') setStep(5);
+  }, [isNew, searchParams]);
+
   const update = (patch: Partial<ActivationDraft>) => setDraft((d) => ({ ...d, ...patch }));
 
   const handleSave = async (publish = false) => {
@@ -201,7 +207,7 @@ export default function AdminActivationEditor() {
                 i === step ? 'bg-primary/15 text-primary font-medium' : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              {s}
+              {s === 'Leads' && !isNew ? `Leads (${leads?.length || 0})` : s}
             </button>
           ))}
         </div>
@@ -440,41 +446,70 @@ export default function AdminActivationEditor() {
               </div>
             </div>
 
-            {/* Leads table (edit mode only) */}
-            {!isNew && leads && leads.length > 0 && (
-              <div className="rounded-lg border border-border bg-card p-5">
-                <h3 className="font-display text-lg text-foreground mb-3">Captured Leads ({leads.length})</h3>
-                <div className="overflow-auto max-h-64">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
-                        <th className="text-left py-2">Name</th>
-                        <th className="text-left py-2">Email</th>
-                        <th className="text-left py-2">Rating</th>
-                        <th className="text-left py-2">Date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {leads.map((l: any) => (
-                        <tr key={l.id} className="border-b border-border/50">
-                          <td className="py-2 text-foreground">{l.name || '—'}</td>
-                          <td className="py-2 text-muted-foreground">{l.email || '—'}</td>
-                          <td className="py-2 text-primary">{l.rating ? `${'★'.repeat(l.rating)}${'☆'.repeat(5 - l.rating)}` : '—'}</td>
-                          <td className="py-2 text-muted-foreground">{l.created_at ? format(new Date(l.created_at), 'PP') : '—'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
             <div className="flex justify-between">
               <Button variant="outline" onClick={() => setStep(3)}>← Back</Button>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => handleSave(false)}>Save as Draft</Button>
                 <Button className="bg-primary text-primary-foreground" onClick={() => handleSave(true)}>Publish Activation</Button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 5: Leads */}
+        {step === 5 && (
+          <div className="space-y-5">
+            {isNew ? (
+              <p className="text-sm text-muted-foreground py-12 text-center">
+                Save the activation first — captured name &amp; email submissions will appear here.
+              </p>
+            ) : (
+              <div className="rounded-lg border border-border bg-card p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="font-display text-lg text-foreground">Captured Leads ({leads?.length || 0})</h3>
+                    <p className="text-[11px] text-muted-foreground">Name &amp; email submitted on the live activation.</p>
+                  </div>
+                  {leads && leads.length > 0 && (
+                    <Button variant="outline" size="sm" onClick={() => exportLeadsCsv(leads, draft.name)}>
+                      Export CSV
+                    </Button>
+                  )}
+                </div>
+                {!leads || leads.length === 0 ? (
+                  <p className="text-xs text-muted-foreground py-10 text-center">
+                    No leads collected yet. Submissions will appear here as soon as someone fills in the form.
+                  </p>
+                ) : (
+                  <div className="overflow-auto max-h-[60vh]">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                          <th className="text-left py-2">Name</th>
+                          <th className="text-left py-2">Email</th>
+                          <th className="text-left py-2">Phone</th>
+                          <th className="text-left py-2">Rating</th>
+                          <th className="text-left py-2">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {leads.map((l: any) => (
+                          <tr key={l.id} className="border-b border-border/50">
+                            <td className="py-2 text-foreground">{l.name || '—'}</td>
+                            <td className="py-2 text-muted-foreground">{l.email || '—'}</td>
+                            <td className="py-2 text-muted-foreground">{l.phone || '—'}</td>
+                            <td className="py-2 text-primary">{l.rating ? `${'★'.repeat(l.rating)}${'☆'.repeat(5 - l.rating)}` : '—'}</td>
+                            <td className="py-2 text-muted-foreground">{l.created_at ? format(new Date(l.created_at), 'PP') : '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="flex justify-start">
+              <Button variant="outline" onClick={() => setStep(4)}>← Back to Review</Button>
             </div>
           </div>
         )}
@@ -487,6 +522,7 @@ export default function AdminActivationEditor() {
 function ContentEditor({ type, content, onChange }: { type: ActivationType; content: Record<string, any>; onChange: (c: Record<string, any>) => void }) {
   const set = (key: string, value: any) => onChange({ ...content, [key]: value });
   const [showVideoPicker, setShowVideoPicker] = useState(false);
+  const [showLogoPicker, setShowLogoPicker] = useState(false);
 
   switch (type) {
     case 'text_image':
@@ -627,7 +663,44 @@ function ContentEditor({ type, content, onChange }: { type: ActivationType; cont
 
     case 'lead_capture':
       return (
-        <div className="space-y-4">
+        <div className="space-y-5">
+          {showLogoPicker && (
+            <ImagePickerDialog
+              onSelect={(url) => { set('partner_logo_url', url); setShowLogoPicker(false); }}
+              onClose={() => setShowLogoPicker(false)}
+            />
+          )}
+
+          {/* Co-branding */}
+          <div className="rounded-lg border border-border p-4 space-y-3">
+            <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Co-branding (optional)</p>
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Switch checked={content.show_classy !== false} onCheckedChange={(v) => set('show_classy', v)} />
+              Show Classy mark
+            </label>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Partner name (shown if no logo)</Label>
+              <Input value={content.partner_name || ''} onChange={(e) => set('partner_name', e.target.value)} placeholder="VIVIENNE WESTWOOD" />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Partner logo</Label>
+              {content.partner_logo_url ? (
+                <div className="flex items-center gap-3">
+                  <img src={content.partner_logo_url} alt="Partner logo" className="h-8 w-auto max-w-[140px] object-contain bg-muted/40 rounded p-1" />
+                  <Button variant="ghost" size="sm" onClick={() => setShowLogoPicker(true)}>Change</Button>
+                  <Button variant="ghost" size="sm" className="text-destructive" onClick={() => set('partner_logo_url', '')}>Remove</Button>
+                </div>
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => setShowLogoPicker(true)}>Upload / pick logo</Button>
+              )}
+            </div>
+          </div>
+
+          {/* Copy */}
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1.5 block">Kicker (small label above title)</Label>
+            <Input value={content.kicker || ''} onChange={(e) => set('kicker', e.target.value)} placeholder="EXCLUSIVE EVENT OFFER" />
+          </div>
           <div>
             <Label className="text-xs text-muted-foreground mb-1.5 block">Form Title</Label>
             <Input value={content.title || ''} onChange={(e) => set('title', e.target.value)} placeholder="Sign up for updates" />
@@ -660,6 +733,56 @@ function ContentEditor({ type, content, onChange }: { type: ActivationType; cont
           <div>
             <Label className="text-xs text-muted-foreground mb-1.5 block">Success Message</Label>
             <Input value={content.success_message || 'Thank you!'} onChange={(e) => set('success_message', e.target.value)} />
+          </div>
+
+          {/* Reward reveal (shown after submit) */}
+          <div className="rounded-lg border border-border p-4 space-y-3">
+            <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Reward reveal (after submit)</p>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Reward Code</Label>
+              <Input value={content.reward_code || ''} onChange={(e) => set('reward_code', e.target.value)} placeholder="VW20" />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Reward label</Label>
+              <Input value={content.reward_label || ''} onChange={(e) => set('reward_label', e.target.value)} placeholder="Your exclusive discount" />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Claim URL</Label>
+              <Input value={content.reward_url || ''} onChange={(e) => set('reward_url', e.target.value)} placeholder="https://classycocktails.com/discount/VW20" />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Claim button text</Label>
+              <Input value={content.reward_cta || ''} onChange={(e) => set('reward_cta', e.target.value)} placeholder="Claim your discount" />
+            </div>
+            <label className="flex items-center gap-2 text-sm text-muted-foreground pt-1">
+              <Switch checked={content.redirect_to_link === true} onCheckedChange={(v) => set('redirect_to_link', v)} />
+              Go straight to the link on submit (skip the code screen)
+            </label>
+          </div>
+
+          {/* Theme */}
+          <div className="rounded-lg border border-border p-4 grid grid-cols-2 gap-3">
+            <p className="col-span-2 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Theme</p>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Background</Label>
+              <Input value={content.bg_color || ''} onChange={(e) => set('bg_color', e.target.value)} placeholder="#111014" />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Accent</Label>
+              <Input value={content.accent_color || ''} onChange={(e) => set('accent_color', e.target.value)} placeholder="#c5a35a" />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Text</Label>
+              <Input value={content.text_color || ''} onChange={(e) => set('text_color', e.target.value)} placeholder="#f4efe6" />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Muted text</Label>
+              <Input value={content.text_muted || ''} onChange={(e) => set('text_muted', e.target.value)} placeholder="#9b9382" />
+            </div>
+            <div className="col-span-2">
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Card border</Label>
+              <Input value={content.border_color || ''} onChange={(e) => set('border_color', e.target.value)} placeholder="rgba(197,163,90,0.35)" />
+            </div>
           </div>
         </div>
       );
@@ -713,6 +836,25 @@ function ContentEditor({ type, content, onChange }: { type: ActivationType; cont
         </div>
       );
   }
+}
+
+// Client-side CSV export of captured leads (no data leaves the browser).
+function exportLeadsCsv(leads: any[], activationName: string) {
+  const headers = ['Name', 'Email', 'Phone', 'Rating', 'Date'];
+  const esc = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const rows = leads.map((l) =>
+    [l.name, l.email, l.phone, l.rating, l.created_at].map(esc).join(',')
+  );
+  const csv = [headers.join(','), ...rows].join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${(activationName || 'activation').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-leads.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 // -- Date picker --

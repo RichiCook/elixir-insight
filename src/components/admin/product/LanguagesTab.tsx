@@ -43,6 +43,10 @@ const EMPTY_FORM = {
   ingredient_list_short: '',
   ingredient_list_full: '',
   allergens_local: '',
+  glass: '',
+  ice: '',
+  garnish: '',
+  flavour: '',
 };
 
 // Section keys whose custom_content has translatable text fields
@@ -79,12 +83,17 @@ export function LanguagesTab({ productId, productName, onSaved }: { productId: s
 
   useEffect(() => {
     if (translation) {
+      const tr = translation as any;
       setForm({
-        claim: translation.claim || '',
-        sensory_description: translation.sensory_description || '',
-        ingredient_list_short: translation.ingredient_list_short || '',
-        ingredient_list_full: translation.ingredient_list_full || '',
-        allergens_local: translation.allergens_local || '',
+        claim: tr.claim || '',
+        sensory_description: tr.sensory_description || '',
+        ingredient_list_short: tr.ingredient_list_short || '',
+        ingredient_list_full: tr.ingredient_list_full || '',
+        allergens_local: tr.allergens_local || '',
+        glass: tr.glass || '',
+        ice: tr.ice || '',
+        garnish: tr.garnish || '',
+        flavour: tr.flavour || '',
       });
     } else {
       setForm(EMPTY_FORM);
@@ -100,7 +109,7 @@ export function LanguagesTab({ productId, productName, onSaved }: { productId: s
       product_id: productId,
       language: activeLang,
       ...form,
-    }, { onConflict: 'product_id,language' });
+    } as any, { onConflict: 'product_id,language' });
     setSaving(false);
     if (error) { toast.error('Failed to save translation'); return; }
     toast.success(`${activeLang} translation saved`);
@@ -143,14 +152,19 @@ export function LanguagesTab({ productId, productName, onSaved }: { productId: s
     if (activeLang === 'EN') { toast.error('Source language cannot be translated'); return; }
     if (!enTranslation) { toast.error('Save an English translation first'); return; }
     setTranslating(true);
+    const enTr = enTranslation as any;
     try {
       const translations = await callTranslate(
         {
-          claim: enTranslation.claim || '',
-          sensory_description: enTranslation.sensory_description || '',
-          ingredient_list_short: enTranslation.ingredient_list_short || '',
-          ingredient_list_full: enTranslation.ingredient_list_full || '',
-          allergens_local: enTranslation.allergens_local || '',
+          claim: enTr.claim || '',
+          sensory_description: enTr.sensory_description || '',
+          ingredient_list_short: enTr.ingredient_list_short || '',
+          ingredient_list_full: enTr.ingredient_list_full || '',
+          allergens_local: enTr.allergens_local || '',
+          glass: enTr.glass || '',
+          ice: enTr.ice || '',
+          garnish: enTr.garnish || '',
+          flavour: enTr.flavour || '',
         },
         activeLang,
       );
@@ -160,6 +174,10 @@ export function LanguagesTab({ productId, productName, onSaved }: { productId: s
         ingredient_list_short: translations.ingredient_list_short ?? f.ingredient_list_short,
         ingredient_list_full: translations.ingredient_list_full ?? f.ingredient_list_full,
         allergens_local: translations.allergens_local ?? f.allergens_local,
+        glass: translations.glass ?? f.glass,
+        ice: translations.ice ?? f.ice,
+        garnish: translations.garnish ?? f.garnish,
+        flavour: translations.flavour ?? f.flavour,
       }));
       toast.success(`Translated to ${activeLang}. Review and save.`);
     } catch (e: any) {
@@ -181,13 +199,18 @@ export function LanguagesTab({ productId, productName, onSaved }: { productId: s
     try {
       // 1 — product_translations fields
       setTranslateAllProgress('Translating product copy…');
+      const enTrAll = enTranslation as any;
       const productTranslations = await callTranslate(
         {
-          claim: enTranslation.claim || '',
-          sensory_description: enTranslation.sensory_description || '',
-          ingredient_list_short: enTranslation.ingredient_list_short || '',
-          ingredient_list_full: enTranslation.ingredient_list_full || '',
-          allergens_local: enTranslation.allergens_local || '',
+          claim: enTrAll.claim || '',
+          sensory_description: enTrAll.sensory_description || '',
+          ingredient_list_short: enTrAll.ingredient_list_short || '',
+          ingredient_list_full: enTrAll.ingredient_list_full || '',
+          allergens_local: enTrAll.allergens_local || '',
+          glass: enTrAll.glass || '',
+          ice: enTrAll.ice || '',
+          garnish: enTrAll.garnish || '',
+          flavour: enTrAll.flavour || '',
         },
         lang,
       );
@@ -342,6 +365,10 @@ export function LanguagesTab({ productId, productName, onSaved }: { productId: s
     { key: 'ingredient_list_short', label: 'Ingredient List (Short)', type: 'textarea', badge: 'STICKER' },
     { key: 'ingredient_list_full', label: 'Ingredient List (Full with %)', type: 'textarea', badge: 'WEBSITE' },
     { key: 'allergens_local', label: 'Allergens (Local)', type: 'input', badge: 'STICKER' },
+    { key: 'glass', label: 'Glass (How to Serve)', type: 'input', badge: 'WEBSITE' },
+    { key: 'ice', label: 'Ice (How to Serve)', type: 'input', badge: 'WEBSITE' },
+    { key: 'garnish', label: 'Garnish (How to Serve)', type: 'input', badge: 'WEBSITE' },
+    { key: 'flavour', label: 'Flavour (How to Serve)', type: 'input', badge: 'WEBSITE' },
   ];
 
   const availableToAdd = AVAILABLE_LANGUAGES.filter((l) => !languages.includes(l.code));

@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { useSpiritPartners, findSpiritPartner, splitSpirits } from '@/hooks/useSpiritPartners';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 interface Props {
   spirit: string;
@@ -7,6 +8,8 @@ interface Props {
 
 export function CraftedWith({ spirit }: Props) {
   const { data: partners } = useSpiritPartners();
+  const { data: settings } = useSiteSettings();
+  const showNames = settings?.show_spirit_partner_names ?? false;
   const names = splitSpirits(spirit);
 
   return (
@@ -20,18 +23,21 @@ export function CraftedWith({ spirit }: Props) {
           const safeSite = partner?.website_url && /^https?:\/\//i.test(partner.website_url)
             ? partner.website_url
             : undefined;
+          const hasLogo = !!partner?.logo_url;
           const card = (
             <div className="flex flex-col items-center justify-center gap-1.5 h-full">
-              {partner?.logo_url && (
+              {hasLogo && (
                 <img
-                  src={partner.logo_url}
+                  src={partner!.logo_url!}
                   alt={name}
                   className="h-9 w-auto max-w-full object-contain"
                 />
               )}
-              <p className={`font-display font-medium text-cc-text leading-tight ${partner?.logo_url ? 'text-sm' : 'text-lg'}`}>
-                {name}
-              </p>
+              {(!hasLogo || showNames) && (
+                <p className={`font-display font-medium text-cc-text leading-tight ${hasLogo ? 'text-sm' : 'text-lg'}`}>
+                  {name}
+                </p>
+              )}
               <p className="font-sans-consumer text-[9px] tracking-[0.1em] uppercase text-cc-text-lt">
                 Spirit Partner
               </p>

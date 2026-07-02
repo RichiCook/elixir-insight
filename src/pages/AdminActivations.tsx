@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useActivations, useDeleteActivation, useUpdateActivation, type ActivationStatus } from '@/hooks/useActivations';
+import { useActivations, useDeleteActivation, useUpdateActivation, useActivationLeadCounts, type ActivationStatus } from '@/hooks/useActivations';
 import { useProducts } from '@/hooks/useProduct';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -39,6 +39,8 @@ const PLACEMENT_LABELS: Record<string, string> = {
 export default function AdminActivations() {
   const { data: activations, isLoading } = useActivations();
   const { data: products } = useProducts();
+  const { data: leadCounts } = useActivationLeadCounts();
+  const totalLeads = leadCounts ? Object.values(leadCounts).reduce((a, b) => a + b, 0) : 0;
   const deleteMutation = useDeleteActivation();
   const updateMutation = useUpdateActivation();
   const navigate = useNavigate();
@@ -99,7 +101,7 @@ export default function AdminActivations() {
             { label: 'Total Activations', value: activations?.length || 0 },
             { label: 'Active', value: activations?.filter((a) => a.status === 'active').length || 0 },
             { label: 'Drafts', value: activations?.filter((a) => a.status === 'draft').length || 0 },
-            { label: 'Leads Captured', value: '—' },
+            { label: 'Leads Captured', value: totalLeads },
           ].map((s) => (
             <div
               key={s.label}
@@ -149,6 +151,10 @@ export default function AdminActivations() {
                       <span>{PLACEMENT_LABELS[a.placement] || a.placement}</span>
                       <span>·</span>
                       <span>{a.target_product_ids?.length || 0} products</span>
+                      <span>·</span>
+                      <Link to={`/admin/activations/${a.id}?tab=leads`} className={`hover:underline ${leadCounts?.[a.id] ? 'text-primary' : ''}`}>
+                        {leadCounts?.[a.id] || 0} leads
+                      </Link>
                     </div>
                     {(a.start_date || a.end_date) && (
                       <p className="text-[10px] text-muted-foreground mt-1">

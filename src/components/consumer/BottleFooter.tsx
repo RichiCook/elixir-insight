@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { Database } from '@/integrations/supabase/types';
 import { t, getLocalizedContent } from '@/lib/consumerI18n';
+import { ClassyWordmark } from './ClassyWordmark';
 
 type Product = Database['public']['Tables']['products']['Row'];
 
@@ -23,6 +24,9 @@ export function BottleFooter({ product, customContent, collab, brandName = 'Clas
 
   return (
     <footer className="px-6 py-8 border-t border-cc-border text-center">
+      <div className="flex justify-center mb-4">
+        <ClassyWordmark color="#2a2a2a" height={24} />
+      </div>
       <p className="font-display text-sm italic text-cc-text-lt mb-1">
         {websiteText}
       </p>
