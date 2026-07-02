@@ -573,6 +573,15 @@ function ContentEditor({ type, content, onChange }: { type: ActivationType; cont
             )}
           </div>
           <div>
+            <Label className="text-xs text-muted-foreground mb-1.5 block">Play button text</Label>
+            <Input
+              value={content.play_label ?? 'Ascolta la storia del drink'}
+              onChange={(e) => set('play_label', e.target.value)}
+              placeholder="Leave empty for play icon only"
+            />
+            <p className="text-[10px] text-muted-foreground mt-1">Shown on the play button. Clear it to show just the ▶ icon.</p>
+          </div>
+          <div>
             <Label className="text-xs text-muted-foreground mb-1.5 block">Caption</Label>
             <Input value={content.caption || ''} onChange={(e) => set('caption', e.target.value)} />
           </div>

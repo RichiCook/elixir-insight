@@ -95,10 +95,13 @@ function VideoActivation({ content }: { content: Record<string, any> }) {
   const url = typeof content.video_url === 'string' ? content.video_url.trim() : '';
   if (!/^https?:\/\//i.test(url)) return null;
 
+  // Play-button label: undefined = never configured → legacy default;
+  // empty string = explicitly cleared → icon-only button; otherwise the text.
   const playLabel =
-    typeof content.play_label === 'string' && content.play_label.trim()
-      ? content.play_label
-      : 'Ascolta la storia del drink';
+    content.play_label === undefined || content.play_label === null
+      ? 'Ascolta la storia del drink'
+      : String(content.play_label).trim();
+  const hasLabel = playLabel.length > 0;
 
   // YouTube / Vimeo → iframe embed. Anything else (e.g. an uploaded .mp4 in the
   // brand-videos bucket) → native <video> player.
@@ -150,7 +153,7 @@ function VideoActivation({ content }: { content: Record<string, any> }) {
             {!started && (
               <button
                 type="button"
-                aria-label={playLabel}
+                aria-label={hasLabel ? playLabel : 'Play'}
                 onClick={() => {
                   const v = videoRef.current;
                   if (v) { v.muted = false; void v.play(); }
@@ -159,13 +162,15 @@ function VideoActivation({ content }: { content: Record<string, any> }) {
               >
                 {/* subtle darkening so the button reads on any frame */}
                 <span className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-black/20" />
-                <span className="relative flex items-center gap-3 rounded-full border border-white/40 bg-white/10 px-6 py-3.5 text-white shadow-[0_8px_30px_rgba(0,0,0,0.35)] backdrop-blur-md transition duration-300 group-hover:scale-[1.03] group-hover:bg-white/20">
+                <span className={`relative flex items-center rounded-full border border-white/40 bg-white/10 text-white shadow-[0_8px_30px_rgba(0,0,0,0.35)] backdrop-blur-md transition duration-300 group-hover:scale-[1.03] group-hover:bg-white/20 ${hasLabel ? 'gap-3 px-6 py-3.5' : 'p-4'}`}>
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20 ring-1 ring-white/30 backdrop-blur-sm">
                     <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 translate-x-[1px] fill-white">
                       <path d="M8 5v14l11-7z" />
                     </svg>
                   </span>
-                  <span className="font-sans-consumer text-[13px] font-medium tracking-[0.06em]">{playLabel}</span>
+                  {hasLabel && (
+                    <span className="font-sans-consumer text-[13px] font-medium tracking-[0.06em]">{playLabel}</span>
+                  )}
                 </span>
               </button>
             )}
