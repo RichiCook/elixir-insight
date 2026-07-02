@@ -404,21 +404,28 @@ export default function BottlePage() {
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.5 }}>
           {sections.map((sec) => {
-            if (!sec.is_visible) return null;
-            const rendered = renderSection(sec.section_key, effectiveContent(sec), sec.block_type, sec.block_config);
-            if (!rendered) return null;
-
             const activationPlacement = ACTIVATION_AFTER[sec.section_key];
+            const acts = Array.isArray(activeActivations) ? activeActivations : [];
+            const hasSlot = !!activationPlacement && acts.some((a: any) => a.placement === activationPlacement);
+            const hasBeforeCta = sec.section_key === 'store_cta' && acts.some((a: any) => a.placement === 'before_cta');
+
+            // Render the section only if it's visible; but still render its
+            // activation slot even when the section is hidden/empty, so an
+            // activation anchored here doesn't silently disappear.
+            const rendered = sec.is_visible
+              ? renderSection(sec.section_key, effectiveContent(sec), sec.block_type, sec.block_config)
+              : null;
+
+            if (!rendered && !hasSlot && !hasBeforeCta) return null;
 
             return (
               <div key={sec.section_key}>
-                {/* before_cta slot */}
-                {sec.section_key === 'store_cta' && activeActivations && (
+                {hasBeforeCta && (
                   <ActivationSlot activations={activeActivations} placement="before_cta" productSlug={product.slug} brandName={brand?.name} />
                 )}
                 {rendered}
-                {activationPlacement && activeActivations && (
-                  <ActivationSlot activations={activeActivations} placement={activationPlacement} productSlug={product.slug} brandName={brand?.name} />
+                {hasSlot && (
+                  <ActivationSlot activations={activeActivations} placement={activationPlacement!} productSlug={product.slug} brandName={brand?.name} />
                 )}
               </div>
             );
