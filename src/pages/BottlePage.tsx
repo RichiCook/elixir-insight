@@ -383,12 +383,7 @@ export default function BottlePage() {
           <div className="relative z-20 flex items-center justify-between px-5 py-2">
             <div className="flex items-center gap-2">
               {brand?.logo_url ? (
-                <>
-                  <img src={brand.logo_url} alt={brand.name} className="h-9 w-auto object-contain" />
-                  <span className="font-sans-consumer text-[10px] tracking-[0.3em] uppercase text-cc-text-lt">
-                    {brand?.name}
-                  </span>
-                </>
+                <img src={brand.logo_url} alt={brand.name} className="h-9 w-auto object-contain" />
               ) : (
                 <ClassyWordmark color="#1a1a1a" height={34} />
               )}
