@@ -30,6 +30,7 @@ import { ActivationSlot } from '@/components/consumer/ActivationRenderer';
 import { useApplySiteSettings } from '@/hooks/useSiteSettings';
 import { useSlugRedirect } from '@/hooks/useSlugRedirect';
 import { useCocktailType } from '@/hooks/useCocktailType';
+import { useAvailableLanguages } from '@/hooks/useAvailableLanguages';
 
 // Map section keys to activation placement names
 const ACTIVATION_AFTER: Record<string, string> = {
@@ -74,6 +75,9 @@ export default function BottlePage() {
   // Signature collab cocktails get a "Explore Classy Cocktails" CTA instead of a per-product store link.
   const { data: cocktailType } = useCocktailType(collab?.id, product?.id, !!collab && !!product);
   const isSignatureCocktail = cocktailType === 'signature';
+
+  // Only offer languages that are actually translated for this product.
+  const shownLangs = useAvailableLanguages(product?.id, availableLangs);
 
   // Technical/nutritional data still fetched separately (admin-only columns
   // are gated by a dedicated RPC — get_product_nutrition — already called
@@ -358,38 +362,43 @@ export default function BottlePage() {
         <AgeGate
           brandName={brand?.name}
           brandWebsiteUrl={brand?.website_url ?? undefined}
+          logoUrl={brand?.logo_url}
         />
       )}
 
       <div className="mx-auto max-w-bottle min-h-screen bg-cc-white shadow-xl">
         {/* Top nav — hidden in preview mode */}
         {!isPreview && (
-          <div className="flex items-center justify-between px-5 pt-4">
-            <div className="flex items-center gap-2">
+          <div className="relative px-5 pt-4 pb-1">
+            {/* Centered brand logo */}
+            <div className="flex justify-center">
               {brand?.logo_url ? (
                 <img src={brand.logo_url} alt={brand.name ?? 'Classy Cocktails'} className="h-7 w-auto object-contain" />
               ) : (
-                <>
+                <div className="flex items-center gap-2">
                   <ClassyLogo size={24} />
                   <span className="font-sans-consumer text-[10px] tracking-[0.3em] uppercase text-cc-text-lt">
                     {brand?.name ?? 'Classy Cocktails'}
                   </span>
-                </>
+                </div>
               )}
             </div>
-            <div className="flex gap-2">
-              {availableLangs.map((l) => (
-                <button
-                  key={l}
-                  onClick={() => handleLangSwitch(l)}
-                  className={`font-sans-consumer text-xs tracking-widest px-2 py-1 transition-colors ${
-                    lang === l ? 'text-cc-gold font-medium' : 'text-cc-text-lt hover:text-cc-text-md'
-                  }`}
-                >
-                  {l}
-                </button>
-              ))}
-            </div>
+            {/* Language switcher — pinned right, vertically centered on the logo */}
+            {shownLangs.length > 1 && (
+              <div className="absolute inset-y-0 right-5 flex items-center gap-2">
+                {shownLangs.map((l) => (
+                  <button
+                    key={l}
+                    onClick={() => handleLangSwitch(l)}
+                    className={`font-sans-consumer text-xs tracking-widest px-1.5 py-1 transition-colors ${
+                      lang === l ? 'text-cc-gold font-medium' : 'text-cc-text-lt hover:text-cc-text-md'
+                    }`}
+                  >
+                    {l}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

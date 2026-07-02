@@ -6,9 +6,10 @@ const STORAGE_KEY = 'cc_age_verified';
 interface Props {
   brandName?: string;
   brandWebsiteUrl?: string;
+  logoUrl?: string | null;
 }
 
-export function AgeGate({ brandName = 'Classy Cocktails', brandWebsiteUrl = 'https://classycocktails.com' }: Props) {
+export function AgeGate({ brandName = 'Classy Cocktails', brandWebsiteUrl = 'https://classycocktails.com', logoUrl }: Props) {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -39,11 +40,15 @@ export function AgeGate({ brandName = 'Classy Cocktails', brandWebsiteUrl = 'htt
     >
       <div className="text-center px-8 max-w-xs">
         <div className="flex justify-center mb-4">
-          <ClassyLogo size={40} />
+          {logoUrl
+            ? <img src={logoUrl} alt={brandName} className="h-10 w-auto object-contain" />
+            : <ClassyLogo size={40} />}
         </div>
-        <p className="font-sans-consumer text-[10px] tracking-[0.2em] uppercase text-cc-text-lt mb-6">
-          {brandName}
-        </p>
+        {!logoUrl && (
+          <p className="font-sans-consumer text-[10px] tracking-[0.2em] uppercase text-cc-text-lt mb-6">
+            {brandName}
+          </p>
+        )}
         <h2 className="font-display text-2xl font-normal text-cc-text mb-8">
           Are you of legal drinking age?
         </h2>
