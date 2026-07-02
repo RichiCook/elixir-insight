@@ -369,23 +369,21 @@ export default function BottlePage() {
       <div className="mx-auto max-w-bottle min-h-screen bg-cc-white shadow-xl">
         {/* Top nav — hidden in preview mode */}
         {!isPreview && (
-          <div className="relative px-5 pt-4 pb-1">
-            {/* Centered brand logo */}
-            <div className="flex justify-center">
-              {brand?.logo_url ? (
-                <img src={brand.logo_url} alt={brand.name ?? 'Classy Cocktails'} className="h-7 w-auto object-contain" />
-              ) : (
-                <div className="flex items-center gap-2">
-                  <ClassyLogo size={24} />
-                  <span className="font-sans-consumer text-[10px] tracking-[0.3em] uppercase text-cc-text-lt">
-                    {brand?.name ?? 'Classy Cocktails'}
-                  </span>
-                </div>
-              )}
-            </div>
-            {/* Language switcher — pinned right, vertically centered on the logo */}
+          <div className="flex items-center justify-between px-5 pt-4 pb-1">
+            {/* Brand logo — left, vertically centered */}
+            {brand?.logo_url ? (
+              <img src={brand.logo_url} alt={brand.name ?? 'Classy Cocktails'} className="h-7 w-auto object-contain" />
+            ) : (
+              <div className="flex items-center gap-2">
+                <ClassyLogo size={24} />
+                <span className="font-sans-consumer text-[10px] tracking-[0.3em] uppercase text-cc-text-lt">
+                  {brand?.name ?? 'Classy Cocktails'}
+                </span>
+              </div>
+            )}
+            {/* Language switcher — right */}
             {shownLangs.length > 1 && (
-              <div className="absolute inset-y-0 right-5 flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 {shownLangs.map((l) => (
                   <button
                     key={l}
