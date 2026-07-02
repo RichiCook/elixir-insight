@@ -66,7 +66,7 @@ function RewardReveal({ code, url, codeLabel, buttonText }: {
           className="block w-full text-center font-sans-consumer text-[12px] font-medium tracking-[0.14em] uppercase text-white rounded-full py-3.5 transition-transform hover:scale-[1.02]"
           style={{ backgroundColor: '#b8975a' }}
         >
-          {btn} ↗
+          {btn}
         </a>
       )}
     </div>

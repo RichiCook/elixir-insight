@@ -7,6 +7,14 @@ interface Props {
   product: Product;
 }
 
+/** Show the alcohol unit when the ABV field is a bare number (e.g. "10.7" → "10.7% Vol"). */
+function formatAbv(abv: string | null | undefined): string {
+  const v = (abv ?? '').trim();
+  if (!v) return '';
+  if (/%|vol|abv|alc/i.test(v)) return v; // already has a unit
+  return `${v}% Vol`;
+}
+
 export function GenuineCard({ product }: Props) {
   const isNoRegrets = product.line === 'No Regrets';
   return (
@@ -38,7 +46,7 @@ export function GenuineCard({ product }: Props) {
       {/* Compact product info row (ABV + EAN + Serving) */}
       <div className="flex items-baseline justify-between mb-3">
         <span className="font-display text-[15px] font-light text-cc-text leading-none">
-          {isNoRegrets ? '0.0% ALC. FREE' : product.abv}
+          {isNoRegrets ? '0.0% ALC. FREE' : formatAbv(product.abv)}
         </span>
         <div className="text-right space-y-0.5">
           {product.ean_int && (

@@ -366,13 +366,16 @@ export default function BottlePage() {
         {!isPreview && (
           <div className="flex items-center justify-between px-5 pt-4">
             <div className="flex items-center gap-2">
-              {brand?.logo_url
-                ? <img src={brand.logo_url} alt={brand.name} className="h-6 w-auto object-contain" />
-                : <ClassyLogo size={24} />
-              }
-              <span className="font-sans-consumer text-[10px] tracking-[0.3em] uppercase text-cc-text-lt">
-                {brand?.name ?? 'Classy Cocktails'}
-              </span>
+              {brand?.logo_url ? (
+                <img src={brand.logo_url} alt={brand.name ?? 'Classy Cocktails'} className="h-7 w-auto object-contain" />
+              ) : (
+                <>
+                  <ClassyLogo size={24} />
+                  <span className="font-sans-consumer text-[10px] tracking-[0.3em] uppercase text-cc-text-lt">
+                    {brand?.name ?? 'Classy Cocktails'}
+                  </span>
+                </>
+              )}
             </div>
             <div className="flex gap-2">
               {availableLangs.map((l) => (
