@@ -333,6 +333,45 @@ function ExcelTab() {
             eanCount++;
           }
 
+          // Structured food-pairing cards from the single FOOD PAIRING value.
+          // AI splits, grammar-fixes and translates (IT/FR/DE). Only when the sheet
+          // has a pairing AND the product has none yet — never clobber curated cards.
+          if (pp.productFields.food_pairing) {
+            const { count: existingPairings } = await supabase
+              .from('product_ai_pairings')
+              .select('id', { count: 'exact', head: true })
+              .eq('product_id', dbProduct!.id);
+            if (!existingPairings) {
+              try {
+                const { data: genData, error: genErr } = await supabase.functions.invoke('generate-pairings', {
+                  body: {
+                    foodPairing: pp.productFields.food_pairing,
+                    occasion: pp.productFields.occasion ?? null,
+                    productName: pp.sheetName,
+                    spirit: pp.productFields.spirit ?? null,
+                    flavour: pp.productFields.flavour ?? null,
+                    targetLangs: ['IT', 'FR', 'DE'],
+                  },
+                });
+                if (!genErr && Array.isArray(genData?.pairings) && genData.pairings.length) {
+                  const rows = genData.pairings.map((c: any, idx: number) => ({
+                    product_id: dbProduct!.id,
+                    name: c.name,
+                    subtitle: c.subtitle ?? null,
+                    emoji: c.emoji ?? '✦',
+                    sort_order: idx,
+                    is_featured: idx === 0,
+                    translations: c.translations ?? {},
+                  }));
+                  await supabase.from('product_ai_pairings').insert(rows as any);
+                  fieldsCount += rows.length;
+                }
+              } catch {
+                // best-effort — pairing generation must never fail the import
+              }
+            }
+          }
+
           let score = 0;
           ['line', 'spirit', 'abv', 'garnish', 'glass', 'flavour', 'food_pairing'].forEach(f => {
             if (pp.productFields[f]) score++;

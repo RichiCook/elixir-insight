@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Sparkles } from 'lucide-react';
 
 const EMOJI_OPTIONS = ['🧀', '🥩', '🍫', '🫒', '🍕', '🥗', '🍝', '🐟', '🦐', '🥖', '🍰', '🍷', '🍸', '🥂', '☕', '🍋', '🌶️', '🥑', '🍓', '✦'];
 
@@ -16,6 +16,7 @@ export function PairingsTab({ productId, onSaved }: { productId: string; onSaved
   const queryClient = useQueryClient();
   const [items, setItems] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
     if (pairings) setItems(pairings.map((p) => ({ ...p })));
@@ -47,6 +48,55 @@ export function PairingsTab({ productId, onSaved }: { productId: string; onSaved
     setItems(newItems.map((item, i) => ({ ...item, sort_order: i })));
   };
 
+  // Generate structured, grammar-checked, translated cards from the product's
+  // single "food pairing" value (imported from the tech sheet). Appended for review.
+  const handleGenerate = async () => {
+    setGenerating(true);
+    try {
+      const { data: prod } = await supabase
+        .from('products')
+        .select('name, food_pairing, spirit, flavour')
+        .eq('id', productId)
+        .single();
+      const fp = (prod as any)?.food_pairing;
+      if (!fp) {
+        toast.error('No “food pairing” value on this product to generate from');
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke('generate-pairings', {
+        body: {
+          foodPairing: fp,
+          productName: (prod as any)?.name ?? '',
+          spirit: (prod as any)?.spirit ?? null,
+          flavour: (prod as any)?.flavour ?? null,
+          targetLangs: ['IT', 'FR', 'DE'],
+        },
+      });
+      if (error || !Array.isArray(data?.pairings) || !data.pairings.length) {
+        toast.error(error?.message || 'Generation returned no pairings');
+        return;
+      }
+      setItems((prev) => [
+        ...prev,
+        ...data.pairings.map((c: any, idx: number) => ({
+          id: `new-${Date.now()}-${idx}`,
+          product_id: productId,
+          name: c.name,
+          subtitle: c.subtitle || '',
+          emoji: c.emoji || '✦',
+          is_featured: prev.length === 0 && idx === 0,
+          translations: c.translations || {},
+          sort_order: prev.length + idx,
+        })),
+      ]);
+      toast.success(`Generated ${data.pairings.length} pairing${data.pairings.length > 1 ? 's' : ''} — review & save`);
+    } catch (e: any) {
+      toast.error(e?.message || 'Generation failed');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     const currentIds = items.filter((i) => !i.id.startsWith('new-')).map((i) => i.id);
@@ -63,11 +113,12 @@ export function PairingsTab({ productId, onSaved }: { productId: string; onSaved
         emoji: item.emoji || '✦',
         is_featured: item.is_featured ?? false,
         sort_order: i,
+        translations: item.translations ?? {},
       };
       if (item.id.startsWith('new-')) {
-        await supabase.from('product_ai_pairings').insert(payload);
+        await supabase.from('product_ai_pairings').insert(payload as any);
       } else {
-        await supabase.from('product_ai_pairings').update(payload).eq('id', item.id);
+        await supabase.from('product_ai_pairings').update(payload as any).eq('id', item.id);
       }
     }
     setSaving(false);
@@ -85,9 +136,14 @@ export function PairingsTab({ productId, onSaved }: { productId: string; onSaved
           <h3 className="text-sm font-medium text-foreground">Food & Drink Pairings</h3>
           <p className="text-[10px] text-muted-foreground mt-0.5">Curate pairing suggestions shown on the consumer bottle page</p>
         </div>
-        <Button variant="outline" size="sm" onClick={addItem}>
-          <Plus className="w-3 h-3 mr-1" /> Add Pairing
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleGenerate} disabled={generating}>
+            <Sparkles className="w-3 h-3 mr-1" /> {generating ? 'Generating…' : 'Generate from tech sheet'}
+          </Button>
+          <Button variant="outline" size="sm" onClick={addItem}>
+            <Plus className="w-3 h-3 mr-1" /> Add Pairing
+          </Button>
+        </div>
       </div>
 
       {items.length === 0 ? (
