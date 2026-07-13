@@ -14,13 +14,10 @@ interface Props {
 export function BottlePairings({ pairings, lang = 'EN' }: Props) {
   return (
     <section className="px-6 py-8 border-t border-cc-border">
-      <h2 className="font-display text-lg font-light tracking-wide text-cc-black mb-1">
+      <h2 className="font-display text-lg font-light tracking-wide text-cc-black mb-6">
         {t(lang, 'perfect_pairings')}
       </h2>
-      <p className="font-sans-consumer text-[10px] tracking-[0.15em] uppercase text-cc-text-lt mb-5">
-        {t(lang, 'ai_curated')}
-      </p>
-      <div className="grid grid-cols-2 gap-2">
+      <div className={`grid gap-3 ${pairings.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
         {pairings.map((p, i) => {
           const tr = getRowTranslation(p, lang);
           const name = tr.name || p.name;
@@ -31,20 +28,17 @@ export function BottlePairings({ pairings, lang = 'EN' }: Props) {
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.08 }}
-              className="relative rounded-lg p-4 border border-cc-border bg-cc-white"
+              transition={{ delay: i * 0.08, duration: 0.4 }}
+              className="flex flex-col items-center text-center rounded-xl border border-cc-border bg-cc-white px-4 py-6"
             >
-              {p.is_featured && (
-                <span className="absolute top-2 right-2 font-sans-consumer text-[8px] tracking-[0.12em] uppercase bg-cc-cream text-cc-gold border border-cc-border rounded px-1.5 py-0.5">
-                  {t(lang, 'featured')}
-                </span>
-              )}
-              <span className="text-xl mb-2 block">{p.emoji}</span>
-              <p className="font-sans-consumer text-sm font-medium text-cc-text">
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-cc-cream text-2xl mb-4">
+                {p.emoji}
+              </span>
+              <p className="font-display text-[15px] leading-snug text-cc-black">
                 {name}
               </p>
               {subtitle && (
-                <p className="font-sans-consumer text-xs text-cc-text-lt mt-0.5">
+                <p className="font-sans-consumer text-[9px] tracking-[0.18em] uppercase text-cc-text-lt mt-2">
                   {subtitle}
                 </p>
               )}
