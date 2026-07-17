@@ -21,6 +21,9 @@ function getSectionHeading(line: string, lang: string) {
 }
 
 export function BottleServeMoments({ moments, line, lang = 'EN', serveMomentImages }: Props) {
+  // Per-card images win; the positional serve_moment image pool only applies
+  // to products saved before per-card images existed.
+  const hasPerCardImages = moments.some((m) => m.image_url);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -68,7 +71,7 @@ export function BottleServeMoments({ moments, line, lang = 'EN', serveMomentImag
             .serve-carousel::-webkit-scrollbar { display: none; }
           `}</style>
           {moments.map((m, i) => {
-            const imageUrl = serveMomentImages?.[i];
+            const imageUrl = hasPerCardImages ? m.image_url : serveMomentImages?.[i];
             const tr = getRowTranslation(m, lang);
             const title = tr.title || m.title;
             const description = tr.description || m.description;

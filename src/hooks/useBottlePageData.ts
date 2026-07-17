@@ -76,6 +76,7 @@ export interface BottleServeMoment {
   translations: Record<string, Record<string, string>> | null;
   background_color: string | null;
   emoji: string | null;
+  image_url: string | null;
   [key: string]: unknown;
 }
 

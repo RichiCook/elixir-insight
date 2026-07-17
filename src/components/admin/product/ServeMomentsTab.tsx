@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Plus, Trash2, Sparkles, X } from 'lucide-react';
+import { Plus, Trash2, Sparkles, ImagePlus, X } from 'lucide-react';
 import { ImagePickerDialog } from '@/components/admin/ImagePickerDialog';
 
 const EMOJI_OPTIONS = ['🍊', '🌙', '✦', '🥂', '🍸', '☀️', '🌅', '🎉', '🕯️', '⛱️', '🎶', '🧊', '🌊', '🏌️', '🍽️', '💫', '🔥', '❄️', '🌆', '🥃'];
@@ -20,15 +20,19 @@ export function ServeMomentsTab({ productId, onSaved }: { productId: string; onS
   const [items, setItems] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const [pickingImage, setPickingImage] = useState(false);
+  const [pickingImageFor, setPickingImageFor] = useState<number | null>(null);
 
   useEffect(() => {
-    if (moments) setItems(moments.map((m) => ({ ...m })));
-  }, [moments]);
-
-  // Photos shown on the consumer cards: approved product images tagged with the
-  // serve_moment section, matched to cards by position.
-  const serveImages = (productImages || []).filter((pi: any) => pi.section === 'serve_moment');
+    if (!moments) return;
+    // Legacy pool: approved images tagged serve_moment, mapped to cards by
+    // position. Prefill each card's own image from it so what the admin sees
+    // matches what the consumer page shows today; saving persists it per card.
+    const legacyPool = (productImages || []).filter((pi: any) => pi.section === 'serve_moment');
+    setItems(moments.map((m: any, i: number) => ({
+      ...m,
+      image_url: m.image_url ?? legacyPool[i]?.brand_images?.public_url ?? null,
+    })));
+  }, [moments, productImages]);
 
   const addItem = () => {
     setItems((prev) => [...prev, {
@@ -38,6 +42,7 @@ export function ServeMomentsTab({ productId, onSaved }: { productId: string; onS
       title: '',
       description: '',
       emoji: '✦',
+      image_url: null,
       sort_order: prev.length,
     }]);
   };
@@ -95,6 +100,7 @@ export function ServeMomentsTab({ productId, onSaved }: { productId: string; onS
           title: m.title,
           description: m.description,
           emoji: m.emoji || '✦',
+          image_url: null,
           translations: m.translations || {},
           sort_order: prev.length + idx,
         })),
@@ -122,6 +128,7 @@ export function ServeMomentsTab({ productId, onSaved }: { productId: string; onS
         title: item.title,
         description: item.description,
         emoji: item.emoji || '✦',
+        image_url: item.image_url || null,
         background_color: item.background_color ?? null,
         sort_order: i,
         translations: item.translations ?? {},
@@ -136,45 +143,6 @@ export function ServeMomentsTab({ productId, onSaved }: { productId: string; onS
     toast.success('Serve moments saved');
     queryClient.invalidateQueries({ queryKey: ['product-serve-moments', productId] });
     onSaved?.();
-  };
-
-  // Same attach flow as ImagesTab, with the section fixed to serve_moment.
-  const handleAttachImage = async (url: string) => {
-    let imageId: string | null = null;
-    const { data: existing } = await supabase.from('brand_images').select('id').eq('public_url', url).maybeSingle();
-    if (existing) {
-      imageId = existing.id;
-    } else {
-      const { data: created, error: createErr } = await supabase
-        .from('brand_images')
-        .insert({ public_url: url, filename: url.split('/').pop() || 'image', storage_path: url, status: 'complete' })
-        .select('id')
-        .single();
-      if (createErr || !created) { toast.error('Failed to register image'); return; }
-      imageId = created.id;
-    }
-    const { data: existingAttr } = await supabase.from('image_attributes').select('id').eq('image_id', imageId!).maybeSingle();
-    if (!existingAttr) {
-      await supabase.from('image_attributes').insert({ image_id: imageId, is_approved: true });
-    } else {
-      await supabase.from('image_attributes').update({ is_approved: true }).eq('id', existingAttr.id);
-    }
-    const { error } = await supabase.from('product_images').upsert({
-      product_id: productId,
-      image_id: imageId,
-      section: 'serve_moment',
-      sort_order: (productImages?.length || 0),
-    }, { onConflict: 'product_id,image_id,section' });
-    if (error) { toast.error('Failed to attach image'); return; }
-    toast.success('Image attached');
-    queryClient.invalidateQueries({ queryKey: ['product-images', productId] });
-    setPickingImage(false);
-  };
-
-  const handleRemoveImage = async (id: string) => {
-    await supabase.from('product_images').delete().eq('id', id);
-    toast.success('Image removed');
-    queryClient.invalidateQueries({ queryKey: ['product-images', productId] });
   };
 
   if (isLoading) return <div className="py-10 text-center text-muted-foreground text-xs">Loading…</div>;
@@ -216,6 +184,34 @@ export function ServeMomentsTab({ productId, onSaved }: { productId: string; onS
                 <button onClick={() => moveItem(index, -1)} disabled={index === 0} className="text-muted-foreground hover:text-foreground disabled:opacity-30 text-[10px]">▲</button>
                 <button onClick={() => moveItem(index, 1)} disabled={index === items.length - 1} className="text-muted-foreground hover:text-foreground disabled:opacity-30 text-[10px]">▼</button>
               </div>
+
+              {/* Card image — shown on the consumer card; emoji is the fallback */}
+              <div className="relative group flex-shrink-0">
+                {item.image_url ? (
+                  <>
+                    <button onClick={() => setPickingImageFor(index)} title="Change photo">
+                      <img src={item.image_url} alt="" className="w-20 aspect-[4/3] object-cover rounded-md border border-border" />
+                    </button>
+                    <button
+                      onClick={() => updateItem(index, 'image_url', null)}
+                      title="Remove photo (card falls back to emoji)"
+                      className="absolute -top-1.5 -right-1.5 bg-black/70 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setPickingImageFor(index)}
+                    title="Add a photo of the drink being served"
+                    className="w-20 aspect-[4/3] rounded-md border border-dashed border-border flex flex-col items-center justify-center text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
+                  >
+                    <ImagePlus className="w-4 h-4" />
+                    <span className="text-[8px] mt-0.5">Photo</span>
+                  </button>
+                )}
+              </div>
+
               <Select value={item.emoji || '✦'} onValueChange={(v) => updateItem(index, 'emoji', v)}>
                 <SelectTrigger className="w-14 h-9 text-lg justify-center"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -243,40 +239,11 @@ export function ServeMomentsTab({ productId, onSaved }: { productId: string; onS
         </Button>
       )}
 
-      {/* Card photos — consumer page matches these to the cards above by position */}
-      <div className="pt-4 border-t border-border">
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <h4 className="text-xs font-medium text-foreground">Card Photos</h4>
-            <p className="text-[10px] text-muted-foreground mt-0.5">
-              Photos of the drink being served. The 1st photo goes on the 1st card, the 2nd on the 2nd, and so on; cards without a photo show their emoji.
-            </p>
-          </div>
-          <Button variant="outline" size="sm" className="h-6 text-[9px]" onClick={() => setPickingImage(true)}>
-            <Plus className="w-3 h-3 mr-1" /> Add Photo
-          </Button>
-        </div>
-        <div className="grid grid-cols-4 gap-2">
-          {serveImages.map((pi: any, idx: number) => (
-            <div key={pi.id} className="relative group rounded-md overflow-hidden border border-border">
-              <img src={pi.brand_images?.public_url} alt="" className="w-full aspect-[4/3] object-cover" />
-              <span className="absolute bottom-1 left-1 text-[9px] bg-black/60 text-white rounded px-1">Card {idx + 1}</span>
-              <button
-                onClick={() => handleRemoveImage(pi.id)}
-                className="absolute top-1 right-1 bg-black/60 text-white rounded p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          ))}
-          {serveImages.length === 0 && (
-            <p className="text-[10px] text-muted-foreground col-span-4 py-2">No photos yet — cards will show their emoji.</p>
-          )}
-        </div>
-      </div>
-
-      {pickingImage && (
-        <ImagePickerDialog onSelect={handleAttachImage} onClose={() => setPickingImage(false)} />
+      {pickingImageFor !== null && (
+        <ImagePickerDialog
+          onSelect={(url) => { updateItem(pickingImageFor, 'image_url', url); setPickingImageFor(null); }}
+          onClose={() => setPickingImageFor(null)}
+        />
       )}
     </div>
   );
