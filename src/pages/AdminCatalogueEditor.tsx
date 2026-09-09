@@ -4,6 +4,8 @@ import { useCatalogue, useCreateCatalogue, useUpdateCatalogue } from '@/hooks/us
 import { useProducts } from '@/hooks/useProduct';
 import { useActivations, useBrands } from '@/hooks/useActivations';
 import { Button } from '@/components/ui/button';
+import { BrandQrCode } from '@/components/admin/BrandQrCode';
+import { useBrandStore } from '@/stores/brandStore';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -53,6 +55,7 @@ const DEFAULT_DRAFT: CatalogueDraft = {
 const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
 export default function AdminCatalogueEditor() {
+  const activeBrand = useBrandStore((st) => st.activeBrand);
   const { id } = useParams<{ id: string }>();
   const isNew = !id || id === 'new';
   const navigate = useNavigate();
@@ -143,8 +146,7 @@ export default function AdminCatalogueEditor() {
   const slugPreview = draft.slug ? slugify(draft.slug) : slugify(draft.title);
   const codeForLink = draft.short_code ? slugify(draft.short_code) : slugPreview;
   const shortLink = `${window.location.origin}/c/${codeForLink}`;
-  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(shortLink)}&size=220x220&margin=10`;
-  const qrDownload = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(shortLink)}&size=1000x1000&format=svg&margin=12`;
+  const qrLogo = draft.partner_logo_url || activeBrand?.logo_url || null;
   const copyLink = async () => {
     try { await navigator.clipboard.writeText(shortLink); setCopied(true); window.setTimeout(() => setCopied(false), 2000); } catch { /* clipboard unavailable */ }
   };
@@ -178,12 +180,12 @@ export default function AdminCatalogueEditor() {
         <section className="rounded-lg border border-border bg-card p-5">
           <h2 className="text-sm font-medium text-foreground mb-3">QR &amp; short link</h2>
           <div className="flex items-center gap-5 flex-wrap">
-            <img src={qrSrc} alt="Catalogue QR code" width={140} height={140} className="rounded bg-white p-1.5 border border-border shrink-0" />
+            <BrandQrCode url={shortLink} logoUrl={qrLogo} size={140} variant="light" filename={`qr-catalogue-${codeForLink}`} showDownload />
             <div className="flex-1 min-w-[220px] space-y-2.5">
               <code className="inline-block text-sm text-foreground bg-muted/40 rounded px-2.5 py-1.5 break-all">{shortLink}</code>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={copyLink}>{copied ? 'Copied ✓' : 'Copy link'}</Button>
-                <a href={qrDownload} target="_blank" rel="noopener noreferrer"><Button variant="outline" size="sm">Download QR (SVG)</Button></a>
+                <span className="text-[10px] text-muted-foreground">Use the PNG / SVG buttons under the code for print-ready files.</span>
               </div>
               {(isNew || draft.status !== 'active') && (
                 <p className="text-[10px] text-muted-foreground">Publish the catalogue to make this link live.</p>
