@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { type ScanStats, periodRationale } from '@/hooks/useScanStats';
 import { useBrandStore } from '@/stores/brandStore';
+import { BrandQrCode } from '@/components/admin/BrandQrCode';
 
 // ── Design tokens (matching the prototype exactly) ────────────────────────
 const T = {
@@ -177,47 +178,6 @@ function SparklineLine({
       />
       <circle cx={lx} cy={ly} r="2.4" fill={c} vectorEffect="non-scaling-stroke" />
     </svg>
-  );
-}
-
-// ── QR code thumbnail ─────────────────────────────────────────────────────
-// Renders the product's live bottle-page QR code using the qrserver.com API.
-// Gold modules on the card background — no library needed.
-
-function QrCode({ url, size = 56 }: { url: string; size?: number }) {
-  const [errored, setErrored] = useState(false);
-  const apiUrl =
-    'https://api.qrserver.com/v1/create-qr-code/?' +
-    new URLSearchParams({
-      data:    url,
-      size:    `${size * 2}x${size * 2}`, // 2× for retina
-      color:   'CAA850',
-      bgcolor: '1B1711',
-      format:  'svg',
-      margin:  '2',
-    }).toString();
-
-  if (errored) {
-    // Silent fallback: small empty rounded square
-    return (
-      <div style={{
-        width: size, height: size, borderRadius: 6, flexShrink: 0,
-        border: `1px solid rgba(202,168,80,0.18)`,
-      }} />
-    );
-  }
-
-  return (
-    <img
-      src={apiUrl}
-      width={size} height={size}
-      alt="QR code"
-      onError={() => setErrored(true)}
-      style={{
-        borderRadius: 6, flexShrink: 0, display: 'block',
-        imageRendering: 'pixelated',
-      }}
-    />
   );
 }
 
@@ -490,7 +450,7 @@ export function ProductInsightCard({ product, stats, brandSlugOverride, badge }:
               )}
             </div>
           </div>
-          <QrCode url={bottleUrl} size={56} />
+          <BrandQrCode url={bottleUrl} logoUrl={activeBrand?.logo_url} size={56} variant="dark" filename={`qr-${brandSlug}-${product.slug}`} showDownload />
         </div>
 
         {/* ── Metric row ── */}
