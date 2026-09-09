@@ -16,20 +16,20 @@ interface Props {
 /** Print export resolution (px). 2000px ≈ 17cm at 300dpi. */
 const PRINT_SIZE = 2000;
 
-/** Fetch an image and return it as a data URL so the QR library embeds it
- *  reliably (avoids cross-origin canvas taint and image-load timing issues). */
-async function toDataUrl(src: string): Promise<string | null> {
-  try {
-    const blob = await fetch(src, { mode: 'cors' }).then((r) => (r.ok ? r.blob() : Promise.reject(r.status)));
-    return await new Promise<string>((res, rej) => {
-      const fr = new FileReader();
-      fr.onload = () => res(String(fr.result));
-      fr.onerror = () => rej(fr.error);
-      fr.readAsDataURL(blob);
-    });
-  } catch {
-    return null;
-  }
+/**
+ * qr-code-styling awaits its centre image with no onerror handler, so an image
+ * it can't load hangs the draw forever (blank QR). Verify the logo ourselves —
+ * load + non-zero size, with a timeout — and only pass it on once it's proven.
+ */
+function verifyImage(src: string, timeoutMs = 5000): Promise<boolean> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    const t = setTimeout(() => resolve(false), timeoutMs);
+    img.onload = () => { clearTimeout(t); resolve(img.naturalWidth > 0 && img.naturalHeight > 0); };
+    img.onerror = () => { clearTimeout(t); resolve(false); };
+    img.src = src;
+  });
 }
 
 function buildOptions(url: string, logo: string | null | undefined, size: number, dark: boolean) {
@@ -52,30 +52,44 @@ function buildOptions(url: string, logo: string | null | undefined, size: number
 
 export function BrandQrCode({ url, logoUrl, size = 140, filename = 'qr-code', variant = 'light', showDownload = false }: Props) {
   const ref = useRef<HTMLDivElement>(null);
-  const [logoData, setLogoData] = useState<string | null>(null);
+  // The logo URL, but only once we've confirmed the browser can actually load it.
+  const [verifiedLogo, setVerifiedLogo] = useState<string | null>(null);
 
-  // Resolve the logo to a data URL once per logoUrl.
   useEffect(() => {
     let alive = true;
-    setLogoData(null);
+    setVerifiedLogo(null);
     if (!logoUrl) return;
-    toDataUrl(logoUrl).then((d) => { if (alive) setLogoData(d); });
+    verifyImage(logoUrl).then((ok) => { if (alive) setVerifiedLogo(ok ? logoUrl : null); });
     return () => { alive = false; };
   }, [logoUrl]);
 
+  // Always draw: first without a logo (instant), then again once the logo is verified.
   useEffect(() => {
-    if (!ref.current) return;
-    const qr = new QRCodeStyling({ ...buildOptions(url, logoData, size, variant === 'dark'), type: 'svg' });
-    ref.current.innerHTML = '';
-    qr.append(ref.current);
-  }, [url, logoData, size, variant]);
+    const el = ref.current;
+    if (!el) return;
+    try {
+      const qr = new QRCodeStyling({ ...buildOptions(url, verifiedLogo, size, variant === 'dark'), type: 'svg' });
+      el.innerHTML = '';
+      qr.append(el);
+    } catch {
+      // Last-resort fallback: never leave the slot blank.
+      const qr = new QRCodeStyling({ ...buildOptions(url, null, size, variant === 'dark'), type: 'svg' });
+      el.innerHTML = '';
+      qr.append(el);
+    }
+  }, [url, verifiedLogo, size, variant]);
 
   // Print export: a fresh high-res, black-on-white instance so the thumbnail size never limits quality.
   const download = async (ext: 'png' | 'svg') => {
-    // Make sure the logo is embedded even if the user clicks before it resolved.
-    const logo = logoData ?? (logoUrl ? await toDataUrl(logoUrl) : null);
-    const qr = new QRCodeStyling({ ...buildOptions(url, logo, PRINT_SIZE, false), type: ext === 'svg' ? 'svg' : 'canvas' });
-    await qr.download({ name: filename, extension: ext });
+    const logo = verifiedLogo ?? (logoUrl && (await verifyImage(logoUrl)) ? logoUrl : null);
+    const make = (withLogo: string | null, type: 'svg' | 'canvas') =>
+      new QRCodeStyling({ ...buildOptions(url, withLogo, PRINT_SIZE, false), type });
+    try {
+      await make(logo, ext === 'svg' ? 'svg' : 'canvas').download({ name: filename, extension: ext });
+    } catch {
+      // e.g. canvas tainted by a cross-origin logo → export as SVG instead, never fail silently.
+      await make(logo, 'svg').download({ name: filename, extension: 'svg' });
+    }
   };
 
   return (
