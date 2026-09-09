@@ -146,7 +146,8 @@ export default function AdminCatalogueEditor() {
   const slugPreview = draft.slug ? slugify(draft.slug) : slugify(draft.title);
   const codeForLink = draft.short_code ? slugify(draft.short_code) : slugPreview;
   const shortLink = `${window.location.origin}/c/${codeForLink}`;
-  const qrLogo = draft.partner_logo_url || activeBrand?.logo_url || null;
+  const freshBrandLogo = brands?.find((b) => b.slug === activeBrand?.slug)?.logo_url ?? activeBrand?.logo_url ?? null;
+  const qrLogo = draft.partner_logo_url || freshBrandLogo;
   const copyLink = async () => {
     try { await navigator.clipboard.writeText(shortLink); setCopied(true); window.setTimeout(() => setCopied(false), 2000); } catch { /* clipboard unavailable */ }
   };
