@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { type ScanStats, periodRationale } from '@/hooks/useScanStats';
 import { useBrandStore } from '@/stores/brandStore';
 import { BrandQrCode } from '@/components/admin/BrandQrCode';
-import { useBrands } from '@/hooks/useBrands';
+import { useBrandQrLogo } from '@/hooks/useBrandQrLogo';
 
 // ── Design tokens (matching the prototype exactly) ────────────────────────
 const T = {
@@ -323,8 +323,8 @@ export function ProductInsightCard({ product, stats, brandSlugOverride, badge }:
   const activeBrand = useBrandStore((s) => s.activeBrand);
   const brandSlug = brandSlugOverride ?? activeBrand?.slug ?? 'classy';
   // Fresh logo from the DB — the persisted activeBrand snapshot can be stale (e.g. logo uploaded later).
-  const { data: brands } = useBrands();
-  const brandLogo = brands?.find((b) => b.slug === (activeBrand?.slug ?? 'classy'))?.logo_url ?? activeBrand?.logo_url ?? null;
+  const { data: qrLogo } = useBrandQrLogo(activeBrand?.slug ?? 'classy');
+  const brandLogo = qrLogo?.resolved ?? activeBrand?.logo_url ?? null;
   const bottleUrl = `${window.location.origin}/b/${brandSlug}/${product.slug}?source=qr`;
 
   const aiPeriod = stats?.aiPeriod ?? 'week';

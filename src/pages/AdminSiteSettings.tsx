@@ -27,6 +27,9 @@ export default function AdminSiteSettings() {
   const [brandId, setBrandId] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState('');
   const [logoPicker, setLogoPicker] = useState(false);
+  const [qrLogoUrl, setQrLogoUrl] = useState('');
+  const [qrPicker, setQrPicker] = useState(false);
+  const [savingQr, setSavingQr] = useState(false);
   const [savingLogo, setSavingLogo] = useState(false);
 
   useEffect(() => {
@@ -43,8 +46,8 @@ export default function AdminSiteSettings() {
       }
       setLoading(false);
     });
-    supabase.from('brands' as any).select('id, logo_url').eq('slug', 'classy').maybeSingle().then(({ data }) => {
-      if (data) { setBrandId((data as any).id); setLogoUrl((data as any).logo_url || ''); }
+    supabase.from('brands' as any).select('*').eq('slug', 'classy').maybeSingle().then(({ data }) => {
+      if (data) { setBrandId((data as any).id); setLogoUrl((data as any).logo_url || ''); setQrLogoUrl((data as any).qr_logo_url || ''); }
     });
   }, []);
 
@@ -58,6 +61,19 @@ export default function AdminSiteSettings() {
     toast.success(url ? 'Brand logo saved' : 'Brand logo removed');
   };
   const handleLogoSelected = (url: string) => { setLogoPicker(false); saveLogo(url); };
+  const saveQrLogo = async (url: string | null) => {
+    if (!brandId) { toast.error('Brand not found'); return; }
+    setSavingQr(true);
+    const { error } = await supabase.from('brands' as any).update({ qr_logo_url: url || null }).eq('id', brandId);
+    setSavingQr(false);
+    if (error) {
+      toast.error(/qr_logo_url/i.test(error.message) ? 'QR logo column missing — run the brand_qr_logo migration first' : 'Failed to save QR logo');
+      return;
+    }
+    setQrLogoUrl(url || '');
+    toast.success(url ? 'QR logo saved' : 'QR logo removed — QR codes use the brand logo');
+  };
+  const handleQrLogoSelected = (url: string) => { setQrPicker(false); saveQrLogo(url); };
 
   const { form, set, saving, handleSave } = useApiForm<SiteSettingsForm>(initial, async (data) => {
     if (!settingsId) return;
@@ -172,6 +188,31 @@ export default function AdminSiteSettings() {
           <p className="text-xs text-muted-foreground">Shown on the consumer bottle pages. PNG with a transparent background works best. Saved as soon as you pick it.</p>
         </div>
 
+        {/* QR Logo — overrides the brand logo inside QR codes only */}
+        <div className="space-y-2">
+          <Label>QR Logo (optional)</Label>
+          <div className="flex items-center gap-4">
+            {qrLogoUrl ? (
+              <div className="h-12 px-2 border border-border rounded flex items-center bg-muted overflow-hidden">
+                <img src={qrLogoUrl} alt="QR logo" className="h-8 w-auto object-contain" />
+              </div>
+            ) : (
+              <div className="w-12 h-12 border border-border rounded flex items-center justify-center bg-muted">
+                <span className="text-[10px] text-muted-foreground text-center leading-tight">Brand<br/>logo</span>
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setQrPicker(true)} disabled={!brandId || savingQr}>
+                <Upload className="w-3 h-3 mr-1" /> {savingQr ? 'Saving…' : 'Upload QR Logo'}
+              </Button>
+              {qrLogoUrl && (
+                <Button variant="ghost" size="sm" onClick={() => saveQrLogo(null)} disabled={savingQr}>Remove</Button>
+              )}
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">Used in the centre of QR codes instead of the brand logo. A simple mark (e.g. just the symbol) reads best at small sizes. Leave empty to use the brand logo.</p>
+        </div>
+
         <Button onClick={handleSave} disabled={saving} className="bg-primary text-primary-foreground">
           {saving ? 'Saving…' : 'Save Settings'}
         </Button>
@@ -190,6 +231,17 @@ export default function AdminSiteSettings() {
             <ImagePickerDialog
               onClose={() => setLogoPicker(false)}
               onSelect={handleLogoSelected}
+            />
+          </div>
+        </div>
+      )}
+
+      {qrPicker && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-background rounded-lg border border-border max-w-3xl w-full max-h-[80vh] overflow-auto p-4">
+            <ImagePickerDialog
+              onClose={() => setQrPicker(false)}
+              onSelect={handleQrLogoSelected}
             />
           </div>
         </div>
