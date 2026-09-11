@@ -13,6 +13,7 @@ function corsFor(req: Request) {
   const prod = Deno.env.get("SITE_URL") ?? "https://classy.aitems.dev";
   const allow =
     origin === prod ||
+    origin === "https://classycocktails.info" ||
     origin === "https://classy.aitems.dev" ||
     /^http:\/\/localhost(:\d+)?$/.test(origin) ||
     /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)

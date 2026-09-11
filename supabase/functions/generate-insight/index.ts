@@ -1,13 +1,34 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("SITE_URL") ?? "https://classy.aitems.dev",
+/**
+ * Multi-origin CORS. Access-Control-Allow-Origin can only carry ONE origin, so
+ * echo the caller's origin when it's allowed (and set Vary: Origin so caches
+ * don't cross-serve). Keeps the old + new domains working during a domain
+ * cutover. Override the list with ALLOWED_ORIGINS (comma-separated).
+ * The security boundary is the JWT/role check in each handler, not CORS.
+ */
+function allowedOrigins(): string[] {
+  const extra = (Deno.env.get("ALLOWED_ORIGINS") ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  const site = Deno.env.get("SITE_URL");
+  return [...new Set([...(site ? [site] : []), "https://classycocktails.info", "https://classy.aitems.dev", ...extra])];
+}
+
+function corsFor(req: Request) {
+  const list = allowedOrigins();
+  const origin = req.headers.get("Origin") ?? "";
+  const isLocal = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+  const allow = list.includes(origin) || isLocal ? origin : list[0];
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Vary": "Origin",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+  };
+}
 
 serve(async (req) => {
+  const corsHeaders = corsFor(req);
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   // Auth gate
