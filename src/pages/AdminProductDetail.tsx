@@ -19,6 +19,7 @@ import { CompositionTab } from '@/components/admin/product/CompositionTab';
 import { LivePreviewPanel } from '@/components/admin/product/LivePreviewPanel';
 import { ChangeLogTimeline } from '@/components/admin/ChangeLogTimeline';
 import { CopyLink } from '@/components/admin/CopyLink';
+import { DeleteProductDialog } from '@/components/admin/product/DeleteProductDialog';
 import { useBrandStore } from '@/stores/brandStore';
 
 export default function AdminProductDetail() {
@@ -144,11 +145,18 @@ export default function AdminProductDetail() {
               <span className="text-[10px] text-muted-foreground">{product.completeness}%</span>
             </div>
           </div>
-          {!isWideScreen && (
-            <a href={publicPath} target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" size="sm">Preview ↗</Button>
-            </a>
-          )}
+          <div className="flex items-center gap-2">
+            {!isWideScreen && (
+              <a href={publicPath} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="sm">Preview ↗</Button>
+              </a>
+            )}
+            <DeleteProductDialog
+              product={{ id: product.id, name: product.name, slug: product.slug }}
+              usedByBrands={(variants?.length ?? 0) + (collab ? 1 : 0)}
+              onDeleted={() => navigate('/admin', { replace: true })}
+            />
+          </div>
         </header>
 
         <div className="p-6 max-w-4xl">
