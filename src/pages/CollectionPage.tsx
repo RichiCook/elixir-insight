@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useCollection, normalizeLine, type CollectionProduct } from '@/hooks/useCollection';
@@ -42,9 +42,36 @@ const COPY = {
   },
 };
 
+/**
+ * Language default: Italian only for visitors in Italy, English everywhere else.
+ * Starts from the browser language so there's no flash of the wrong copy, then
+ * confirms with /api/geo (Vercel edge geolocation). A manual choice always wins.
+ */
+function browserLang(): 'IT' | 'EN' {
+  if (typeof navigator === 'undefined') return 'EN';
+  const langs = [navigator.language, ...(navigator.languages ?? [])].filter(Boolean) as string[];
+  return langs.some((l) => /^it\b/i.test(l)) ? 'IT' : 'EN';
+}
+
 export default function CollectionPage() {
   const { data, isLoading } = useCollection();
-  const [lang, setLang] = useState<'IT' | 'EN'>('IT');
+  const [lang, setLang] = useState<'IT' | 'EN'>(browserLang);
+  const [langPinned, setLangPinned] = useState(false);
+
+  useEffect(() => {
+    if (langPinned) return;
+    let alive = true;
+    fetch('/api/geo')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((g) => {
+        if (!alive || langPinned || !g) return;
+        const country = String(g.country ?? '').toUpperCase();
+        if (country) setLang(country === 'IT' ? 'IT' : 'EN');
+      })
+      .catch(() => { /* keep the browser-language guess */ });
+    return () => { alive = false; };
+  }, [langPinned]);
+
   const [q, setQ] = useState('');
   const [line, setLine] = useState<string>('all');
   const t = COPY[lang];
@@ -71,7 +98,7 @@ export default function CollectionPage() {
           <ClassyWordmark height={22} />
           <div style={{ display: 'flex', gap: 4 }}>
             {(['IT', 'EN'] as const).map((l) => (
-              <button key={l} onClick={() => setLang(l)}
+              <button key={l} onClick={() => { setLang(l); setLangPinned(true); }}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 7px', fontSize: 12, letterSpacing: '0.12em',
                          color: lang === l ? C.gold : C.muted, fontWeight: lang === l ? 600 : 400 }}>
                 {l}
