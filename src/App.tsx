@@ -39,6 +39,7 @@ const AdminCatalogues          = lazy(() => import('@/pages/AdminCatalogues'));
 const AdminLeads               = lazy(() => import('@/pages/AdminLeads'));
 const AdminCatalogueEditor     = lazy(() => import('@/pages/AdminCatalogueEditor'));
 const CataloguePage            = lazy(() => import('@/pages/CataloguePage'));
+const CollectionPage          = lazy(() => import('@/pages/CollectionPage'));
 const AdminCaseStudyGenerator  = lazy(() => import('@/pages/AdminCaseStudyGenerator'));
 
 /** Redirect /bottle/:slug → /b/classy/:slug for backward-compat QR codes */
@@ -104,6 +105,7 @@ function AppInner() {
             <CataloguePage />
           </ErrorBoundary>
         } />
+        <Route path="/collection" element={<CollectionPage />} />
         <Route path="/c/:slug" element={
           <ErrorBoundary fallback={
             <div style={{ minHeight: '100vh', background: '#0c0b0f', color: '#9b9382', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
