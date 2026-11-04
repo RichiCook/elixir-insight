@@ -101,6 +101,9 @@ export default function AdminDashboard() {
           {perms.canManageActivations && (
             <Link to="/admin/catalogues"><Button variant="outline" size="sm">Catalogues</Button></Link>
           )}
+          <a href="/collection" target="_blank" rel="noopener noreferrer">
+            <Button variant="outline" size="sm">Sales Collection ↗</Button>
+          </a>
           {perms.canManageActivations && (
             <Link to="/admin/leads"><Button variant="outline" size="sm">Leads</Button></Link>
           )}
